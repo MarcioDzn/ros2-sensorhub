@@ -10,6 +10,8 @@
 #include "std_msgs/msg/string.hpp"
 #include "interfaces/msg/imu_data.hpp"
 
+#include "imu_lib.hpp"
+
 using IMUData = interfaces::msg::IMUData;
 
 class CentralNode : public rclcpp::Node
@@ -23,6 +25,7 @@ class CentralNode : public rclcpp::Node
         rclcpp::TimerBase::SharedPtr timer_;
 
         size_t count_;
+        std::vector<std::shared_ptr<BNO055IMU>> imus_;
 
         // parâmetros
         std::vector<long> imu_ids_;

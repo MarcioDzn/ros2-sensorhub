@@ -1,6 +1,14 @@
 #include "central_node.hpp"
+#include "imu_lib.hpp"
 
 using namespace std::chrono_literals;
+
+// função para substituir o delay do
+// wiringpi quando estiver compilando
+// no computador
+inline void delay(int ms) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+}
 
 CentralNode::CentralNode() : Node("central_node"), count_(0)
 {
@@ -10,14 +18,30 @@ CentralNode::CentralNode() : Node("central_node"), count_(0)
     // leitura dos parâmetros
     load_parameters();
 
-    // criando um publisher pra cada IMU
+    // setup do wiringpi
+    BNO055IMU::setupWiringPi();
+
     auto qos = rclcpp::QoS(10).reliable();
     for (size_t id = 0; id < imu_ids_.size(); id++)
     {
+        // criando e armazenando as instâncias
+        // dos IMUs
+        auto imu = std::make_shared<BNO055IMU>(multiplex_ids_[id], imu_ids_[id], imu_addresses_[id]);
+        imus_.push_back(imu);
+
+        // criando um publisher pra cada IMU
         auto publisher = this->create_publisher<IMUData>(
             "/sensor" + std::to_string(imu_ids_[id]) + "/imu", qos);
         publishers_.push_back(publisher);
     }
+
+    // setup dos IMUs
+    for (auto& imu : imus_) imu->setup();
+    delay(1); // 1ms
+
+    // calibração dos IMUs
+    for (auto& imu : imus_) imu->callibrate();
+    delay(1000); // 1s;
 
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(update_rate_ms_), 
@@ -50,10 +74,7 @@ void CentralNode::timer_callback()
 // mock de dados retornados por um IMU
 void CentralNode::get_imu_data(int id, std::vector<double>& imu_data)
 {
-    imu_data.resize(3);
-    imu_data[0] = id*15.43;
-    imu_data[1] = id*28.12;
-    imu_data[2] = id*1.54;
+    imus_[id]->getData(imu_data);
 }
 
 // converte um array plano em um array de arrays

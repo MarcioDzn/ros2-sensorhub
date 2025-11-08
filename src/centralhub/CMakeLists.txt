@@ -25,12 +25,12 @@ find_package(std_msgs REQUIRED)
 
 include_directories(
   include/centralhub
-  ${CMAKE_SOURCE_DIR}/../imu_bno/include
-  ${CMAKE_SOURCE_DIR}/../wiringpi/wiringPi
+  ${CMAKE_CURRENT_SOURCE_DIR}/../imu_bno/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../wiringpi/wiringPi
 )
 
 set(IMU_BNO_SOURCES
-  ${CMAKE_SOURCE_DIR}/../imu_bno/src/bno055.cpp 
+  ${CMAKE_CURRENT_SOURCE_DIR}/../imu_bno/src/bno055.cpp 
 )
 
 # Arquivos da WiringPi necessários para build no PC
@@ -39,6 +39,15 @@ if(NOT RASPBERRY_PI)
 else()
   set(WIRINGPI_SOURCES "")
 endif()
+
+# bibliotecas
+add_library(imu_lib
+  src/imu_lib.cpp
+  ${IMU_BNO_SOURCES} 
+)
+ament_target_dependencies(imu_lib
+  rclcpp
+)
 
 add_executable(central_node 
   src/central_node.cpp 
@@ -56,7 +65,10 @@ ament_target_dependencies(central_node
   interfaces
 )
 
+target_link_libraries(central_node imu_lib)
+
 install(TARGETS
+  imu_lib
   central_node
   DESTINATION lib/${PROJECT_NAME}
 )
