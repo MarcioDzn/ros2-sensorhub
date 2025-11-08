@@ -11,18 +11,8 @@
 
 #include "bno055.h"
 
-#ifdef __arm__  // código só compila no Raspberry Pi
 #include <wiringPi.h>
-#else
-// se não for Raspberry Pi, define stubs que não fazem nada
-#define HIGH 1
-#define LOW 0
-#define OUTPUT 1
-inline void digitalWrite(int pin, int value) {}
-inline void delay(int ms) {}
-inline int wiringPiSetup() { return 0; }
-inline void pinMode(int pin, int mode) {}
-#endif
+
 
 typedef unsigned char byte;
 
