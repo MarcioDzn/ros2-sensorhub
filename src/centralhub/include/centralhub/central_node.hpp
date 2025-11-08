@@ -19,12 +19,14 @@ class CentralNode : public rclcpp::Node
         virtual ~CentralNode();
 
     private:
-        rclcpp::Publisher<IMUData>::SharedPtr publisher_;
+        std::vector<rclcpp::Publisher<IMUData>::SharedPtr> publishers_;
         rclcpp::TimerBase::SharedPtr timer_;
+
         size_t count_;
+        std::vector<size_t> imu_ids_;
 
         void timer_callback();
-        void get_imu_data(std::vector<double>& imu_data);
+        void get_imu_data(int id, std::vector<double>& imu_data);
 };
 
 #endif // CENTRAL_NODE_HPP
