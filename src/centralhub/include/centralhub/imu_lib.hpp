@@ -8,20 +8,20 @@
 
 class BNO055IMU {
     public:
-        BNO055IMU(int32_t bnoID, int sensorID, uint8_t address);
+        BNO055IMU(int32_t bno_id, int sensor_id, uint8_t address);
         void setup();
-        void getData(std::vector<double>& outData);
-        void callibrate();
-        static void setupWiringPi();
+        void get_data(std::vector<double>& out_data);
+        void calibrate();
+        static void setup_wiringpi();
       
     private:
       BNO055 bno_;
-      int selAState_;
-      int selBState_;
-      int sensorID_;
-      double callibrationRef_[3] = {0, 0, 0};
+      int selA_state_;
+      int selB_state_;
+      int sensor_id_;
+      double calibration_ref_[3] = {0, 0, 0};
       
-      void setupStates();
+      void setup_states();
 };
 
 #endif // IMU_LIB_HPP_

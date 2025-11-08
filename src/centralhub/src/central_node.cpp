@@ -19,7 +19,7 @@ CentralNode::CentralNode() : Node("central_node"), count_(0)
     load_parameters();
 
     // setup do wiringpi
-    BNO055IMU::setupWiringPi();
+    BNO055IMU::setup_wiringpi();
 
     auto qos = rclcpp::QoS(10).reliable();
     for (size_t id = 0; id < imu_ids_.size(); id++)
@@ -40,7 +40,7 @@ CentralNode::CentralNode() : Node("central_node"), count_(0)
     delay(1); // 1ms
 
     // calibração dos IMUs
-    for (auto& imu : imus_) imu->callibrate();
+    for (auto& imu : imus_) imu->calibrate();
     delay(1000); // 1s;
 
     timer_ = this->create_wall_timer(
@@ -74,7 +74,7 @@ void CentralNode::timer_callback()
 // mock de dados retornados por um IMU
 void CentralNode::get_imu_data(int id, std::vector<double>& imu_data)
 {
-    imus_[id]->getData(imu_data);
+    imus_[id]->get_data(imu_data);
 }
 
 // converte um array plano em um array de arrays
