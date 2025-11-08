@@ -20,6 +20,7 @@ target_link_libraries(central_node)
 ament_target_dependencies(central_node
   rclcpp
   std_msgs
+  interfaces
 )
 
 install(TARGETS
