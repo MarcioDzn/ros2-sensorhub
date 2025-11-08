@@ -1,0 +1,8 @@
+central_node:
+  ros__parameters:
+    sensor_ids: [1, 2, 3]
+    sensor_addresses: [1, 2, 3]
+    euler_orders: [1, 2, 0, 1, 2, 0, 1, 2, 0]
+    multiplex_ids: [0, 1, 0]
+    sensor_names: ["sensor_1", "sensor_2", "sensor_3"]
+    update_rate_ms: 15

@@ -23,10 +23,20 @@ class CentralNode : public rclcpp::Node
         rclcpp::TimerBase::SharedPtr timer_;
 
         size_t count_;
-        std::vector<size_t> imu_ids_;
+
+        // parâmetros
+        std::vector<long> imu_ids_;
+        std::vector<long> imu_addresses_;
+        std::vector<long> multiplex_ids_;
+        std::vector<std::vector<int>> euler_orders_;
+        std::vector<std::string> imu_names_;
+        int update_rate_ms_;
 
         void timer_callback();
         void get_imu_data(int id, std::vector<double>& imu_data);
+        std::vector<std::vector<int>> chunk_vector(
+            const std::vector<int64_t>& flat, 
+            size_t group_size);
 };
 
 #endif // CENTRAL_NODE_HPP
