@@ -5,29 +5,17 @@ using namespace std::chrono_literals;
 CentralNode::CentralNode() : Node("central_node"), count_(0)
 {
     // definindo parâmetros de inicialização
-    this->declare_parameter<std::vector<int>>("imu_ids", {1, 2, 3});
-    this->declare_parameter<std::vector<int>>("imu_addresses", {1, 0, 1});
-    this->declare_parameter<std::vector<int>>("euler_orders", {1, 2, 0, 1, 2, 0, 1, 2, 0});
-    this->declare_parameter<std::vector<int>>("multiplex_ids", {0, 1, 0});
-    this->declare_parameter<std::vector<std::string>>(
-        "imu_names", {"sensor_1", "sensor_2", "sensor_3"});
-    this->declare_parameter<int>("update_rate_ms", 15);
+    declare_parameters();
 
     // leitura dos parâmetros
-    imu_ids_ = this->get_parameter("imu_ids").as_integer_array();
-    imu_addresses_ = this->get_parameter("imu_addresses").as_integer_array();
-    multiplex_ids_ = this->get_parameter("multiplex_ids").as_integer_array();
-    imu_names_ = this->get_parameter("imu_names").as_string_array();
-    update_rate_ms_ = this->get_parameter("update_rate_ms").as_int();
-    auto flat = this->get_parameter("euler_orders").as_integer_array();
-
-    euler_orders_ = chunk_vector(flat, imu_ids_.size());
+    load_parameters();
 
     // criando um publisher pra cada IMU
+    auto qos = rclcpp::QoS(10).reliable();
     for (size_t id = 0; id < imu_ids_.size(); id++)
     {
         auto publisher = this->create_publisher<IMUData>(
-            "/sensor" + std::to_string(imu_ids_[id]) + "/imu", 10);
+            "/sensor" + std::to_string(imu_ids_[id]) + "/imu", qos);
         publishers_.push_back(publisher);
     }
 
@@ -101,6 +89,28 @@ std::vector<std::vector<int>> CentralNode::chunk_vector(
     }
 
     return chunks;
+}
+
+void CentralNode::declare_parameters()
+{
+    this->declare_parameter<std::vector<int>>("imu_ids", {1, 2, 3});
+    this->declare_parameter<std::vector<int>>("imu_addresses", {1, 0, 1});
+    this->declare_parameter<std::vector<int>>("euler_orders", {1, 2, 0, 1, 2, 0, 1, 2, 0});
+    this->declare_parameter<std::vector<int>>("multiplex_ids", {0, 1, 0});
+    this->declare_parameter<std::vector<std::string>>(
+        "imu_names", {"sensor_1", "sensor_2", "sensor_3"});
+    this->declare_parameter<int>("update_rate_ms", 15);
+}
+
+void CentralNode::load_parameters()
+{
+    imu_ids_ = this->get_parameter("imu_ids").as_integer_array();
+    imu_addresses_ = this->get_parameter("imu_addresses").as_integer_array();
+    multiplex_ids_ = this->get_parameter("multiplex_ids").as_integer_array();
+    imu_names_ = this->get_parameter("imu_names").as_string_array();
+    update_rate_ms_ = this->get_parameter("update_rate_ms").as_int();
+    auto flat = this->get_parameter("euler_orders").as_integer_array();
+    euler_orders_ = chunk_vector(flat, imu_ids_.size());
 }
 
 CentralNode::~CentralNode() = default;

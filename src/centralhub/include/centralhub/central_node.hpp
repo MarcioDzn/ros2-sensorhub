@@ -37,6 +37,8 @@ class CentralNode : public rclcpp::Node
         std::vector<std::vector<int>> chunk_vector(
             const std::vector<int64_t>& flat, 
             size_t group_size);
+        void declare_parameters();
+        void load_parameters();
 };
 
 #endif // CENTRAL_NODE_HPP
