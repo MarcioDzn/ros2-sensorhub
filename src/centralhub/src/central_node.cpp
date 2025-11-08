@@ -1,5 +1,7 @@
 #include "central_node.hpp"
 
+constexpr auto TIMER_PERIOD = 15ms;
+
 using namespace std::chrono_literals;
 
 CentralNode::CentralNode() : Node("central_node"), count_(0), imu_ids_({1, 2, 3})
@@ -7,11 +9,13 @@ CentralNode::CentralNode() : Node("central_node"), count_(0), imu_ids_({1, 2, 3}
     // criando um publisher pra cada IMU
     for (size_t id = 0; id < imu_ids_.size(); id++)
     {
-        auto publisher = this->create_publisher<IMUData>("/sensor" + std::to_string(imu_ids_[id]) + "/imu", 10);
+        auto publisher = this->create_publisher<IMUData>(
+            "/sensor" + std::to_string(imu_ids_[id]) + "/imu", 10);
         publishers_.push_back(publisher);
     }
 
-    timer_ = this->create_wall_timer(500ms, std::bind(&CentralNode::timer_callback, this));
+    timer_ = this->create_wall_timer(
+        TIMER_PERIOD, std::bind(&CentralNode::timer_callback, this));
 }
 
 // callback que recebe os dados dos 3 sensores
