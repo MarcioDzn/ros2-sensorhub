@@ -14,6 +14,7 @@ CentralNode::CentralNode() : Node("central_node"), count_(0), imu_ids_({1, 2, 3}
     timer_ = this->create_wall_timer(500ms, std::bind(&CentralNode::timer_callback, this));
 }
 
+// callback que recebe os dados dos 3 sensores
 void CentralNode::timer_callback()
 {
     for (size_t id = 0; id < imu_ids_.size(); id++)
