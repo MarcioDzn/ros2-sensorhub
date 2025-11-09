@@ -24,6 +24,8 @@ class IMUManager : public ISensorManager
         void createPublishers() override; 
         void publishAll() override;
 
+        int getUpdateRateMs() const { return update_rate_ms_; }
+
     private:
         rclcpp::Node* node_;
 
@@ -43,7 +45,6 @@ class IMUManager : public ISensorManager
             const std::vector<int64_t>& flat, 
             size_t group_size
         );
-
 };
 
 #endif // IMU_MANAGER_HPP
