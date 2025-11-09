@@ -9,7 +9,7 @@
 #include "interfaces/msg/imu_data.hpp"
 #include "managers/interface_sensor_manager.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "imu_lib.hpp"
+#include "libs/imu_lib.hpp"
 
 using IMUData = interfaces::msg::IMUData;
 

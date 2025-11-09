@@ -1,4 +1,5 @@
-#include "imu_lib.hpp"
+#include "libs/imu_lib.hpp"
+#include "rclcpp/rclcpp.hpp" 
 
 #include <stdio.h>      
 #include <stdlib.h>   
@@ -6,10 +7,7 @@
 #include <iostream>       
 #include <thread>         
 #include <chrono>         
-#include "rclcpp/rclcpp.hpp"   
-
 #include <wiringPi.h>
-
 
 #define SEL_A 2
 #define SEL_B 0
@@ -64,8 +62,7 @@ void BNO055IMU::calibrate() {
 }
 
 void BNO055IMU::setup_wiringpi() {
-    if (wiringPiSetup() < 0)
-        exit(1);
+    if (wiringPiSetup() < 0) { exit(1); }
         
 	pinMode(SEL_A, OUTPUT);
 	pinMode(SEL_B, OUTPUT);

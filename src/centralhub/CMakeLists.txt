@@ -42,7 +42,7 @@ endif()
 
 # bibliotecas
 add_library(imu_lib
-  src/imu_lib.cpp
+  src/libs/imu_lib.cpp
   ${IMU_BNO_SOURCES} 
 )
 ament_target_dependencies(imu_lib
