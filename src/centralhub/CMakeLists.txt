@@ -49,6 +49,15 @@ ament_target_dependencies(imu_lib
   rclcpp
 )
 
+add_library(imu_manager
+  src/managers/imu_manager.cpp
+)
+ament_target_dependencies(imu_manager
+  rclcpp
+  interfaces
+)
+target_link_libraries(imu_manager imu_lib)
+
 add_executable(central_node 
   src/central_node.cpp 
   ${IMU_BNO_SOURCES} 
@@ -65,10 +74,11 @@ ament_target_dependencies(central_node
   interfaces
 )
 
-target_link_libraries(central_node imu_lib)
+target_link_libraries(central_node imu_manager)
 
 install(TARGETS
   imu_lib
+  imu_manager
   central_node
   DESTINATION lib/${PROJECT_NAME}
 )
