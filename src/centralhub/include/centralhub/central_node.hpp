@@ -22,6 +22,8 @@ class CentralNode : public rclcpp::Node
         rclcpp::TimerBase::SharedPtr timer_;
         size_t count_;
 
+        int update_rate_ms_;
+
         void timer_callback();
 };
 

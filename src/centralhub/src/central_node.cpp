@@ -10,9 +10,12 @@ CentralNode::CentralNode() : Node("central_node"), count_(0)
     imu_manager_->createSensors();
     imu_manager_->createPublishers();
 
-    int rate = imu_manager_->getUpdateRateMs();
+    // parâmetros do central node
+    this->declare_parameter<int>("central_node.update_rate_ms", 15);
+    update_rate_ms_ = this->get_parameter("central_node.update_rate_ms").as_int();
+
     timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(rate), 
+        std::chrono::milliseconds(update_rate_ms_), 
         std::bind(&CentralNode::timer_callback, this));
 }
 

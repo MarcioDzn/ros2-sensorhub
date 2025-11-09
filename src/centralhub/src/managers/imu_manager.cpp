@@ -4,13 +4,12 @@ IMUManager::IMUManager(rclcpp::Node* node) : node_(node) {}
 
 void IMUManager::loadParameters()
 {
-    node_->declare_parameter<std::vector<int64_t>>("imus.imu_ids", {1, 2, 3});
-    node_->declare_parameter<std::vector<int64_t>>("imus.imu_addresses", {1, 0, 1});
-    node_->declare_parameter<std::vector<int64_t>>("imus.euler_orders", {1, 2, 0, 1, 2, 0, 1, 2, 0});
-    node_->declare_parameter<std::vector<int64_t>>("imus.multiplex_ids", {0, 1, 0});
+    node_->declare_parameter<std::vector<int64_t>>("imu_manager.imu_ids", {1, 2, 3});
+    node_->declare_parameter<std::vector<int64_t>>("imu_manager.imu_addresses", {1, 0, 1});
+    node_->declare_parameter<std::vector<int64_t>>("imu_manager.euler_orders", {1, 2, 0, 1, 2, 0, 1, 2, 0});
+    node_->declare_parameter<std::vector<int64_t>>("imu_manager.multiplex_ids", {0, 1, 0});
     node_->declare_parameter<std::vector<std::string>>(
-        "imus.imu_names", {"sensor_1", "sensor_2", "sensor_3"});
-    node_->declare_parameter<int>("imus.update_rate_ms", 15);
+        "imu_manager.imu_names", {"sensor_1", "sensor_2", "sensor_3"});
 
     setParameters();
 }
@@ -78,13 +77,12 @@ void IMUManager::publishAll()
 
 void IMUManager::setParameters()
 {
-    imu_ids_ = node_->get_parameter("imus.imu_ids").as_integer_array();
-    imu_addresses_ = node_->get_parameter("imus.imu_addresses").as_integer_array();
-    multiplex_ids_ = node_->get_parameter("imus.multiplex_ids").as_integer_array();
-    imu_names_ = node_->get_parameter("imus.imu_names").as_string_array();
-    update_rate_ms_ = node_->get_parameter("imus.update_rate_ms").as_int();
+    imu_ids_ = node_->get_parameter("imu_manager.imu_ids").as_integer_array();
+    imu_addresses_ = node_->get_parameter("imu_manager.imu_addresses").as_integer_array();
+    multiplex_ids_ = node_->get_parameter("imu_manager.multiplex_ids").as_integer_array();
+    imu_names_ = node_->get_parameter("imu_manager.imu_names").as_string_array();
 
-    auto flat = node_->get_parameter("imus.euler_orders").as_integer_array();
+    auto flat = node_->get_parameter("imu_manager.euler_orders").as_integer_array();
     euler_orders_ = chunkVector(flat, imu_ids_.size());
 }
 

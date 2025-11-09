@@ -24,8 +24,6 @@ class IMUManager : public ISensorManager
         void createPublishers() override; 
         void publishAll() override;
 
-        int getUpdateRateMs() const { return update_rate_ms_; }
-
     private:
         rclcpp::Node* node_;
 
@@ -38,7 +36,6 @@ class IMUManager : public ISensorManager
         std::vector<int64_t> multiplex_ids_;
         std::vector<std::vector<int>> euler_orders_;
         std::vector<std::string> imu_names_;
-        int update_rate_ms_;
 
         void setParameters();
         std::vector<std::vector<int>> chunkVector(
