@@ -7,6 +7,7 @@ CentralNode::CentralNode() : Node("central_node"), count_(0)
 {
     imu_manager_ = std::make_unique<IMUManager>(this);
     imu_manager_->loadParameters();
+    imu_manager_->initialize();
     imu_manager_->createSensors();
     imu_manager_->createPublishers();
 
