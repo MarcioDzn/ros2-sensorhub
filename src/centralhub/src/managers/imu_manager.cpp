@@ -18,7 +18,7 @@ IMUManager::IMUManager(rclcpp::Node* node) : node_(node) {}
 void IMUManager::loadParameters()
 {
     node_->declare_parameter<std::vector<int64_t>>("imu_manager.imu_ids", {1, 2, 3});
-    node_->declare_parameter<std::vector<int64_t>>("imu_manager.imu_addresses", {1, 0, 1});
+    node_->declare_parameter<std::vector<int64_t>>("imu_manager.imu_addresses", {0x28, 0x29, 0x28});
     node_->declare_parameter<std::vector<int64_t>>("imu_manager.euler_orders", {1, 2, 0, 1, 2, 0, 1, 2, 0});
     node_->declare_parameter<std::vector<int64_t>>("imu_manager.multiplex_ids", {0, 1, 0});
     node_->declare_parameter<std::vector<std::string>>(
@@ -38,6 +38,9 @@ void IMUManager::createSensors()
     // dos IMUs
     for (size_t id = 0; id < imu_ids_.size(); id++)
     {
+        RCLCPP_INFO(node_->get_logger(), 
+            "Criando sensor %d - MULTIPLEX ID: %d IMU ID: %d ADDRESS: %d",
+            multiplex_ids_[id], imu_ids_[id], imu_addresses_[id]);
         auto imu = std::make_shared<BNO055IMU>(multiplex_ids_[id], imu_ids_[id], imu_addresses_[id]);
         imus_.push_back(imu);
     }
@@ -74,6 +77,9 @@ void IMUManager::createPublishers()
  */
 void IMUManager::initialize()
 {
+    // setup do wiring pi
+    BNO055IMU::setup_wiringpi();
+    
     // setup dos IMUs
     for (auto& imu : imus_) imu->setup();
     std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 1ms
