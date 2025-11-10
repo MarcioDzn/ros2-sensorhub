@@ -61,7 +61,7 @@ void IMUManager::createPublishers()
     for (size_t id = 0; id < imu_ids_.size(); id++)
     {
         auto publisher = node_->create_publisher<IMUData>(
-            "/sensor" + std::to_string(imu_ids_[id]) + "/imu", qos);
+            "" + imu_names_[id] + "/imu", qos);
         publishers_.push_back(publisher);
     }
 }

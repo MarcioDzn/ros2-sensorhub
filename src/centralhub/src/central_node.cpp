@@ -12,8 +12,8 @@ CentralNode::CentralNode() : Node("central_node"), count_(0)
     imu_manager_->createPublishers();
 
     // parâmetros do central node
-    this->declare_parameter<int>("central_node.update_rate_ms", 15);
-    update_rate_ms_ = this->get_parameter("central_node.update_rate_ms").as_int();
+    this->declare_parameter<int>("update_rate_ms", 15);
+    update_rate_ms_ = this->get_parameter("update_rate_ms").as_int();
 
     // executa o callback a cada 
     // <update_rate_ms_> segundos

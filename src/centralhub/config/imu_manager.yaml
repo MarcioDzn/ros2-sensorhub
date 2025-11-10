@@ -1,7 +1,0 @@
-imu_manager:
-  ros__parameters:
-    sensor_ids: [1, 2, 3]
-    sensor_addresses: [0x28, 0x29, 0x28]
-    euler_orders: [1, 2, 0, 1, 2, 0, 1, 2, 0]
-    multiplex_ids: [0, 1, 0]
-    sensor_names: ["sensor_1", "sensor_2", "sensor_3"]
