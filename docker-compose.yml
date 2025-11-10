@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  sensorhub:
+    image: ghcr.io/sloretz/ros:humble-desktop
+    container_name: ros2-sensorhub
+    privileged: true
+    network_mode: bridge
+    environment:
+      - ROS_DOMAIN_ID=42
+    volumes:
+      # Volumes para usar no pc
+      - ~/Documentos/Dev/UEFS/IC/sensorhub:/ros2_ws
+
+      # Volumes abaixo para usar na raspberry
+      #- ~/Documentos/ros2-sensorhub:/ros2_ws
+      #- ~/WiringPi:/ros2_ws/src/wiringpi
+    devices:
+      - /dev/mem:/dev/mem
+      - /dev/gpiomem:/dev/gpiomem
+    tty: true
+    stdin_open: true
+    command: >
+      bash -i -c "
+        echo '*** 1/3: Instalando wiringPi (como root)... ***' &&
+        cd /ros2_ws/src/wiringpi/wiringPi &&
+        make clean &&
+        make &&
+        make install &&
+        echo '*** wiringPi instalado com sucesso. ***' &&
+        echo '*** 2/3: Configurando ROS2 workspace... ***' &&
+        source /opt/ros/humble/setup.bash &&
+        cd /ros2_ws &&
+        echo '*** 3/3: Pronto para rodar o central_node como root ***' &&
+        bash
+      "
