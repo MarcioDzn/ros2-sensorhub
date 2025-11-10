@@ -2,6 +2,8 @@
 #define SUBSCRIBER_NODE_HPP
 
 #include <memory>
+#include <vector>
+#include <string>
 
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/msg/imu_data.hpp"
@@ -15,8 +17,9 @@ class SubscriberNode : public rclcpp::Node
     virtual ~SubscriberNode();
 
   private:
-    rclcpp::Subscription<IMUData>::SharedPtr subscription_;
-    void topic_callback(const IMUData & msg) const;	
+  
+    std::vector<rclcpp::Subscription<IMUData>::SharedPtr> imu_subscriptions_;
+    void topic_callback(const IMUData & msg, const std::string & imu_name) const;	
 };
 
 #endif // SUBSCRIBER_NODE_HPP
