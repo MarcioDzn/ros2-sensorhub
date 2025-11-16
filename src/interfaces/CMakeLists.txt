@@ -13,8 +13,14 @@ find_package(builtin_interfaces REQUIRED)
 set(msg_files
   "msg/IMUData.msg"
 )
+
+set(srv_files
+  "srv/SetMotorConfig.srv"
+)
+
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${msg_files}
+  ${srv_files}
   DEPENDENCIES builtin_interfaces
 )
 

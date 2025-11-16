@@ -1,0 +1,28 @@
+# definem quais parâmetros devem ser aplicados
+bool set_torque_curr
+bool set_speed
+bool set_angle
+bool set_rs485_baud
+bool set_spin_dir
+bool set_max_angle
+bool set_max_speed
+bool set_max_accel
+bool set_max_torque_curr
+bool set_torque_curr_ramp
+
+# valores
+int32 torque_curr
+float64 speed
+float64 angle
+int32 rs485_baud
+int32 spin_dir
+float64 max_angle
+float64 max_speed
+int32 max_accel
+int32 max_torque_curr
+int32 torque_curr_ramp
+
+---
+
+bool success
+string message
