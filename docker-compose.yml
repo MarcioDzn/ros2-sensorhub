@@ -10,7 +10,7 @@ services:
       - ROS_DOMAIN_ID=42
     volumes:
       # Volumes para usar no pc
-      - ~/Documentos/Dev/UEFS/IC/sensorhub:/ros2_ws
+      - /home/marcio/Documentos/Dev/UEFS/IC/sensorhub:/ros2_ws
 
       # Volumes abaixo para usar na raspberry
       #- ~/Documentos/ros2-sensorhub:/ros2_ws
