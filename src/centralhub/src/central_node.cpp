@@ -1,5 +1,6 @@
 #include "central_node.hpp"
 #include "managers/imu_manager.hpp"
+#include "managers/motor_manager.hpp"
 
 using namespace std::chrono_literals;
 

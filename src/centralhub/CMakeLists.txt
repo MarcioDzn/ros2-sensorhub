@@ -58,6 +58,14 @@ ament_target_dependencies(imu_manager
 )
 target_link_libraries(imu_manager imu_lib)
 
+add_library(motor_manager
+  src/managers/motor_manager.cpp
+)
+ament_target_dependencies(motor_manager
+  rclcpp
+  interfaces
+)
+
 add_executable(central_node 
   src/central_node.cpp 
   ${IMU_BNO_SOURCES} 
@@ -79,6 +87,7 @@ target_link_libraries(central_node imu_manager)
 install(TARGETS
   imu_lib
   imu_manager
+  motor_manager
   central_node
   DESTINATION lib/${PROJECT_NAME}
 )
