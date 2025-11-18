@@ -10,18 +10,16 @@ int main(int argc, char ** argv)
   rclcpp::init(argc, argv);
 
   if (argc != 3) {
-      RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "usage: send config to motor node");
+      RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "usage: config motor");
       return 1;
   }
 
-  std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("manipulate_motor_client");
+  std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("motor_config_client");
 
   rclcpp::Client<SetMotorConfig>::SharedPtr client =
-    node->create_client<SetMotorConfig>("manipulate_motor");
+    node->create_client<SetMotorConfig>("motor_config");
 
   auto request = std::make_shared<SetMotorConfig::Request>();
-  request->a = atoll(argv[1]);
-  request->b = atoll(argv[2]);
 
   while (!client->wait_for_service(1s)) {
     if (!rclcpp::ok()) {
@@ -36,9 +34,9 @@ int main(int argc, char ** argv)
   if (rclcpp::spin_until_future_complete(node, result) ==
     rclcpp::FutureReturnCode::SUCCESS)
   {
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Sum: %ld", result.get()->sum);
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Funcionou");
   } else {
-    RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service add_two_ints");
+    RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Não funcionou");
   }
 
   rclcpp::shutdown();
