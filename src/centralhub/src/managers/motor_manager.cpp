@@ -1,7 +1,10 @@
 #include "managers/motor_manager.hpp"
 
-MotorManager::MotorManager(rclcpp::Node* node, const char* device)
-    : node_(node), device_()
+MotorManager::MotorManager(
+    rclcpp::Node* node, 
+    const char* device, 
+    int motor_id
+)   : node_(node), device_(), motor_id_(motor_id)
 {
     device_.init(device);
 }
@@ -17,7 +20,23 @@ void MotorManager::createServer()
 // controle
 bool MotorManager::setTorqueCurr(int torque)
 {
-    return false;
+    unsigned char motor_id = motor_id_;
+
+    std::vector<unsigned char> packet { 
+        MotorManager::PACKAGE_HEADER, 
+        MotorManager::SET_TORQUE_COMMAND,
+        motor_id,
+        0x00,
+        (
+            MotorManager::PACKAGE_HEADER + 
+            MotorManager::SET_TORQUE_COMMAND +
+            motor_id
+        ) // checksum 
+    };
+
+    if ( device_.writeData(packet) < 0 ) { return false; } 
+    
+    return true;
 }
 
 bool MotorManager::setSpeed(double speed)

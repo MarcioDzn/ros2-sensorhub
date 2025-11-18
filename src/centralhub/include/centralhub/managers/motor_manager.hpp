@@ -19,7 +19,11 @@ using SetMotorConfig = interfaces::srv::SetMotorConfig;
 class MotorManager
 {
     public:
-        MotorManager(rclcpp::Node* node, const char* device);
+        MotorManager(
+            rclcpp::Node* node, 
+            const char* device,
+            int motor_id
+        );
 
         void loadParameters();
         void createServer();
@@ -60,6 +64,7 @@ class MotorManager
     private:
         rclcpp::Node* node_;
         DeviceComm device_;
+        int motor_id_;
 
         // controle
         int torque_curr_;
@@ -76,6 +81,11 @@ class MotorManager
         int max_accel_;       
         int max_torque_curr_;
         int torque_curr_ramp_;
+
+        // constantes
+        static constexpr unsigned char PACKAGE_HEADER = 0x3E;
+        static constexpr unsigned char SET_TORQUE_COMMAND = 0xBB;
+
 };
 
 #endif
