@@ -63,16 +63,25 @@ int DeviceComm::readData(
     }
 
     read_buf.resize(bytes_to_read);
-    ssize_t n = read(fd_, read_buf.data(), read_buf.size());
-    if (n < 0) {
-        std::cerr << "Erro ao ler do dispositivo: " 
-            << std::strerror(errno) 
-            << std::endl;
-        return -1;
+    size_t total_read = 0;
+
+    // TODO: verificar se existe algum delimitador
+    // no RX do motor
+
+    // lê até receber todos os dados
+    while (total_read < bytes_to_read) {
+        ssize_t n = read(fd_, read_buf.data() + total_read, bytes_to_read - total_read);
+        if (n < 0) {
+            std::cerr << "Erro ao ler do dispositivo: " << std::strerror(errno) << std::endl;
+            return -1;
+        } else if (n == 0) {
+            break;
+        }
+        total_read += n;
     }
 
-    read_buf.resize(n);
-    return static_cast<int>(n);
+    read_buf.resize(total_read);
+    return static_cast<int>(total_read);
 }
 
 DeviceComm::~DeviceComm()
