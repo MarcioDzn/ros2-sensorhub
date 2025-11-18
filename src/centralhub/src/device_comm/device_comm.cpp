@@ -21,6 +21,19 @@ int DeviceComm::init(const char* device)
         return -1;
     }
 
+    // configurações
+    cfsetospeed(&tty_, B115200);
+    cfsetispeed(&tty_, B115200);
+    tty_.c_cflag = (tty_.c_cflag & ~CSIZE) | CS8;  // 8 bits
+    tty_.c_cflag &= ~PARENB;                       // sem paridade
+    tty_.c_cflag &= ~CSTOPB;                       // 1 stop bit
+    tty_.c_cflag &= ~CRTSCTS;                      // sem flow control
+    tty_.c_lflag &= ~(ICANON | ECHO | ISIG);       // raw mode
+    tty_.c_iflag &= ~(IXON | IXOFF | IXANY | ICRNL); // desativa flow control e conversões
+    tty_.c_oflag &= ~OPOST;                          // saída bruta
+    tty_.c_cc[VMIN]  = 0;                            // mínimo de bytes para read()
+    tty_.c_cc[VTIME] = 10;                           // timeout 1s (10 decisegundos)
+
     return 0;
 }
 
