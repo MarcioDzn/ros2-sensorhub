@@ -66,6 +66,10 @@ ament_target_dependencies(motor_manager
   interfaces
 )
 
+add_library(device_comm
+  src/device_comm/device_comm.cpp
+)
+
 add_executable(central_node 
   src/central_node.cpp 
   ${IMU_BNO_SOURCES} 
@@ -82,12 +86,13 @@ ament_target_dependencies(central_node
   interfaces
 )
 
-target_link_libraries(central_node imu_manager)
+target_link_libraries(central_node imu_manager motor_manager device_comm)
 
 install(TARGETS
   imu_lib
   imu_manager
   motor_manager
+  device_comm
   central_node
   DESTINATION lib/${PROJECT_NAME}
 )

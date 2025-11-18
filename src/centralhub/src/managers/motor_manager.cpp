@@ -1,4 +1,5 @@
 #include "managers/motor_manager.hpp"
+#include "device_comm/device_comm.hpp"
 
 MotorManager::MotorManager(rclcpp::Node* node)
     : node_(node)
