@@ -8,9 +8,8 @@ MotorManager::MotorManager(
 
 int MotorManager::initComm(const char* device)
 {
-    if (device_.init(device) < 0)
-        return false;
-    return true;
+    return device_.init(device);
+
 }
 
 void MotorManager::loadParameters()

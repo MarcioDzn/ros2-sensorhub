@@ -13,7 +13,10 @@ CentralNode::CentralNode() : Node("central_node"), count_(0)
     imu_manager_->createPublishers();
     
     motor_manager_ = std::make_unique<MotorManager>(this, 1);
-    motor_manager_->initComm("/dev/ttyUSB0");
+    if (motor_manager_->initComm("/dev/ttyUSB1") < 0)
+    {
+        RCLCPP_ERROR(this->get_logger(), "Erro ao inicializar a comunicacao!");
+    }
     motor_manager_->setTorqueCurr(10);
     
 
