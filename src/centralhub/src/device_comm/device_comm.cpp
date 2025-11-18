@@ -34,6 +34,14 @@ int DeviceComm::init(const char* device)
     tty_.c_cc[VMIN]  = 0;                            // mínimo de bytes para read()
     tty_.c_cc[VTIME] = 10;                           // timeout 1s (10 decisegundos)
 
+    // aplica as configs
+    if (tcsetattr(fd_, TCSANOW, &tty_) != 0) {
+        std::cerr << "Erro ao aplicar configuração: " 
+            << strerror(errno) 
+            << std::endl;
+        return -1;
+    }
+    
     return 0;
 }
 
@@ -72,8 +80,12 @@ int DeviceComm::readData(
     read_buf.resize(bytes_to_read);
     size_t total_read = 0;
 
-    // TODO: verificar se existe algum delimitador
-    // no RX do motor
+    // O terceiro byte (começando do 0) indica
+    // a quantidade de bytes relevantes após ele
+    // por exemplo, se o RX é RX: 3E 1F 01 02 60 32 20 52
+    // 02 é o byte de comprimento
+    // os bytes importantes são 60 32
+    // os últimos 2 bytes são CHECKSUM aparentemente
 
     // lê até receber todos os dados
     while (total_read < bytes_to_read) {
@@ -90,6 +102,7 @@ int DeviceComm::readData(
     read_buf.resize(total_read);
     return static_cast<int>(total_read);
 }
+
 
 DeviceComm::~DeviceComm()
 {
