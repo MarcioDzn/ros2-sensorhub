@@ -45,23 +45,17 @@ int DeviceComm::writeData(const std::vector<unsigned char>& data)
         return -1;
     }
 
-    ssize_t n = write(fd_, data.data(), data.size());
-    if (n < 0) {
-        std::cerr << "Erro ao escrever no dispositivo: " 
-            << std::strerror(errno) 
-            << std::endl;
-        return -1;
+    size_t total_written = 0;
+    while (total_written < data.size()) {
+        ssize_t n = write(fd_, data.data() + total_written, data.size() - total_written);
+        if (n < 0) {
+            std::cerr << "Erro ao escrever: " << std::strerror(errno) << std::endl;
+            return -1;
+        }
+        total_written += n;
     }
 
-    // TODO: loop até escrever todos os dados
-    if (static_cast<size_t>(n) != data.size()) {
-        std::cerr << "Aviso: apenas " << n 
-            << " de " << data.size() 
-            << " bytes escritos." 
-            << std::endl;
-    }
-
-    return static_cast<int>(n);
+    return static_cast<int>(total_written);
 }
 
 int DeviceComm::readData(
