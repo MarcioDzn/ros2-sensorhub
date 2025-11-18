@@ -4,6 +4,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include "interfaces/srv/set_motor_config.hpp"
+#include "device_comm/device_comm.hpp"
 
 // TODO: definir outros valores
 // e ver o que eles representam
@@ -18,7 +19,7 @@ using SetMotorConfig = interfaces::srv::SetMotorConfig;
 class MotorManager
 {
     public:
-        MotorManager(rclcpp::Node* node);
+        MotorManager(rclcpp::Node* node, const char* device);
 
         void loadParameters();
         void createServer();
@@ -58,6 +59,7 @@ class MotorManager
 
     private:
         rclcpp::Node* node_;
+        DeviceComm device_;
 
         // controle
         int torque_curr_;

@@ -1,9 +1,9 @@
 #include "managers/motor_manager.hpp"
-#include "device_comm/device_comm.hpp"
 
-MotorManager::MotorManager(rclcpp::Node* node)
-    : node_(node)
+MotorManager::MotorManager(rclcpp::Node* node, const char* device)
+    : node_(node), device_()
 {
+    device_.init(device);
 }
 
 void MotorManager::loadParameters()
