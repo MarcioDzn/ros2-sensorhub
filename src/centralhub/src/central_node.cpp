@@ -11,6 +11,11 @@ CentralNode::CentralNode() : Node("central_node"), count_(0)
     imu_manager_->createSensors();
     imu_manager_->initialize();     
     imu_manager_->createPublishers();
+    
+    motor_manager_ = std::make_unique<MotorManager>(this, 1);
+    motor_manager_->initComm("/dev/ttyUSB0");
+    motor_manager_->setTorqueCurr(10);
+    
 
     // parâmetros do central node
     this->declare_parameter<int>("update_rate_ms", 15);

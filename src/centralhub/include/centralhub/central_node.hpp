@@ -8,6 +8,7 @@
 #include "interfaces/msg/imu_data.hpp"
 
 #include "managers/imu_manager.hpp"
+#include "managers/motor_manager.hpp"
 
 using IMUData = interfaces::msg::IMUData;
 
@@ -19,6 +20,7 @@ class CentralNode : public rclcpp::Node
 
     private:
         std::unique_ptr<IMUManager> imu_manager_;
+        std::unique_ptr<MotorManager> motor_manager_;
         rclcpp::TimerBase::SharedPtr timer_;
         size_t count_;
 

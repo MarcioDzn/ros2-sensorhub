@@ -2,11 +2,15 @@
 
 MotorManager::MotorManager(
     rclcpp::Node* node, 
-    const char* device, 
     int motor_id
-)   : node_(node), device_(), motor_id_(motor_id)
+)   : node_(node), motor_id_(motor_id)
+{}
+
+int MotorManager::initComm(const char* device)
 {
-    device_.init(device);
+    if (device_.init(device) < 0)
+        return false;
+    return true;
 }
 
 void MotorManager::loadParameters()

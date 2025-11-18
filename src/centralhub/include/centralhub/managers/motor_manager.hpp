@@ -21,7 +21,6 @@ class MotorManager
     public:
         MotorManager(
             rclcpp::Node* node, 
-            const char* device,
             int motor_id
         );
 
@@ -57,6 +56,7 @@ class MotorManager
         int getMaxTorqueCurr() { return max_torque_curr_; };
         int getTorqueCurrRamp() { return torque_curr_ramp_; };
 
+        int initComm(const char* device);
         bool applySettings();
         bool start();
         bool stop();

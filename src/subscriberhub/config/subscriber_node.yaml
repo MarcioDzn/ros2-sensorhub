@@ -1,3 +1,4 @@
 subscriber_node:
   ros__parameters:
-    imu_names: ["sensor_1", "sensor_2", "sensor_3"]
+    #imu_names: ["sensor_1", "sensor_2", "sensor_3"]
+    imu_names: ["sensor_2"]
