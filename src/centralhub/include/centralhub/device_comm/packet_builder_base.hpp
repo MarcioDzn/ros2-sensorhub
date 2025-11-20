@@ -12,6 +12,10 @@ class PacketBuilderBase
         virtual PacketBuilderBase& setParamLength(uint8_t length) = 0;
         virtual PacketBuilderBase& setChecksum() = 0;
         virtual PacketBuilderBase& clear() = 0;
+        virtual PacketBuilderBase& setID(uint8_t id) = 0;
+        virtual PacketBuilderBase& setInstruction(uint8_t instruction) = 0;
+        virtual PacketBuilderBase& setAddress(uint8_t address) = 0;
+        virtual PacketBuilderBase& addParameter(uint8_t* param) = 0;
         virtual const uint8_t* build() = 0;
 };
 

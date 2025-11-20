@@ -14,12 +14,11 @@ class DynamixelPacketBuilder : public PacketBuilderBase
         DynamixelPacketBuilder& setParamLength(uint8_t length) override;
         DynamixelPacketBuilder& setChecksum() override;
         DynamixelPacketBuilder& clear() override;
+        DynamixelPacketBuilder& setID(uint8_t id) override;
+        DynamixelPacketBuilder& setInstruction(uint8_t instruction) override;
+        DynamixelPacketBuilder& setAddress(uint8_t address) override;
+        DynamixelPacketBuilder& addParameter(uint8_t* param) override;
         const uint8_t* build() override;
-
-        DynamixelPacketBuilder& setID(uint8_t id);
-        DynamixelPacketBuilder& setInstruction(uint8_t instruction);
-        DynamixelPacketBuilder& setAddress(uint8_t address);
-        DynamixelPacketBuilder& addParameter(uint8_t* param);
 
     private:
         enum class State {
