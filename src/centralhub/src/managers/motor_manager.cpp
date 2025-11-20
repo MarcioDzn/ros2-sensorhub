@@ -3,6 +3,7 @@
 #include "device_comm/dynamixel_packet_builder.hpp"
 
 #define PACKET_OVERHEAD_SIZE 7 // apenas para TESTE
+#define INSTRUCTION_WRITE 3
 
 MotorManager::MotorManager(
     rclcpp::Node* node, 
@@ -27,12 +28,12 @@ void MotorManager::createServer()
 bool MotorManager::setTorqueCurr(int torque)
 {
     PacketBuilderBase* builder = new DynamixelPacketBuilder();
-    uint8_t params[2] = { 0x12, 0x34 };
+    uint8_t params[1] = { torque };
     const std::vector<uint8_t>& packet = builder->startPacket()
         .setID(motor_id_)
-        .setParamLength(2)
-        .setAddress(0x03)
-        .setInstruction(0x04)
+        .setParamLength(1)
+        .setAddress(0x18)
+        .setInstruction(INSTRUCTION_WRITE)
         .addParameter(params)
         .setHeader(0xFF)
         .setChecksum()
