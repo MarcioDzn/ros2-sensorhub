@@ -115,11 +115,11 @@ DynamixelPacketBuilder& DynamixelPacketBuilder::setChecksum()
     return *this;
 }
 
-const uint8_t* DynamixelPacketBuilder::build()
+std::vector<uint8_t>& DynamixelPacketBuilder::build()
 {
     checkState(State::Build);
     state_ = State::Start;
-    return buffer_.data();
+    return buffer_;
 }
 
 DynamixelPacketBuilder& DynamixelPacketBuilder::clear()

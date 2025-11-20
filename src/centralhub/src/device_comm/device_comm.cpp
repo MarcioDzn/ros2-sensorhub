@@ -45,7 +45,7 @@ int DeviceComm::init(const char* device)
     return 0;
 }
 
-int DeviceComm::writeData(const std::vector<unsigned char>& data)
+int DeviceComm::writeData(const std::vector<uint8_t>& data)
 {
     // fd deve ser válido
     if (fd_ < 0) {

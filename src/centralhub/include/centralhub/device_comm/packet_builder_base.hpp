@@ -2,6 +2,7 @@
 #define PACKET_BUILDER_BASE_HPP
 
 #include <cstdint>
+#include <vector>
 
 class PacketBuilderBase
 {
@@ -16,7 +17,7 @@ class PacketBuilderBase
         virtual PacketBuilderBase& setInstruction(uint8_t instruction) = 0;
         virtual PacketBuilderBase& setAddress(uint8_t address) = 0;
         virtual PacketBuilderBase& addParameter(uint8_t* param) = 0;
-        virtual const uint8_t* build() = 0;
+        virtual std::vector<uint8_t>& build() = 0;
 };
 
 inline PacketBuilderBase::~PacketBuilderBase() {}

@@ -12,9 +12,23 @@ MotorManager::MotorManager(
 
 int MotorManager::initComm(const char* device)
 {
+    return device_.init(device);
+}
+
+void MotorManager::loadParameters()
+{
+}
+
+void MotorManager::createServer()
+{
+}
+
+// controle
+bool MotorManager::setTorqueCurr(int torque)
+{
     PacketBuilderBase* builder = new DynamixelPacketBuilder();
     uint8_t params[2] = { 0x12, 0x34 };
-    const uint8_t* packet = builder->startPacket()
+    const std::vector<uint8_t>& packet = builder->startPacket()
         .setID(motor_id_)
         .setParamLength(2)
         .setAddress(0x03)
@@ -33,37 +47,9 @@ int MotorManager::initComm(const char* device)
 
     delete builder;  // libera memória
 
-    return 0; // sucesso
-}
+    if ( device_.writeData(packet) < 0 ) { return -1; } 
 
-void MotorManager::loadParameters()
-{
-}
-
-void MotorManager::createServer()
-{
-}
-
-// controle
-bool MotorManager::setTorqueCurr(int torque)
-{
-    unsigned char motor_id = motor_id_;
-
-    std::vector<unsigned char> packet { 
-        MotorManager::PACKAGE_HEADER, 
-        MotorManager::SET_TORQUE_COMMAND,
-        motor_id,
-        0x00,
-        (
-            MotorManager::PACKAGE_HEADER + 
-            MotorManager::SET_TORQUE_COMMAND +
-            motor_id
-        ) // checksum 
-    };
-
-    if ( device_.writeData(packet) < 0 ) { return false; } 
-    
-    return true;
+    return 0; 
 }
 
 bool MotorManager::setSpeed(double speed)

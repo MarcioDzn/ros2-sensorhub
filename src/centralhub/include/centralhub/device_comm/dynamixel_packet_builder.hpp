@@ -3,8 +3,6 @@
 
 #include "device_comm/packet_builder_base.hpp"
 
-#include <vector>
-
 class DynamixelPacketBuilder : public PacketBuilderBase
 {
     public:
@@ -19,7 +17,7 @@ class DynamixelPacketBuilder : public PacketBuilderBase
         DynamixelPacketBuilder& setInstruction(uint8_t instruction) override;
         DynamixelPacketBuilder& setAddress(uint8_t address) override;
         DynamixelPacketBuilder& addParameter(uint8_t* param) override;
-        const uint8_t* build() override;
+        std::vector<uint8_t>& build() override;
 
     private:
         enum class State {

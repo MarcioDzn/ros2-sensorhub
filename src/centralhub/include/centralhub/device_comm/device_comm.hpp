@@ -20,7 +20,7 @@ class DeviceComm
         virtual ~DeviceComm();
 
         int init(const char* device);
-        int writeData(const std::vector<unsigned char>& data);
+        int writeData(const std::vector<uint8_t>& data);
         int readData(
             std::vector<unsigned char>& read_buf,
             size_t bytes_to_read
