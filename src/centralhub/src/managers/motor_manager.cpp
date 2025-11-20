@@ -1,4 +1,8 @@
 #include "managers/motor_manager.hpp"
+#include "device_comm/packet_builder_base.hpp"
+#include "device_comm/dynamixel_packet_builder.hpp"
+
+#define PACKET_OVERHEAD_SIZE 7 // apenas para TESTE
 
 MotorManager::MotorManager(
     rclcpp::Node* node, 
@@ -8,8 +12,28 @@ MotorManager::MotorManager(
 
 int MotorManager::initComm(const char* device)
 {
-    return device_.init(device);
+    PacketBuilderBase* builder = new DynamixelPacketBuilder();
+    uint8_t params[2] = { 0x12, 0x34 };
+    const uint8_t* packet = builder->startPacket()
+        .setID(motor_id_)
+        .setParamLength(2)
+        .setAddress(0x03)
+        .setInstruction(0x04)
+        .addParameter(params)
+        .setHeader(0xFF)
+        .setChecksum()
+        .build();
 
+    size_t packet_size = PACKET_OVERHEAD_SIZE + 2; // 7 + param_length
+    std::cout << "Packet: ";
+    for (size_t i = 0; i < packet_size; ++i) {
+        printf("%02X ", packet[i]);
+    }
+    std::cout << std::endl;
+
+    delete builder;  // libera memória
+
+    return 0; // sucesso
 }
 
 void MotorManager::loadParameters()
