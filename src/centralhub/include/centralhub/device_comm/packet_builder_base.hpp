@@ -19,4 +19,6 @@ class PacketBuilderBase
         virtual const uint8_t* build() = 0;
 };
 
+inline PacketBuilderBase::~PacketBuilderBase() {}
+
 #endif // PACKET_BUILDER_BASE_HPP

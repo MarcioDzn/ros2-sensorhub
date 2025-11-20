@@ -1,7 +1,7 @@
 #ifndef DYNAMIEL_PACKET_BUILDER_HPP
 #define DYNAMIEL_PACKET_BUILDER_HPP
 
-#include "device_comm/packet_builder.hpp"
+#include "device_comm/packet_builder_base.hpp"
 
 #include <vector>
 
@@ -9,6 +9,7 @@ class DynamixelPacketBuilder : public PacketBuilderBase
 {
     public:
         DynamixelPacketBuilder();
+        ~DynamixelPacketBuilder() override;
         DynamixelPacketBuilder& startPacket() override;
         DynamixelPacketBuilder& setHeader(uint8_t header) override;
         DynamixelPacketBuilder& setParamLength(uint8_t length) override;
