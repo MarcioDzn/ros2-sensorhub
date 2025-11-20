@@ -70,6 +70,10 @@ add_library(device_comm
   src/device_comm/device_comm.cpp
 )
 
+add_library(dynamixel_packet_builder
+  src/device_comm/dynamixel_packet_builder.cpp
+)
+
 add_executable(central_node 
   src/central_node.cpp 
   ${IMU_BNO_SOURCES} 
@@ -86,13 +90,18 @@ ament_target_dependencies(central_node
   interfaces
 )
 
-target_link_libraries(central_node imu_manager motor_manager device_comm)
+target_link_libraries(central_node 
+  imu_manager 
+  motor_manager 
+  device_comm 
+  dynamixel_packet_builder)
 
 install(TARGETS
   imu_lib
   imu_manager
   motor_manager
   device_comm
+  dynamixel_packet_builder
   central_node
   DESTINATION lib/${PROJECT_NAME}
 )
