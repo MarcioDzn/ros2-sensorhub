@@ -1,10 +1,16 @@
 #include "device_comm/device_comm.hpp"
 
+#include <termios.h>
+#include <asm/termbits.h>
+#include <sys/ioctl.h>
+
 DeviceComm::DeviceComm() : fd_(-1) {}
 
-int DeviceComm::init(const char* device)
+int DeviceComm::init(const char* device, int baudrate)
 {
-    fd_ = open(device, O_RDWR);
+    struct termios config;
+
+    fd_ = open(device, O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (fd_ < 0) {
         std::cout << "Error " << errno 
             << " from open: " << std::strerror(errno) 
@@ -12,37 +18,54 @@ int DeviceComm::init(const char* device)
         return -1;
     }
 
-    // config
-    if (tcgetattr(fd_, &tty_) != 0)
-    {
-        std::cout << "Error " << errno 
-            << " from tcgetattr: " << std::strerror(errno) 
-            << std::endl;
+    // configurações
+    if (tcgetattr(fd_, &config) != 0) {
+        std::cerr << "Erro em tcgetattr(): " << strerror(errno) << std::endl;
         return -1;
     }
 
-    // configurações
-    cfsetospeed(&tty_, B115200);
-    cfsetispeed(&tty_, B115200);
-    tty_.c_cflag = (tty_.c_cflag & ~CSIZE) | CS8;  // 8 bits
-    tty_.c_cflag &= ~PARENB;                       // sem paridade
-    tty_.c_cflag &= ~CSTOPB;                       // 1 stop bit
-    tty_.c_cflag &= ~CRTSCTS;                      // sem flow control
-    tty_.c_lflag &= ~(ICANON | ECHO | ISIG);       // raw mode
-    tty_.c_iflag &= ~(IXON | IXOFF | IXANY | ICRNL); // desativa flow control e conversões
-    tty_.c_oflag &= ~OPOST;                          // saída bruta
-    tty_.c_cc[VMIN]  = 0;                            // mínimo de bytes para read()
-    tty_.c_cc[VTIME] = 10;                           // timeout 1s (10 decisegundos)
+    config.c_cflag = CS8 | CLOCAL | CREAD;
+    config.c_iflag = IGNPAR;
+    config.c_oflag      = 0;
+    config.c_lflag      = 0;
+    config.c_cc[VTIME]  = 0;
+    config.c_cc[VMIN]   = 0;
+
+    // limpa o buffer
+    tcflush(fd_, TCIFLUSH);
 
     // aplica as configs
-    if (tcsetattr(fd_, TCSANOW, &tty_) != 0) {
+    if (tcsetattr(fd_, TCSANOW, &config) != 0) {
         std::cerr << "Erro ao aplicar configuração: " 
             << strerror(errno) 
             << std::endl;
         return -1;
     }
+
+    // aplica o baudrate
+    if (setBaudRate(baudrate) != 0) {
+        std::cerr << "Erro ao aplicar baudrate custom!" << std::endl;
+        return -1;
+    }
     
     return 0;
+}
+
+int DeviceComm::setBaudRate(int speed)
+{
+    struct termios2 options;
+    if (ioctl(fd_, TCGETS2, &options) != -1)
+    {
+        options.c_cflag &= ~CBAUD;
+        options.c_cflag |= BOTHER;
+        options.c_ispeed = speed;
+        options.c_ospeed = speed;
+
+        if (ioctl(fd_, TCSETS2, &options) != -1)
+            return 0;
+        return -1; 
+    }
+    return -1; 
 }
 
 int DeviceComm::writeData(const std::vector<uint8_t>& data)

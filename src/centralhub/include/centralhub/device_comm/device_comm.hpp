@@ -9,7 +9,6 @@
 #include <cerrno>
 #include <fcntl.h>
 #include <unistd.h>
-#include <termios.h>
 
 
 // https://blog.mbedded.ninja/programming/operating-systems/linux/linux-serial-ports-using-c-cpp/
@@ -19,7 +18,8 @@ class DeviceComm
         DeviceComm();
         virtual ~DeviceComm();
 
-        int init(const char* device);
+        int init(const char* device, int baudrate);
+        int setBaudRate(int speed);
         int writeData(const std::vector<uint8_t>& data);
         int readData(
             std::vector<unsigned char>& read_buf,
@@ -28,7 +28,6 @@ class DeviceComm
 
     private:
         int fd_;
-        struct termios tty_;
 };
 
 #endif // DEVICE_COMM_HPP

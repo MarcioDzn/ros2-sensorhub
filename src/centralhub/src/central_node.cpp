@@ -2,15 +2,18 @@
 #include "managers/imu_manager.hpp"
 #include "managers/motor_manager.hpp"
 
+#define BAUDRATE 2000000
+
 using namespace std::chrono_literals;
 
 CentralNode::CentralNode() : Node("central_node"), count_(0)
 {
     motor_manager_ = std::make_unique<MotorManager>(this, 1);
-    if (motor_manager_->initComm("/dev/ttyUSB1") < 0)
+    if (motor_manager_->initComm("/dev/ttyUSB1", BAUDRATE) < 0)
     {
         RCLCPP_ERROR(this->get_logger(), "Erro ao inicializar a comunicacao!");
     }
+    
     motor_manager_->setTorqueCurr(10);
 
     imu_manager_ = std::make_unique<IMUManager>(this);
@@ -19,10 +22,6 @@ CentralNode::CentralNode() : Node("central_node"), count_(0)
     imu_manager_->initialize();     
     imu_manager_->createPublishers();
     
-
-
-    
-
     // parâmetros do central node
     this->declare_parameter<int>("update_rate_ms", 15);
     update_rate_ms_ = this->get_parameter("update_rate_ms").as_int();
