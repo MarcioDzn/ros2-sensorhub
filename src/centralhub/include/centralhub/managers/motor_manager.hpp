@@ -57,8 +57,13 @@ class MotorManager
         int getTorqueCurrRamp() { return torque_curr_ramp_; };
 
         int initComm(const char* device, int baudrate);
+        int sendReceivePacket(
+            const std::vector<uint8_t>& packet, 
+            std::vector<uint8_t>& response,
+            int timeout_ms
+        );
         int sendPacket(const std::vector<uint8_t>& packet);
-        int receivePacket(std::vector<uint8_t>& buffer);
+        int receivePacket(std::vector<uint8_t>& buffer, int timeout_ms);
         bool applySettings();
         bool start();
         bool stop();

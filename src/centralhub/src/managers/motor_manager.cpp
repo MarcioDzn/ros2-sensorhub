@@ -90,13 +90,26 @@ bool MotorManager::setTorqueCurrRamp(int ramp)
     return false;
 }
 
+int MotorManager::sendReceivePacket(
+    const std::vector<uint8_t>& packet, 
+    std::vector<uint8_t>& response,
+    int timeout_ms
+) {
+    if (sendPacket(packet) < 0) {
+        std::cerr << "Falha ao enviar pacote.\n";
+        return -1;
+    }
+    
+    return receivePacket(response, timeout_ms); // precisar ajustar receivePacket para aceitar timeout
+}
+
 int MotorManager::sendPacket(const std::vector<uint8_t>& packet)
 {
     if ( device_.writeData(packet) < 0 ) { return -1; } 
     return 0;
 }
 
-int MotorManager::receivePacket(std::vector<uint8_t>& buffer)
+int MotorManager::receivePacket(std::vector<uint8_t>& buffer, int timeout_ms)
 {
     buffer.clear();
     
