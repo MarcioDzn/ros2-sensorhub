@@ -128,8 +128,6 @@ DynamixelPacketBuilder& DynamixelPacketBuilder::clear()
     return *this;
 }
 
-
-
 DynamixelPacketBuilder::~DynamixelPacketBuilder()
 {
     state_ = State::Start;

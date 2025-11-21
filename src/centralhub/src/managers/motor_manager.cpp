@@ -100,6 +100,74 @@ bool MotorManager::setTorqueCurrRamp(int ramp)
     return false;
 }
 
+int MotorManager::receivePacket(std::vector<uint8_t>& buffer)
+{
+    buffer.clear();
+    
+    // precisa de 6 bytes pra saber o tamanho total
+    // HEADER0 HEADER1 ID LENGTH ERROR CHECKSUM
+    size_t header_min_size = 6; 
+    size_t total_expected = header_min_size;
+    
+    bool header_parsed = false;
+    size_t total_read = 0;
+    
+    buffer.resize(128); 
+
+    auto start_time = std::chrono::steady_clock::now();
+    int timeout_ms = 15; 
+
+    while (true) {
+        int n = device_.readData(buffer.data() + total_read, buffer.size() - total_read);
+
+        if (n > 0) {
+            total_read += n;
+        }
+
+        // tenta descobrir o tamanho, após ler os 4 bytes iniciais
+        if (!header_parsed && total_read >= header_min_size) {
+            
+            // verifica o header
+            if (buffer[0] == 0xFF && buffer[1] == 0xFF) {
+                
+                uint8_t body_length = buffer[3]; 
+                
+                // tamanho total do pacote 6 bytes iniciais + body_length -1
+                total_expected = 4 + body_length;
+                
+                // Ajusta o buffer se o pacote for maior que o reservado (128)
+                if (buffer.size() < total_expected) {
+                    buffer.resize(total_expected);
+                }
+                
+                header_parsed = true;
+            }
+            else {
+                std::cerr << "Erro: Header (FF FF) inválido recebido.\n";
+                return -1;
+            }
+        }
+
+        // tudo já foi lido e o tamanho é conhecido?
+        if (header_parsed && total_read >= total_expected) {
+            buffer.resize(total_read); 
+            return static_cast<int>(total_read);
+        }
+
+        // verifica timeout
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - start_time).count();
+            
+        if (elapsed >= timeout_ms) {
+            return -1; 
+        }
+
+        if (n <= 0) {
+            std::this_thread::sleep_for(std::chrono::microseconds(100));
+        }
+    }
+}
+
 // operação
 bool MotorManager::applySettings()
 {

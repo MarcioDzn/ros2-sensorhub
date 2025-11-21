@@ -91,55 +91,10 @@ int DeviceComm::writeData(const std::vector<uint8_t>& data)
     return static_cast<int>(total_written);
 }
 
-int DeviceComm::readData(
-    std::vector<unsigned char>& read_buf,
-    size_t bytes_to_read
-)
+int DeviceComm::readData(uint8_t* buffer, int length)
 {
-    // fd deve ser válido
-    if (fd_ < 0) {
-        std::cerr << "Dispositivo não inicializado. Chame init() primeiro.\n";
-        return -1;
-    }
-
-    read_buf.clear();
-    read_buf.resize(bytes_to_read);
-
-    size_t total_read = 0;
-
-    auto start_time = std::chrono::steady_clock::now();
-    int timeout_ms = 20;
-
-    // lê até receber todos os dados
-    while (total_read < bytes_to_read) {
-        ssize_t n = read(fd_, read_buf.data() + total_read, bytes_to_read - total_read);
-        if (n > 0) {
-            total_read += n;
-        } 
-        else if (n < 0) {
-            // se o erro for de "sem dados disponíveis" (EAGAIN)
-            // então apenas continua o loop
-            if (errno != EAGAIN && errno != EWOULDBLOCK) {
-                std::cerr << "Erro fatal de leitura: " << strerror(errno) << std::endl;
-                return -1;
-            }
-        }
-
-        // verifica se deu timeout
-        auto current_time = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
-    
-        if (elapsed >= timeout_ms) {
-            break; 
-        }
-
-        if (n <= 0) {
-            std::this_thread::sleep_for(std::chrono::microseconds(100));
-        }
-    }
-
-    read_buf.resize(total_read);
-    return static_cast<int>(total_read);
+    if (fd_ < 0) return -1;
+    return read(fd_, buffer, length);
 }
 
 

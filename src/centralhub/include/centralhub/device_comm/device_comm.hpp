@@ -21,10 +21,7 @@ class DeviceComm
         int init(const char* device, int baudrate);
         int setBaudRate(int speed);
         int writeData(const std::vector<uint8_t>& data);
-        int readData(
-            std::vector<unsigned char>& read_buf,
-            size_t bytes_to_read
-        );
+        int readData(uint8_t* buffer, int length);
 
     private:
         int fd_;
