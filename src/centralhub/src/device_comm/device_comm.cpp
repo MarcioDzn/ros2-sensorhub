@@ -3,6 +3,8 @@
 #include <termios.h>
 #include <asm/termbits.h>
 #include <sys/ioctl.h>
+#include <chrono>
+#include <thread>
 
 DeviceComm::DeviceComm() : fd_(-1) {}
 
@@ -100,26 +102,40 @@ int DeviceComm::readData(
         return -1;
     }
 
+    read_buf.clear();
     read_buf.resize(bytes_to_read);
+
     size_t total_read = 0;
 
-    // O terceiro byte (começando do 0) indica
-    // a quantidade de bytes relevantes após ele
-    // por exemplo, se o RX é RX: 3E 1F 01 02 60 32 20 52
-    // 02 é o byte de comprimento
-    // os bytes importantes são 60 32
-    // os últimos 2 bytes são CHECKSUM aparentemente
+    auto start_time = std::chrono::steady_clock::now();
+    int timeout_ms = 20;
 
     // lê até receber todos os dados
     while (total_read < bytes_to_read) {
         ssize_t n = read(fd_, read_buf.data() + total_read, bytes_to_read - total_read);
-        if (n < 0) {
-            std::cerr << "Erro ao ler do dispositivo: " << std::strerror(errno) << std::endl;
-            return -1;
-        } else if (n == 0) {
-            break;
+        if (n > 0) {
+            total_read += n;
+        } 
+        else if (n < 0) {
+            // se o erro for de "sem dados disponíveis" (EAGAIN)
+            // então apenas continua o loop
+            if (errno != EAGAIN && errno != EWOULDBLOCK) {
+                std::cerr << "Erro fatal de leitura: " << strerror(errno) << std::endl;
+                return -1;
+            }
         }
-        total_read += n;
+
+        // verifica se deu timeout
+        auto current_time = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
+    
+        if (elapsed >= timeout_ms) {
+            break; 
+        }
+
+        if (n <= 0) {
+            std::this_thread::sleep_for(std::chrono::microseconds(100));
+        }
     }
 
     read_buf.resize(total_read);
