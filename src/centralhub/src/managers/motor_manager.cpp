@@ -11,9 +11,9 @@ MotorManager::MotorManager(
 )   : node_(node), motor_id_(motor_id)
 {}
 
-int MotorManager::initComm(const char* device)
+int MotorManager::initComm(const char* device, int baudrate)
 {
-    return device_.init(device);
+    return device_.init(device, baudrate);
 }
 
 void MotorManager::loadParameters()

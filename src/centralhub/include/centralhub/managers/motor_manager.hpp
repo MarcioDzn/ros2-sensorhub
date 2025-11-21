@@ -56,7 +56,7 @@ class MotorManager
         int getMaxTorqueCurr() { return max_torque_curr_; };
         int getTorqueCurrRamp() { return torque_curr_ramp_; };
 
-        int initComm(const char* device);
+        int initComm(const char* device, int baudrate);
         int sendPacket(const std::vector<uint8_t>& packet);
         int receivePacket(std::vector<uint8_t>& buffer);
         bool applySettings();
