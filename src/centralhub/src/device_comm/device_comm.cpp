@@ -1,10 +1,31 @@
 #include "device_comm/device_comm.hpp"
 
 #include <termios.h>
-#include <asm/termbits.h>
 #include <sys/ioctl.h>
 #include <chrono>
 #include <thread>
+
+// Definições de termios2 baseadas no Dynamixel SDK (ROBOTIS)
+struct termios2 {
+  tcflag_t c_iflag;       /* input mode flags */
+  tcflag_t c_oflag;       /* output mode flags */
+  tcflag_t c_cflag;       /* control mode flags */
+  tcflag_t c_lflag;       /* local mode flags */
+  cc_t c_line;            /* line discipline */
+  cc_t c_cc[19];          /* control characters */
+  speed_t c_ispeed;       /* input speed */
+  speed_t c_ospeed;       /* output speed */
+};
+
+#ifndef TCGETS2
+#define TCGETS2     _IOR('T', 0x2A, struct termios2)
+#endif
+#ifndef TCSETS2
+#define TCSETS2     _IOW('T', 0x2B, struct termios2)
+#endif
+#ifndef BOTHER
+#define BOTHER      0010000
+#endif
 
 DeviceComm::DeviceComm() : fd_(-1) {}
 
