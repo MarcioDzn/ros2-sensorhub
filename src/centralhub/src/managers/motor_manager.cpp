@@ -4,6 +4,7 @@
 
 #define PACKET_OVERHEAD_SIZE 7 // apenas para TESTE
 #define INSTRUCTION_WRITE 3
+#define TIMEOUT_MS 15
 
 MotorManager::MotorManager(
     rclcpp::Node* node, 
@@ -40,7 +41,8 @@ bool MotorManager::setTorqueCurr(int torque)
         .build();
     delete builder;  // libera memória
 
-    return sendPacket(packet); 
+    std::vector<uint8_t> response;
+    int n = sendReceivePacket(packet, response, TIMEOUT_MS);
 }
 
 bool MotorManager::setSpeed(double speed)
@@ -124,7 +126,6 @@ int MotorManager::receivePacket(std::vector<uint8_t>& buffer, int timeout_ms)
     buffer.resize(128); 
 
     auto start_time = std::chrono::steady_clock::now();
-    int timeout_ms = 15; 
 
     while (true) {
         int n = device_.readData(buffer.data() + total_read, buffer.size() - total_read);
