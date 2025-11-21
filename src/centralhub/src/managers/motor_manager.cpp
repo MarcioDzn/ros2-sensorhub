@@ -2,9 +2,20 @@
 #include "device_comm/packet_builder_base.hpp"
 #include "device_comm/dynamixel_packet_builder.hpp"
 
+#define DXL_LOBYTE(w) ((uint8_t)((w) & 0xFF))
+#define DXL_HIBYTE(w) ((uint8_t)(((w) >> 8) & 0xFF))
+
 #define PACKET_OVERHEAD_SIZE 7 // apenas para TESTE
 #define INSTRUCTION_WRITE 3
 #define TIMEOUT_MS 15
+
+#define HEADER 0xFF
+
+#define B1SIZE 1
+#define B2SIZE 2
+
+#define TORQUE_ADDR 0x18
+#define GOAL_POSITION_ADDR
 
 MotorManager::MotorManager(
     rclcpp::Node* node, 
@@ -32,11 +43,11 @@ bool MotorManager::setTorqueCurr(int torque)
     uint8_t params[1] = { torque };
     const std::vector<uint8_t> packet = builder->startPacket()
         .setID(motor_id_)
-        .setParamLength(1)
-        .setAddress(0x18)
+        .setParamLength(B1SIZE)
+        .setAddress(TORQUE_ADDR)
         .setInstruction(INSTRUCTION_WRITE)
         .addParameter(params)
-        .setHeader(0xFF)
+        .setHeader(HEADER)
         .setChecksum()
         .build();
     delete builder;  // libera memória
@@ -52,7 +63,21 @@ bool MotorManager::setSpeed(double speed)
 
 bool MotorManager::setAngle(double angle)
 {
-    return false;
+    PacketBuilderBase* builder = new DynamixelPacketBuilder();
+    uint8_t params[2] = { DXL_LOBYTE(angle), DXL_HIBYTE(angle) };;
+    const std::vector<uint8_t> packet = builder->startPacket()
+        .setID(motor_id_)
+        .setParamLength(B2SIZE)
+        .setAddress(GOAL_POSITION_ADDR)
+        .setInstruction(INSTRUCTION_WRITE)
+        .addParameter(params)
+        .setHeader(HEADER)
+        .setChecksum()
+        .build();
+    delete builder;
+
+    std::vector<uint8_t> response;
+    int n = sendReceivePacket(packet, response, TIMEOUT_MS);
 }
 
 // configs básicas
