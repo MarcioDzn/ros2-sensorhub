@@ -57,7 +57,8 @@ class MotorManager
         int getTorqueCurrRamp() { return torque_curr_ramp_; };
 
         int initComm(const char* device);
-        int receivePacket(size_t bytes_to_read);
+        int sendPacket(const std::vector<uint8_t>& packet);
+        int receivePacket(std::vector<uint8_t>& buffer);
         bool applySettings();
         bool start();
         bool stop();

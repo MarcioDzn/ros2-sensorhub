@@ -29,7 +29,7 @@ bool MotorManager::setTorqueCurr(int torque)
 {
     PacketBuilderBase* builder = new DynamixelPacketBuilder();
     uint8_t params[1] = { torque };
-    const std::vector<uint8_t>& packet = builder->startPacket()
+    const std::vector<uint8_t> packet = builder->startPacket()
         .setID(motor_id_)
         .setParamLength(1)
         .setAddress(0x18)
@@ -38,19 +38,9 @@ bool MotorManager::setTorqueCurr(int torque)
         .setHeader(0xFF)
         .setChecksum()
         .build();
-
-    size_t packet_size = PACKET_OVERHEAD_SIZE + 2; // 7 + param_length
-    std::cout << "Packet: ";
-    for (size_t i = 0; i < packet_size; ++i) {
-        printf("%02X ", packet[i]);
-    }
-    std::cout << std::endl;
-
     delete builder;  // libera memória
 
-    if ( device_.writeData(packet) < 0 ) { return -1; } 
-
-    return 0; 
+    return sendPacket(packet); 
 }
 
 bool MotorManager::setSpeed(double speed)
@@ -98,6 +88,12 @@ bool MotorManager::setMaxTorqueCurr(int torque)
 bool MotorManager::setTorqueCurrRamp(int ramp)
 {
     return false;
+}
+
+int MotorManager::sendPacket(const std::vector<uint8_t>& packet)
+{
+    if ( device_.writeData(packet) < 0 ) { return -1; } 
+    return 0;
 }
 
 int MotorManager::receivePacket(std::vector<uint8_t>& buffer)
