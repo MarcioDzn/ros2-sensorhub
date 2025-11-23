@@ -16,7 +16,7 @@ CentralNode::CentralNode() : Node("central_node"), count_(0)
         RCLCPP_ERROR(this->get_logger(), "Erro ao inicializar a comunicacao!");
     }
     
-    motor_manager_->setTorqueCurr(10, &error);
+    motor_manager_->getPresentPosition(&error);
 
     imu_manager_ = std::make_unique<IMUManager>(this);
     imu_manager_->loadParameters();

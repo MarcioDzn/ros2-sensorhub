@@ -6,6 +6,7 @@
 #define DXL_HIBYTE(w) ((uint8_t)(((w) >> 8) & 0xFF))
 
 #define PACKET_OVERHEAD_SIZE 7 // apenas para TESTE
+#define INSTRUCTION_READ 2
 #define INSTRUCTION_WRITE 3
 #define TIMEOUT_MS 15
 
@@ -16,6 +17,7 @@
 
 #define TORQUE_ADDR 0x18
 #define GOAL_POSITION_ADDR 0x1E
+#define PRESENT_POSITION_ADDR 0x24
 
 MotorManager::MotorManager(
     rclcpp::Node* node, 
@@ -37,7 +39,7 @@ void MotorManager::createServer()
 }
 
 // controle
-int MotorManager::setTorqueCurr(uint8_t torque, uint8_t *error)
+int MotorManager::enableTorque(uint8_t torque, uint8_t *error)
 {
     PacketBuilderBase* builder = new DynamixelPacketBuilder();
     uint8_t params[1] = { torque };
@@ -60,10 +62,10 @@ bool MotorManager::setSpeed(double speed)
     return false;
 }
 
-int MotorManager::setAngle(uint16_t angle, uint8_t *error)
+int MotorManager::setGoalPosition(uint16_t angle, uint8_t *error)
 {
     PacketBuilderBase* builder = new DynamixelPacketBuilder();
-    uint8_t params[2] = { DXL_LOBYTE(angle), DXL_HIBYTE(angle) };;
+    uint8_t params[2] = { DXL_LOBYTE(angle), DXL_HIBYTE(angle) };
     const std::vector<uint8_t> packet = builder->startPacket()
         .setID(motor_id_)
         .setParamLength(B2SIZE)
@@ -73,6 +75,31 @@ int MotorManager::setAngle(uint16_t angle, uint8_t *error)
         .setHeader(HEADER)
         .setChecksum()
         .build();
+
+    std::vector<uint8_t> response;
+    return sendReceivePacket(packet, response, error, TIMEOUT_MS);
+}
+
+int MotorManager::getPresentPosition(uint8_t *error)
+{
+    PacketBuilderBase* builder = new DynamixelPacketBuilder();
+    uint8_t params[1] = { B2SIZE };
+    const std::vector<uint8_t> packet = builder->startPacket()
+        .setID(motor_id_)
+        .setParamLength(B1SIZE)
+        .setAddress(PRESENT_POSITION_ADDR)
+        .setInstruction(INSTRUCTION_READ)
+        .addParameter(params)
+        .setHeader(HEADER)
+        .setChecksum()
+        .build();
+
+    std::cout << "Pacote: ";
+    for (auto byte : packet)
+        std::cout << "0x" << std::hex << std::uppercase 
+                  << std::setw(2) << std::setfill('0') 
+                  << (int)byte << " ";
+    std::cout << std::dec << std::endl; 
     delete builder;
 
     std::vector<uint8_t> response;
