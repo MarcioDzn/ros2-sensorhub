@@ -14,8 +14,9 @@
 
 #define B1SIZE 1
 #define B2SIZE 2
+#define B3SIZE 2
 
-#define TORQUE_ADDR 0x18
+#define TORQUE_ENABLE_ADDR 0x18
 #define GOAL_POSITION_ADDR 0x1E
 #define PRESENT_POSITION_ADDR 0x24
 
@@ -42,11 +43,10 @@ void MotorManager::createServer()
 int MotorManager::enableTorque(uint8_t torque, uint8_t *error)
 {
     PacketBuilderBase* builder = new DynamixelPacketBuilder();
-    uint8_t params[1] = { torque };
+    uint8_t params[2] = { TORQUE_ENABLE_ADDR, torque };
     const std::vector<uint8_t> packet = builder->startPacket()
         .setID(motor_id_)
-        .setParamLength(B1SIZE)
-        .setAddress(TORQUE_ADDR)
+        .setParamLength(B2SIZE)
         .setInstruction(INSTRUCTION_WRITE)
         .addParameter(params)
         .setHeader(HEADER)
@@ -65,11 +65,10 @@ bool MotorManager::setSpeed(double speed)
 int MotorManager::setGoalPosition(uint16_t angle, uint8_t *error)
 {
     PacketBuilderBase* builder = new DynamixelPacketBuilder();
-    uint8_t params[2] = { DXL_LOBYTE(angle), DXL_HIBYTE(angle) };
+    uint8_t params[3] = { GOAL_POSITION_ADDR, DXL_LOBYTE(angle), DXL_HIBYTE(angle) };
     const std::vector<uint8_t> packet = builder->startPacket()
         .setID(motor_id_)
-        .setParamLength(B2SIZE)
-        .setAddress(GOAL_POSITION_ADDR)
+        .setParamLength(B3SIZE)
         .setInstruction(INSTRUCTION_WRITE)
         .addParameter(params)
         .setHeader(HEADER)
@@ -83,11 +82,10 @@ int MotorManager::setGoalPosition(uint16_t angle, uint8_t *error)
 int MotorManager::getPresentPosition(uint8_t *error)
 {
     PacketBuilderBase* builder = new DynamixelPacketBuilder();
-    uint8_t params[1] = { B2SIZE };
+    uint8_t params[2] = { PRESENT_POSITION_ADDR, B2SIZE };
     const std::vector<uint8_t> packet = builder->startPacket()
         .setID(motor_id_)
-        .setParamLength(B1SIZE)
-        .setAddress(PRESENT_POSITION_ADDR)
+        .setParamLength(B2SIZE)
         .setInstruction(INSTRUCTION_READ)
         .addParameter(params)
         .setHeader(HEADER)

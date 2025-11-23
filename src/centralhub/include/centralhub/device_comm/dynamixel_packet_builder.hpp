@@ -15,7 +15,6 @@ class DynamixelPacketBuilder : public PacketBuilderBase
         DynamixelPacketBuilder& clear() override;
         DynamixelPacketBuilder& setID(uint8_t id) override;
         DynamixelPacketBuilder& setInstruction(uint8_t instruction) override;
-        DynamixelPacketBuilder& setAddress(uint8_t address) override;
         DynamixelPacketBuilder& addParameter(uint8_t* param) override;
         std::vector<uint8_t>& build() override;
 
@@ -27,7 +26,6 @@ class DynamixelPacketBuilder : public PacketBuilderBase
             ID,
             Length,
             Instruction,
-            Address,
             Params,
             Header,
             Checksum,

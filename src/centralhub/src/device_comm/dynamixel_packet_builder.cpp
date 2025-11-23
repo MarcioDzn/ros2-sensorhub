@@ -11,7 +11,7 @@
 #define INFO_SIZE_POSITION 3
 #define INSTRUCTION_POSITION 4
 
-#define ADDRESS_POSITION 5
+#define SIZE_OVERHEAD 2
 
 
 DynamixelPacketBuilder::DynamixelPacketBuilder(){}
@@ -43,24 +43,16 @@ DynamixelPacketBuilder& DynamixelPacketBuilder::setParamLength(uint8_t length)
 {
     checkState(State::Length);
 
-    if (length > PARAM_LIMIT_SIZE) 
+    if (length > PARAM_LIMIT_SIZE)
         throw std::runtime_error("Param length exceeds limit");
 
     param_length_ = length;
 
-    // tamanho total do pacote
-    buffer_.resize(PACKET_OVERHEAD_SIZE+param_length_);
-    buffer_[INFO_SIZE_POSITION] = param_length_+3;
+    // Resize total correto: header(2) + ID(1) + Length(1) + Instruction(1) + Params(length) + Checksum(1)
+    buffer_.resize(5 + param_length_ + 1);
 
-    state_ = State::Address;
-    return *this;
-}
-
-DynamixelPacketBuilder& DynamixelPacketBuilder::setAddress(uint8_t address)
-{
-    checkState(State::Address);
-
-    buffer_[ADDRESS_POSITION] = address;
+    // Length = Instruction + Params + Checksum = params + 2
+    buffer_[INFO_SIZE_POSITION] = param_length_ + 2;
 
     state_ = State::Instruction;
     return *this;
@@ -82,7 +74,7 @@ DynamixelPacketBuilder& DynamixelPacketBuilder::addParameter(uint8_t* param)
 
     for (int i = 0; i < param_length_;i++)
     {
-        buffer_[ADDRESS_POSITION+1+i] = param[i];
+        buffer_[INSTRUCTION_POSITION+1+i] = param[i];
     }
 
     state_ = State::Header;
