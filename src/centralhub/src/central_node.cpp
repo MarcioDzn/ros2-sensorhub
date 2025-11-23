@@ -9,12 +9,14 @@ using namespace std::chrono_literals;
 CentralNode::CentralNode() : Node("central_node"), count_(0)
 {
     motor_manager_ = std::make_unique<MotorManager>(this, 1);
+    uint8_t error = 0;
+    
     if (motor_manager_->initComm("/dev/ttyUSB1", BAUDRATE) < 0)
     {
         RCLCPP_ERROR(this->get_logger(), "Erro ao inicializar a comunicacao!");
     }
     
-    motor_manager_->setTorqueCurr(10);
+    motor_manager_->setTorqueCurr(10, &error);
 
     imu_manager_ = std::make_unique<IMUManager>(this);
     imu_manager_->loadParameters();

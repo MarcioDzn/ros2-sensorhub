@@ -10,7 +10,9 @@
 #define ID_POSITION 2
 #define INFO_SIZE_POSITION 3
 #define INSTRUCTION_POSITION 4
+
 #define ADDRESS_POSITION 5
+
 
 DynamixelPacketBuilder::DynamixelPacketBuilder(){}
 

@@ -15,7 +15,7 @@
 #define B2SIZE 2
 
 #define TORQUE_ADDR 0x18
-#define GOAL_POSITION_ADDR
+#define GOAL_POSITION_ADDR 0x1E
 
 MotorManager::MotorManager(
     rclcpp::Node* node, 
@@ -37,7 +37,7 @@ void MotorManager::createServer()
 }
 
 // controle
-bool MotorManager::setTorqueCurr(int torque)
+int MotorManager::setTorqueCurr(uint8_t torque, uint8_t *error)
 {
     PacketBuilderBase* builder = new DynamixelPacketBuilder();
     uint8_t params[1] = { torque };
@@ -50,10 +50,9 @@ bool MotorManager::setTorqueCurr(int torque)
         .setHeader(HEADER)
         .setChecksum()
         .build();
-    delete builder;  // libera memória
 
     std::vector<uint8_t> response;
-    int n = sendReceivePacket(packet, response, TIMEOUT_MS);
+    return sendReceivePacket(packet, response, error, TIMEOUT_MS);
 }
 
 bool MotorManager::setSpeed(double speed)
@@ -61,7 +60,7 @@ bool MotorManager::setSpeed(double speed)
     return false;
 }
 
-bool MotorManager::setAngle(double angle)
+int MotorManager::setAngle(uint16_t angle, uint8_t *error)
 {
     PacketBuilderBase* builder = new DynamixelPacketBuilder();
     uint8_t params[2] = { DXL_LOBYTE(angle), DXL_HIBYTE(angle) };;
@@ -77,7 +76,7 @@ bool MotorManager::setAngle(double angle)
     delete builder;
 
     std::vector<uint8_t> response;
-    int n = sendReceivePacket(packet, response, TIMEOUT_MS);
+    return sendReceivePacket(packet, response, error, TIMEOUT_MS);
 }
 
 // configs básicas
@@ -120,6 +119,7 @@ bool MotorManager::setTorqueCurrRamp(int ramp)
 int MotorManager::sendReceivePacket(
     const std::vector<uint8_t>& packet, 
     std::vector<uint8_t>& response,
+    uint8_t *error,
     int timeout_ms
 ) {
     if (sendPacket(packet) < 0) {
@@ -127,7 +127,7 @@ int MotorManager::sendReceivePacket(
         return -1;
     }
     
-    return receivePacket(response, timeout_ms); // precisar ajustar receivePacket para aceitar timeout
+    return receivePacket(response, error, timeout_ms); // precisar ajustar receivePacket para aceitar timeout
 }
 
 int MotorManager::sendPacket(const std::vector<uint8_t>& packet)
@@ -136,9 +136,9 @@ int MotorManager::sendPacket(const std::vector<uint8_t>& packet)
     return 0;
 }
 
-int MotorManager::receivePacket(std::vector<uint8_t>& buffer, int timeout_ms)
+int MotorManager::receivePacket(std::vector<uint8_t>& packet, uint8_t* error, int timeout_ms)
 {
-    buffer.clear();
+    packet.clear();
     
     // precisa de 6 bytes pra saber o tamanho total
     // HEADER0 HEADER1 ID LENGTH ERROR CHECKSUM
@@ -148,12 +148,12 @@ int MotorManager::receivePacket(std::vector<uint8_t>& buffer, int timeout_ms)
     bool header_parsed = false;
     size_t total_read = 0;
     
-    buffer.resize(128); 
+    packet.resize(128); 
 
     auto start_time = std::chrono::steady_clock::now();
 
     while (true) {
-        int n = device_.readData(buffer.data() + total_read, buffer.size() - total_read);
+        int n = device_.readData(packet.data() + total_read, packet.size() - total_read);
 
         if (n > 0) {
             total_read += n;
@@ -163,16 +163,16 @@ int MotorManager::receivePacket(std::vector<uint8_t>& buffer, int timeout_ms)
         if (!header_parsed && total_read >= header_min_size) {
             
             // verifica o header
-            if (buffer[0] == 0xFF && buffer[1] == 0xFF) {
+            if (packet[0] == 0xFF && packet[1] == 0xFF) {
                 
-                uint8_t body_length = buffer[3]; 
+                uint8_t body_length = packet[3]; 
                 
                 // tamanho total do pacote 6 bytes iniciais + body_length -1
                 total_expected = 4 + body_length;
                 
-                // Ajusta o buffer se o pacote for maior que o reservado (128)
-                if (buffer.size() < total_expected) {
-                    buffer.resize(total_expected);
+                // Ajusta o packet se o pacote for maior que o reservado (128)
+                if (packet.size() < total_expected) {
+                    packet.resize(total_expected);
                 }
                 
                 header_parsed = true;
@@ -185,9 +185,12 @@ int MotorManager::receivePacket(std::vector<uint8_t>& buffer, int timeout_ms)
 
         // tudo já foi lido e o tamanho é conhecido?
         if (header_parsed && total_read >= total_expected) {
-            buffer.resize(total_read); 
+            packet.resize(total_read); 
             return static_cast<int>(total_read);
         }
+
+        if (error != 0)
+            *error = (uint8_t)packet[DynamixelPacketBuilder::ERROR_POSITION];
 
         // verifica timeout
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(

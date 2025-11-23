@@ -28,9 +28,9 @@ class MotorManager
         void createServer();
 
         // controle
-        bool setTorqueCurr(int torque);
+        int setTorqueCurr(uint8_t torque, uint8_t *error);
         bool setSpeed(double speed);
-        bool setAngle(double angle);
+        int setAngle(uint16_t angle, uint8_t *error);
 
         int getTorqueCurr() { return torque_curr_; };
         double getSpeed() { return speed_; };
@@ -60,10 +60,11 @@ class MotorManager
         int sendReceivePacket(
             const std::vector<uint8_t>& packet, 
             std::vector<uint8_t>& response,
+            uint8_t *error,
             int timeout_ms
         );
         int sendPacket(const std::vector<uint8_t>& packet);
-        int receivePacket(std::vector<uint8_t>& buffer, int timeout_ms);
+        int receivePacket(std::vector<uint8_t>& buffer, uint8_t *error, int timeout_ms);
         bool applySettings();
         bool start();
         bool stop();

@@ -19,6 +19,8 @@ class DynamixelPacketBuilder : public PacketBuilderBase
         DynamixelPacketBuilder& addParameter(uint8_t* param) override;
         std::vector<uint8_t>& build() override;
 
+        static constexpr uint8_t ERROR_POSITION = 4;
+
     private:
         enum class State {
             Start,
