@@ -8,7 +8,7 @@
 #define PACKET_OVERHEAD_SIZE 7 // apenas para TESTE
 #define INSTRUCTION_READ 2
 #define INSTRUCTION_WRITE 3
-#define TIMEOUT_MS 15
+#define TIMEOUT_MS 50
 
 #define HEADER 0xFF
 
@@ -55,6 +55,7 @@ int MotorManager::enableTorque(uint8_t *error)
         .setHeader(HEADER)
         .setChecksum()
         .build();
+    delete builder;
 
     std::vector<uint8_t> response;
     return sendReceivePacket(packet, response, error, TIMEOUT_MS);
@@ -72,6 +73,7 @@ int MotorManager::enableLED(uint8_t *error)
         .setHeader(HEADER)
         .setChecksum()
         .build();
+    delete builder;
 
     std::vector<uint8_t> response;
     return sendReceivePacket(packet, response, error, TIMEOUT_MS);
@@ -107,7 +109,7 @@ int MotorManager::setGoalPosition(uint16_t angle, uint8_t *error)
     return sendReceivePacket(packet, response, error, TIMEOUT_MS);
 }
 
-int MotorManager::getPresentPosition(uint8_t *error)
+int MotorManager::getPresentPosition(std::vector<uint8_t>& response, uint8_t *error)
 {
     PacketBuilderBase* builder = new DynamixelPacketBuilder();
     uint8_t params[2] = { PRESENT_POSITION_ADDR, B2SIZE };
@@ -119,8 +121,15 @@ int MotorManager::getPresentPosition(uint8_t *error)
         .setHeader(HEADER)
         .setChecksum()
         .build();
-
-    std::vector<uint8_t> response;
+    delete builder;
+    
+    std::cout << "Pacote: ";
+    for (auto byte : packet)
+        std::cout << "0x" << std::hex << std::uppercase 
+                  << std::setw(2) << std::setfill('0') 
+                  << (int)byte << " ";
+    std::cout << std::dec << std::endl; 
+    
     return sendReceivePacket(packet, response, error, TIMEOUT_MS);
 }
 
@@ -193,7 +202,7 @@ int MotorManager::receivePacket(std::vector<uint8_t>& packet, uint8_t* error, in
     bool header_parsed = false;
     size_t total_read = 0;
     
-    packet.resize(128); 
+    packet.resize(16); 
 
     auto start_time = std::chrono::steady_clock::now();
 
@@ -231,11 +240,15 @@ int MotorManager::receivePacket(std::vector<uint8_t>& packet, uint8_t* error, in
         // tudo já foi lido e o tamanho é conhecido?
         if (header_parsed && total_read >= total_expected) {
             packet.resize(total_read); 
+            
+            if (error != 0)
+                *error = (uint8_t)packet[DynamixelPacketBuilder::ERROR_POSITION];
+            
+            RCLCPP_INFO(node_->get_logger(), "Response (no RECEIVE): %02X %02X %02X %02X %02X %02X %02X %02X",
+                packet[0], packet[1], packet[2], packet[3], packet[4], packet[5], packet[6], packet[7]);
+                
             return static_cast<int>(total_read);
         }
-
-        if (error != 0)
-            *error = (uint8_t)packet[DynamixelPacketBuilder::ERROR_POSITION];
 
         // verifica timeout
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
