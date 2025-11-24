@@ -121,7 +121,7 @@ int MotorManager::getPresentPosition(uint16_t *data, uint8_t *error)
     {
         if (*error == 0)
         {
-            *data = (static_cast<uint16_t>(response[6]) << 8) | response[5];
+            *data = static_cast<uint16_t>(response[5]) | (static_cast<uint16_t>(response[6]) << 8);
             return 0;
         }
     }
