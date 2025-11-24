@@ -1,6 +1,7 @@
 central_node:
   ros__parameters:
     update_rate_ms: 15
+    goal_position: 2000
 
     imu_manager:
       imu_ids: [1, 2, 3]

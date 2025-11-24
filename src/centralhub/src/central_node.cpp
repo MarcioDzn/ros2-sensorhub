@@ -8,6 +8,12 @@ using namespace std::chrono_literals;
 
 CentralNode::CentralNode() : Node("central_node"), count_(0)
 {
+    // parâmetros do central node
+    this->declare_parameter<int>("update_rate_ms", 15);
+    this->declare_parameter<int>("goal_position", 1000);
+    update_rate_ms_ = this->get_parameter("update_rate_ms").as_int();
+    uint16_t goal_position = this->get_parameter("goal_position").as_int();
+    
     motor_manager_ = std::make_unique<MotorManager>(this, 1);
     uint8_t error = 0;
     
@@ -18,7 +24,7 @@ CentralNode::CentralNode() : Node("central_node"), count_(0)
     
     uint16_t data;
     motor_manager_->enableTorque(&error);
-    motor_manager_->setGoalPosition(1500, &error);
+    motor_manager_->setGoalPosition(goal_position, &error);
     motor_manager_->getPresentPosition(&data, &error);
     motor_manager_->enableLED(&error);
     
@@ -30,9 +36,7 @@ CentralNode::CentralNode() : Node("central_node"), count_(0)
     imu_manager_->initialize();     
     imu_manager_->createPublishers();
     
-    // parâmetros do central node
-    this->declare_parameter<int>("update_rate_ms", 15);
-    update_rate_ms_ = this->get_parameter("update_rate_ms").as_int();
+    
 
     // executa o callback a cada 
     // <update_rate_ms_> segundos
