@@ -22,6 +22,14 @@ CentralNode::CentralNode() : Node("central_node"), count_(0)
         RCLCPP_ERROR(this->get_logger(), "Erro ao inicializar a comunicacao!");
     }
     
+    // service do motor
+    motor_service_ = this->create_service<SetMotorConfig>("motor_config", std::bind(
+        &CentralNode::motor_service_callback, 
+        this,
+        std::placeholders::_1,
+        std::placeholders::_2
+    ));
+    
     uint16_t data;
     motor_manager_->enableTorque(&error);
     motor_manager_->setGoalPosition(goal_position, &error);
@@ -49,6 +57,34 @@ CentralNode::CentralNode() : Node("central_node"), count_(0)
 void CentralNode::timer_callback()
 {
     imu_manager_->publishAll();
+}
+
+//ros2 service call /motor_config interfaces/srv/SetMotorConfig "{command: 'set_goal_position', params: [1500]}"
+//ros2 service call /motor_config interfaces/srv/SetMotorConfig "{command: 'enable_torque'}"
+void CentralNode::motor_service_callback(
+    const std::shared_ptr<SetMotorConfig::Request> request,
+    std::shared_ptr<SetMotorConfig::Response> response)
+{
+    uint8_t error = 0;
+    response->success = false;
+
+    if (request->command == "set_goal_position")
+    {
+            if (request->params.size() < 1)
+            {
+                    RCLCPP_ERROR(this->get_logger(), "Parametros insuficientes");
+            } else 
+            {
+                uint16_t goal_pos = request->params[0];
+                motor_manager_->setGoalPosition(goal_pos, &error);
+                response->success = (error == 0);
+            }
+    } else if (request->command == "enable_torque")
+    {
+        motor_manager_->enableTorque(&error);
+        response->success = (error == 0);
+    }
+    
 }
 
 CentralNode::~CentralNode() = default;

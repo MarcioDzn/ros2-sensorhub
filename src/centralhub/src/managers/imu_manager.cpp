@@ -117,11 +117,12 @@ void IMUManager::publishAll()
         message.pitch = imu_data[1];
         message.yaw = imu_data[2];
 
+        /*
         RCLCPP_INFO(
             node_->get_logger(), 
             "[ID %zu] PUBLICANDO\nROLL: %f\nPITCH: %f\nYAW: %f", 
             id, message.roll, message.pitch, message.yaw);
-
+        */
         publishers_[id]->publish(message);
     }
 }
