@@ -26,11 +26,32 @@ int main(int argc, char ** argv)
   }
 
 
-  std::string command = argv[1];
-  request->command = command;
+  uint16_t command = static_cast<uint16_t>(std::stoul(argv[1])); 
+  std::string command_str;  
   
-    uint16_t motor_id = static_cast<uint16_t>(std::stoul(argv[2]));  
-    request->motor_id = motor_id;
+  switch(command)
+  {
+      case 1:
+        command_str = "enable_torque";
+        break;
+      case 2:
+        command_str = "disable_torque";
+        break;
+      case 3:
+        command_str = "set_goal_position";
+        break;
+      case 4:
+        command_str = "get_present_position";
+        break;
+      default:
+        command_str = "get_present_position";
+  }
+  
+
+  request->command = command_str;
+  
+  uint16_t motor_id = static_cast<uint16_t>(std::stoul(argv[2]));  
+  request->motor_id = motor_id;
   
   for (int i = 3; i < argc; i++)
   {
