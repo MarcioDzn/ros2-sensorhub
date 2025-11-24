@@ -58,36 +58,59 @@ void CentralNode::motor_service_callback(
     const std::shared_ptr<SetMotorConfig::Request> request,
     std::shared_ptr<SetMotorConfig::Response> response)
 {
-    uint8_t error = 0;
     response->success = false;
 
     motor_manager_->setId(request->motor_id);
     if (request->command == "set_goal_position")
     {
-            if (request->params.size() < 1)
-            {
-                    RCLCPP_ERROR(this->get_logger(), "Parametros insuficientes");
-            } else 
-            {
-                uint16_t goal_pos = request->params[0];
-                motor_manager_->setGoalPosition(goal_pos, &error);
-                response->success = (error == 0);
-            }
+        set_goal_position(request, response);
             
     } else if (request->command == "enable_torque")
     {
-        motor_manager_->enableTorque(&error);
-        response->success = (error == 0);
+        enable_torque(request, response);
         
     } else if (request->command == "get_present_position")
     {
-        uint16_t data;
-        motor_manager_->getPresentPosition(&data, &error);
-        response->success = (error == 0);
-        response->result.clear();    
-        response->result.push_back(data);
+        get_present_position(request, response);
     }
     
+}
+
+void CentralNode::set_goal_position(
+    const std::shared_ptr<SetMotorConfig::Request> request,
+    std::shared_ptr<SetMotorConfig::Response> response)
+{
+    uint8_t error = 0;  
+    if (request->params.size() < 1)
+    {
+        RCLCPP_ERROR(this->get_logger(), "Parametros insuficientes");
+    } else 
+    {
+        uint16_t goal_pos = request->params[0];
+        motor_manager_->setGoalPosition(goal_pos, &error);
+        response->success = (error == 0);
+    }
+}
+
+void CentralNode::enable_torque(
+    const std::shared_ptr<SetMotorConfig::Request> request,
+    std::shared_ptr<SetMotorConfig::Response> response)
+{
+    uint8_t error = 0;
+    motor_manager_->enableTorque(&error);
+    response->success = (error == 0);
+}
+
+void CentralNode::get_present_position(
+    const std::shared_ptr<SetMotorConfig::Request> request,
+    std::shared_ptr<SetMotorConfig::Response> response)
+{
+    uint8_t error = 0;
+    uint16_t data;
+    motor_manager_->getPresentPosition(&data, &error);
+    response->success = (error == 0);
+    response->result.clear();    
+    response->result.push_back(data);
 }
 
 CentralNode::~CentralNode() = default;

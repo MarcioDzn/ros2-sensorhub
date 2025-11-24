@@ -36,6 +36,15 @@ class CentralNode : public rclcpp::Node
         void motor_service_callback(
                 const std::shared_ptr<SetMotorConfig::Request> request,
                 std::shared_ptr<SetMotorConfig::Response> response);
+        void set_goal_position(
+                const std::shared_ptr<SetMotorConfig::Request> request,
+                std::shared_ptr<SetMotorConfig::Response> response);
+        void enable_torque(
+                const std::shared_ptr<SetMotorConfig::Request> request,
+                std::shared_ptr<SetMotorConfig::Response> response);
+        void get_present_position(
+                const std::shared_ptr<SetMotorConfig::Request> request,
+                std::shared_ptr<SetMotorConfig::Response> response);
 };
 
 #endif // CENTRAL_NODE_HPP
