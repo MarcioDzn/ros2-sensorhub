@@ -35,14 +35,6 @@ int MotorManager::initComm(const char* device, int baudrate)
     return device_.init(device, baudrate);
 }
 
-void MotorManager::loadParameters()
-{
-}
-
-void MotorManager::createServer(std::string server_name)
-{
-}
-
 // controle
 int MotorManager::enableTorque(uint8_t *error)
 {
@@ -98,27 +90,9 @@ int MotorManager::enableLED(uint8_t *error)
     return sendReceivePacket(packet, response, error, TIMEOUT_MS);
 }
 
-bool MotorManager::setSpeed(double speed)
-{
-    return false;
-}
-
 int MotorManager::setGoalPosition(uint16_t angle, uint8_t *error)
 {
-    PacketBuilderBase* builder = new DynamixelPacketBuilder();
-    uint8_t params[3] = { GOAL_POSITION_ADDR, DXL_LOBYTE(angle), DXL_HIBYTE(angle) };
-    const std::vector<uint8_t> packet = builder->startPacket()
-        .setID(motor_id_)
-        .setParamLength(B3SIZE)
-        .setInstruction(INSTRUCTION_WRITE)
-        .addParameter(params)
-        .setHeader(HEADER)
-        .setChecksum()
-        .build();
-    delete builder;
-    
-    std::vector<uint8_t> response;
-    return sendReceivePacket(packet, response, error, TIMEOUT_MS);
+    return writeWord(static_cast<DXAddr>(GOAL_POSITION_ADDR), angle, error);
 }
 
 int MotorManager::getPresentPosition(uint16_t *data, uint8_t *error)
@@ -145,6 +119,52 @@ int MotorManager::getPresentPosition(uint16_t *data, uint8_t *error)
         }
     }
     return -1;
+}
+
+std::vector<uint8_t> MotorManager::buildWritePacket(DXAddr addr, std::initializer_list<uint8_t> values)
+{
+    PacketBuilderBase* builder = new DynamixelPacketBuilder();
+    
+    std::vector<uint8_t> params = { static_cast<uint8_t>(addr) };
+    params.insert(params.end(), values.begin(), values.end());
+    
+    builder->startPacket()
+        .setID(motor_id_)
+        .setParamLength(values.size()+1) // dados + addr
+        .setInstruction(INSTRUCTION_WRITE)
+        .addParameter(params.data())
+        .setHeader(HEADER)
+        .setChecksum();
+    std::vector<uint8_t> packet = builder->build();
+    delete builder;
+    return packet;
+}
+
+int MotorManager::writeByte(DXAddr addr, uint8_t value, uint8_t* error)
+{
+    auto packet = buildWritePacket(addr, { value });
+    std::vector<uint8_t> resp;
+    return sendReceivePacket(packet, resp, error, TIMEOUT_MS);
+}
+
+int MotorManager::writeWord(DXAddr addr, uint16_t value, uint8_t* error)
+{
+    auto packet = buildWritePacket(addr, { DXL_LOBYTE(value), DXL_HIBYTE(value) });
+    std::vector<uint8_t> resp;
+    return sendReceivePacket(packet, resp, error, TIMEOUT_MS);
+}
+
+void MotorManager::loadParameters()
+{
+}
+
+void MotorManager::createServer(std::string server_name)
+{
+}
+
+bool MotorManager::setSpeed(double speed)
+{
+    return false;
 }
 
 // configs básicas

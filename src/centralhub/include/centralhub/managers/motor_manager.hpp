@@ -14,6 +14,13 @@ enum SpinDirection {
     REVERSE = -1
 };
 
+enum class DXAddr : uint8_t {
+    TorqueEnable    = 0x18,
+    LedEnable       = 0x19,
+    GoalPosition    = 0x1E,
+    PresentPosition = 0x24
+};
+
 using SetMotorConfig = interfaces::srv::SetMotorConfig;
 
 class MotorManager
@@ -31,14 +38,13 @@ class MotorManager
         int enableTorque(uint8_t *error);
         int disableTorque(uint8_t *error);
         int enableLED(uint8_t *error);          
-        bool setSpeed(double speed);
         int setGoalPosition(uint16_t angle, uint8_t *error);
         int getPresentPosition(uint16_t *data, uint8_t *error);
-
+        
+        bool setSpeed(double speed);
         int getTorqueCurr() { return torque_curr_; };
         double getSpeed() { return speed_; };
         double getAngle() { return angle_; };
-
         // configs basicas
         bool setRS485Baud(int baud);
         bool setSpinDir(SpinDirection dir);
@@ -66,6 +72,11 @@ class MotorManager
             uint8_t *error,
             int timeout_ms
         );
+        
+        std::vector<uint8_t> buildWritePacket(DXAddr addr, std::initializer_list<uint8_t> values);
+        int writeByte(DXAddr addr, uint8_t value, uint8_t* error);
+        int writeWord(DXAddr addr, uint16_t value, uint8_t* error);
+        
         int sendPacket(const std::vector<uint8_t>& packet);
         int receivePacket(std::vector<uint8_t>& buffer, uint8_t *error, int timeout_ms);
         bool applySettings();
