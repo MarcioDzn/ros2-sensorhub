@@ -29,10 +29,6 @@ CentralNode::CentralNode() : Node("central_node"), count_(0)
         std::placeholders::_1,
         std::placeholders::_2
     ));
-    
-    uint16_t data;
-    
-    RCLCPP_INFO(this->get_logger(), "POSICAO ATUAL: %d", data);
 
     imu_manager_ = std::make_unique<IMUManager>(this);
     imu_manager_->loadParameters();
@@ -55,8 +51,9 @@ void CentralNode::timer_callback()
     imu_manager_->publishAll();
 }
 
-//ros2 service call /motor_config interfaces/srv/SetMotorConfig "{command: 'set_goal_position', params: [1500]}"
-//ros2 service call /motor_config interfaces/srv/SetMotorConfig "{command: 'enable_torque'}"
+//ros2 service call /motor_config interfaces/srv/SetMotorConfig "{motor_id: 1, command: 'set_goal_position', params: [1500]}"
+//ros2 service call /motor_config interfaces/srv/SetMotorConfig "{motor_id: 1, command: 'enable_torque'}"
+//ros2 service call /motor_config interfaces/srv/SetMotorConfig "{motor_id: 1, command: 'get_present_position'}"
 void CentralNode::motor_service_callback(
     const std::shared_ptr<SetMotorConfig::Request> request,
     std::shared_ptr<SetMotorConfig::Response> response)
@@ -76,10 +73,19 @@ void CentralNode::motor_service_callback(
                 motor_manager_->setGoalPosition(goal_pos, &error);
                 response->success = (error == 0);
             }
+            
     } else if (request->command == "enable_torque")
     {
         motor_manager_->enableTorque(&error);
         response->success = (error == 0);
+        
+    } else if (request->command == "get_present_position")
+    {
+        uint16_t data;
+        motor_manager_->getPresentPosition(&data, &error);
+        response->success = (error == 0);
+        response->result.clear();    
+        response->result.push_back(data);
     }
     
 }
