@@ -25,10 +25,9 @@ class CentralNode : public rclcpp::Node
     private:
         std::unique_ptr<IMUManager> imu_manager_;
         std::unique_ptr<MotorManager> motor_manager_;
-        rclcpp::Service<SetMotorConfig>::SharedPtr motor_service_;
         
+        rclcpp::Service<SetMotorConfig>::SharedPtr motor_service_;
         rclcpp::TimerBase::SharedPtr timer_;
-        size_t count_;
 
         int update_rate_ms_;
 
@@ -36,6 +35,7 @@ class CentralNode : public rclcpp::Node
         void motor_service_callback(
                 const std::shared_ptr<SetMotorConfig::Request> request,
                 std::shared_ptr<SetMotorConfig::Response> response);
+                
         void set_goal_position(
                 const std::shared_ptr<SetMotorConfig::Request> request,
                 std::shared_ptr<SetMotorConfig::Response> response);

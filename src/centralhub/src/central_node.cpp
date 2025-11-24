@@ -6,29 +6,26 @@
 
 using namespace std::chrono_literals;
 
-CentralNode::CentralNode() : Node("central_node"), count_(0)
+bool handleError(uint8_t error) {
+    if (error != 0) 
+        return false;
+    return true;
+}
+
+CentralNode::CentralNode() : Node("central_node")
 {
     // parâmetros do central node
     this->declare_parameter<int>("update_rate_ms", 15);
-    this->declare_parameter<int>("goal_position", 1000);
     update_rate_ms_ = this->get_parameter("update_rate_ms").as_int();
-    uint16_t goal_position = this->get_parameter("goal_position").as_int();
+
     
     motor_manager_ = std::make_unique<MotorManager>(this, 1);
-    uint8_t error = 0;
-    
-    if (motor_manager_->initComm("/dev/ttyUSB0", BAUDRATE) < 0)
-    {
+    if (motor_manager_->initComm("/dev/ttyUSB0", BAUDRATE) < 0) // inicia a comunicacao serial
         RCLCPP_ERROR(this->get_logger(), "Erro ao inicializar a comunicacao!");
-    }
-    
-    // service do motor
+    // cria o servidor para executar tarefas do motor
     motor_service_ = this->create_service<SetMotorConfig>("motor_config", std::bind(
-        &CentralNode::motor_service_callback, 
-        this,
-        std::placeholders::_1,
-        std::placeholders::_2
-    ));
+        &CentralNode::motor_service_callback, this,
+        std::placeholders::_1, std::placeholders::_2));
 
     imu_manager_ = std::make_unique<IMUManager>(this);
     imu_manager_->loadParameters();
@@ -36,10 +33,7 @@ CentralNode::CentralNode() : Node("central_node"), count_(0)
     imu_manager_->initialize();     
     imu_manager_->createPublishers();
     
-    
-
-    // executa o callback a cada 
-    // <update_rate_ms_> segundos
+    // executa o callback a cada <update_rate_ms_> segundos
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(update_rate_ms_), 
         std::bind(&CentralNode::timer_callback, this));
@@ -59,25 +53,16 @@ void CentralNode::motor_service_callback(
     std::shared_ptr<SetMotorConfig::Response> response)
 {
     response->success = false;
-
     motor_manager_->setId(request->motor_id);
-    if (request->command == "set_goal_position")
-    {
+    if (request->command == "set_goal_position"){
         set_goal_position(request, response);
-            
-    } else if (request->command == "enable_torque")
-    {
+    } else if (request->command == "enable_torque"){
         enable_torque(request, response);
-        
-    } else if (request->command == "disable_torque")
-    {
+    } else if (request->command == "disable_torque"){
         disable_torque(request, response);
-        
-    } else if (request->command == "get_present_position")
-    {
+    } else if (request->command == "get_present_position"){
         get_present_position(request, response);
     }
-    
 }
 
 void CentralNode::set_goal_position(
@@ -85,14 +70,12 @@ void CentralNode::set_goal_position(
     std::shared_ptr<SetMotorConfig::Response> response)
 {
     uint8_t error = 0;  
-    if (request->params.size() < 1)
-    {
+    if (request->params.size() < 1){
         RCLCPP_ERROR(this->get_logger(), "Parametros insuficientes");
-    } else 
-    {
+    } else {
         uint16_t goal_pos = request->params[0];
         motor_manager_->setGoalPosition(goal_pos, &error);
-        response->success = (error == 0);
+        response->success = handleError(error);
     }
 }
 
@@ -102,7 +85,7 @@ void CentralNode::enable_torque(
 {
     uint8_t error = 0;
     motor_manager_->enableTorque(&error);
-    response->success = (error == 0);
+    response->success = handleError(error);
 }
 
 void CentralNode::disable_torque(
@@ -111,7 +94,7 @@ void CentralNode::disable_torque(
 {
     uint8_t error = 0;
     motor_manager_->disableTorque(&error);
-    response->success = (error == 0);
+    response->success = handleError(error);
 }
 
 void CentralNode::get_present_position(
@@ -121,7 +104,7 @@ void CentralNode::get_present_position(
     uint8_t error = 0;
     uint16_t data;
     motor_manager_->getPresentPosition(&data, &error);
-    response->success = (error == 0);
+    response->success = handleError(error);
     response->result.clear();    
     response->result.push_back(data);
 }

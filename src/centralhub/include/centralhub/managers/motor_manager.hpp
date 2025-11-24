@@ -25,7 +25,7 @@ class MotorManager
         );
 
         void loadParameters();
-        void createServer();
+        void createServer(std::string server_name);
 
         // controle
         int enableTorque(uint8_t *error);

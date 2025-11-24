@@ -39,7 +39,7 @@ void MotorManager::loadParameters()
 {
 }
 
-void MotorManager::createServer()
+void MotorManager::createServer(std::string server_name)
 {
 }
 
