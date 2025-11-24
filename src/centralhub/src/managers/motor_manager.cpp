@@ -109,7 +109,7 @@ int MotorManager::setGoalPosition(uint16_t angle, uint8_t *error)
     return sendReceivePacket(packet, response, error, TIMEOUT_MS);
 }
 
-int MotorManager::getPresentPosition(std::vector<uint8_t>& response, uint8_t *error)
+int MotorManager::getPresentPosition(uint16_t *data, uint8_t *error)
 {
     PacketBuilderBase* builder = new DynamixelPacketBuilder();
     uint8_t params[2] = { PRESENT_POSITION_ADDR, B2SIZE };
@@ -130,7 +130,17 @@ int MotorManager::getPresentPosition(std::vector<uint8_t>& response, uint8_t *er
                   << (int)byte << " ";
     std::cout << std::dec << std::endl; 
     
-    return sendReceivePacket(packet, response, error, TIMEOUT_MS);
+    std::vector<uint8_t> response;
+    if (sendReceivePacket(packet, response, error, TIMEOUT_MS) != -1)
+    {
+        if (*error == 0)
+        {
+            *data = (static_cast<uint16_t>(response[6]) << 8) | response[5];
+            RCLCPP_INFO(node_->get_logger(), "POSICAO ATUAL MANAGER: %d", *data);
+            return 0;
+        }
+    }
+    return -1;
 }
 
 // configs básicas

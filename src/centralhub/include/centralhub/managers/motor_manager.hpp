@@ -32,7 +32,7 @@ class MotorManager
         int enableLED(uint8_t *error);          
         bool setSpeed(double speed);
         int setGoalPosition(uint16_t angle, uint8_t *error);
-        int getPresentPosition(std::vector<uint8_t>& response, uint8_t *error);
+        int getPresentPosition(uint16_t *data, uint8_t *error);
 
         int getTorqueCurr() { return torque_curr_; };
         double getSpeed() { return speed_; };

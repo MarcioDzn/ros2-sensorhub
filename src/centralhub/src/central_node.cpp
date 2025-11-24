@@ -16,11 +16,12 @@ CentralNode::CentralNode() : Node("central_node"), count_(0)
         RCLCPP_ERROR(this->get_logger(), "Erro ao inicializar a comunicacao!");
     }
     
-    std::vector<uint8_t> response;
+    uint16_t data;
     motor_manager_->enableTorque(&error);
-    motor_manager_->getPresentPosition(response, &error);
+    motor_manager_->getPresentPosition(&data, &error);
     motor_manager_->enableLED(&error);
     
+    RCLCPP_INFO(this->get_logger(), "POSICAO ATUAL: %d", data);
     //RCLCPP_INFO(this->get_logger(), "Response: %02X %02X %02X %02X %02X %02X %02X %02X",
     //response[0], response[1], response[2], response[3], response[4], response[5], response[6], response[7]);
 
