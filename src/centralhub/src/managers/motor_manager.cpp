@@ -25,7 +25,7 @@
 
 MotorManager::MotorManager(
     rclcpp::Node* node, 
-    int motor_id
+    uint16_t motor_id
 )   : node_(node), motor_id_(motor_id)
 {}
 
@@ -270,4 +270,10 @@ bool MotorManager::start()
 bool MotorManager::stop()
 {
     return false;
+}
+
+int MotorManager::setId(uint16_t id)
+{
+        motor_id_ = id;
+        return 0;
 }

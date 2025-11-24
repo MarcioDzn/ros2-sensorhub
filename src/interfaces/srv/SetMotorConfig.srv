@@ -1,4 +1,4 @@
-uint8_t motor_id
+int16 motor_id
 string command        # "set_goal_position", "get_position", "enable_torque", ...
 int16[] params
 ---

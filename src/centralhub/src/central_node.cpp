@@ -31,10 +31,6 @@ CentralNode::CentralNode() : Node("central_node"), count_(0)
     ));
     
     uint16_t data;
-    motor_manager_->enableTorque(&error);
-    motor_manager_->setGoalPosition(goal_position, &error);
-    motor_manager_->getPresentPosition(&data, &error);
-    motor_manager_->enableLED(&error);
     
     RCLCPP_INFO(this->get_logger(), "POSICAO ATUAL: %d", data);
 
@@ -68,6 +64,7 @@ void CentralNode::motor_service_callback(
     uint8_t error = 0;
     response->success = false;
 
+    motor_manager_->setId(request->motor_id);
     if (request->command == "set_goal_position")
     {
             if (request->params.size() < 1)

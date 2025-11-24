@@ -21,7 +21,7 @@ class MotorManager
     public:
         MotorManager(
             rclcpp::Node* node, 
-            int motor_id
+            uint16_t motor_id
         );
 
         void loadParameters();
@@ -70,6 +70,7 @@ class MotorManager
         bool applySettings();
         bool start();
         bool stop();
+        int setId(uint16_t id);
 
     private:
         rclcpp::Node* node_;
