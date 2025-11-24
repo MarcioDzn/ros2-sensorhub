@@ -96,13 +96,6 @@ int MotorManager::setGoalPosition(uint16_t angle, uint8_t *error)
         .setHeader(HEADER)
         .setChecksum()
         .build();
-
-    std::cout << "Pacote: ";
-    for (auto byte : packet)
-        std::cout << "0x" << std::hex << std::uppercase 
-                  << std::setw(2) << std::setfill('0') 
-                  << (int)byte << " ";
-    std::cout << std::dec << std::endl; 
     delete builder;
     
     std::vector<uint8_t> response;
@@ -123,20 +116,12 @@ int MotorManager::getPresentPosition(uint16_t *data, uint8_t *error)
         .build();
     delete builder;
     
-    std::cout << "Pacote: ";
-    for (auto byte : packet)
-        std::cout << "0x" << std::hex << std::uppercase 
-                  << std::setw(2) << std::setfill('0') 
-                  << (int)byte << " ";
-    std::cout << std::dec << std::endl; 
-    
     std::vector<uint8_t> response;
     if (sendReceivePacket(packet, response, error, TIMEOUT_MS) != -1)
     {
         if (*error == 0)
         {
             *data = (static_cast<uint16_t>(response[6]) << 8) | response[5];
-            RCLCPP_INFO(node_->get_logger(), "POSICAO ATUAL MANAGER: %d", *data);
             return 0;
         }
     }
@@ -253,9 +238,6 @@ int MotorManager::receivePacket(std::vector<uint8_t>& packet, uint8_t* error, in
             
             if (error != 0)
                 *error = (uint8_t)packet[DynamixelPacketBuilder::ERROR_POSITION];
-            
-            RCLCPP_INFO(node_->get_logger(), "Response (no RECEIVE): %02X %02X %02X %02X %02X %02X %02X %02X",
-                packet[0], packet[1], packet[2], packet[3], packet[4], packet[5], packet[6], packet[7]);
                 
             return static_cast<int>(total_read);
         }
