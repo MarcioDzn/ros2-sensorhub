@@ -28,7 +28,8 @@ class MotorManager
         void createServer();
 
         // controle
-        int enableTorque(uint8_t torque, uint8_t *error);
+        int enableTorque(uint8_t *error);
+        int enableLED(uint8_t *error);          
         bool setSpeed(double speed);
         int setGoalPosition(uint16_t angle, uint8_t *error);
         int getPresentPosition(uint8_t *error);

@@ -14,9 +14,12 @@
 
 #define B1SIZE 1
 #define B2SIZE 2
-#define B3SIZE 2
+#define B3SIZE 3
+
+#define ENABLE 1
 
 #define TORQUE_ENABLE_ADDR 0x18
+#define LED_ENABLE_ADDR 0x19
 #define GOAL_POSITION_ADDR 0x1E
 #define PRESENT_POSITION_ADDR 0x24
 
@@ -40,10 +43,27 @@ void MotorManager::createServer()
 }
 
 // controle
-int MotorManager::enableTorque(uint8_t torque, uint8_t *error)
+int MotorManager::enableTorque(uint8_t *error)
 {
     PacketBuilderBase* builder = new DynamixelPacketBuilder();
-    uint8_t params[2] = { TORQUE_ENABLE_ADDR, torque };
+    uint8_t params[2] = { TORQUE_ENABLE_ADDR, ENABLE };
+    const std::vector<uint8_t> packet = builder->startPacket()
+        .setID(motor_id_)
+        .setParamLength(B2SIZE)
+        .setInstruction(INSTRUCTION_WRITE)
+        .addParameter(params)
+        .setHeader(HEADER)
+        .setChecksum()
+        .build();
+
+    std::vector<uint8_t> response;
+    return sendReceivePacket(packet, response, error, TIMEOUT_MS);
+}
+
+int MotorManager::enableLED(uint8_t *error)
+{
+    PacketBuilderBase* builder = new DynamixelPacketBuilder();
+    uint8_t params[2] = { LED_ENABLE_ADDR, ENABLE };
     const std::vector<uint8_t> packet = builder->startPacket()
         .setID(motor_id_)
         .setParamLength(B2SIZE)
@@ -75,6 +95,14 @@ int MotorManager::setGoalPosition(uint16_t angle, uint8_t *error)
         .setChecksum()
         .build();
 
+    std::cout << "Pacote: ";
+    for (auto byte : packet)
+        std::cout << "0x" << std::hex << std::uppercase 
+                  << std::setw(2) << std::setfill('0') 
+                  << (int)byte << " ";
+    std::cout << std::dec << std::endl; 
+    delete builder;
+    
     std::vector<uint8_t> response;
     return sendReceivePacket(packet, response, error, TIMEOUT_MS);
 }
@@ -91,14 +119,6 @@ int MotorManager::getPresentPosition(uint8_t *error)
         .setHeader(HEADER)
         .setChecksum()
         .build();
-
-    std::cout << "Pacote: ";
-    for (auto byte : packet)
-        std::cout << "0x" << std::hex << std::uppercase 
-                  << std::setw(2) << std::setfill('0') 
-                  << (int)byte << " ";
-    std::cout << std::dec << std::endl; 
-    delete builder;
 
     std::vector<uint8_t> response;
     return sendReceivePacket(packet, response, error, TIMEOUT_MS);
