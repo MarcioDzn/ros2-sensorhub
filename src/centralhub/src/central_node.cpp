@@ -69,6 +69,10 @@ void CentralNode::motor_service_callback(
     {
         enable_torque(request, response);
         
+    } else if (request->command == "disable_torque")
+    {
+        disable_torque(request, response);
+        
     } else if (request->command == "get_present_position")
     {
         get_present_position(request, response);
@@ -98,6 +102,15 @@ void CentralNode::enable_torque(
 {
     uint8_t error = 0;
     motor_manager_->enableTorque(&error);
+    response->success = (error == 0);
+}
+
+void CentralNode::disable_torque(
+    const std::shared_ptr<SetMotorConfig::Request> request,
+    std::shared_ptr<SetMotorConfig::Response> response)
+{
+    uint8_t error = 0;
+    motor_manager_->disableTorque(&error);
     response->success = (error == 0);
 }
 

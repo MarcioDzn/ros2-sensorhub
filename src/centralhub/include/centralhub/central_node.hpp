@@ -42,6 +42,9 @@ class CentralNode : public rclcpp::Node
         void enable_torque(
                 const std::shared_ptr<SetMotorConfig::Request> request,
                 std::shared_ptr<SetMotorConfig::Response> response);
+        void disable_torque(
+                const std::shared_ptr<SetMotorConfig::Request> request,
+                std::shared_ptr<SetMotorConfig::Response> response);
         void get_present_position(
                 const std::shared_ptr<SetMotorConfig::Request> request,
                 std::shared_ptr<SetMotorConfig::Response> response);

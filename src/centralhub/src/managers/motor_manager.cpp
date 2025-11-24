@@ -17,6 +17,7 @@
 #define B3SIZE 3
 
 #define ENABLE 1
+#define DISABLE 0
 
 #define TORQUE_ENABLE_ADDR 0x18
 #define LED_ENABLE_ADDR 0x19
@@ -47,6 +48,24 @@ int MotorManager::enableTorque(uint8_t *error)
 {
     PacketBuilderBase* builder = new DynamixelPacketBuilder();
     uint8_t params[2] = { TORQUE_ENABLE_ADDR, ENABLE };
+    const std::vector<uint8_t> packet = builder->startPacket()
+        .setID(motor_id_)
+        .setParamLength(B2SIZE)
+        .setInstruction(INSTRUCTION_WRITE)
+        .addParameter(params)
+        .setHeader(HEADER)
+        .setChecksum()
+        .build();
+    delete builder;
+
+    std::vector<uint8_t> response;
+    return sendReceivePacket(packet, response, error, TIMEOUT_MS);
+}
+
+int MotorManager::disableTorque(uint8_t *error)
+{
+    PacketBuilderBase* builder = new DynamixelPacketBuilder();
+    uint8_t params[2] = { TORQUE_ENABLE_ADDR, DISABLE };
     const std::vector<uint8_t> packet = builder->startPacket()
         .setID(motor_id_)
         .setParamLength(B2SIZE)

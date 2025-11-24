@@ -29,6 +29,7 @@ class MotorManager
 
         // controle
         int enableTorque(uint8_t *error);
+        int disableTorque(uint8_t *error);
         int enableLED(uint8_t *error);          
         bool setSpeed(double speed);
         int setGoalPosition(uint16_t angle, uint8_t *error);
