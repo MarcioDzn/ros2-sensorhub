@@ -66,6 +66,14 @@ ament_target_dependencies(motor_manager
   interfaces
 )
 
+add_library(insole_manager
+  src/managers/insole_manager.cpp
+)
+ament_target_dependencies(insole_manager
+  rclcpp
+  interfaces
+)
+
 add_library(device_comm
   src/device_comm/device_comm.cpp
 )
@@ -93,6 +101,7 @@ ament_target_dependencies(central_node
 target_link_libraries(central_node 
   imu_manager 
   motor_manager 
+  insole_manager
   device_comm 
   dynamixel_packet_builder)
 
@@ -100,6 +109,7 @@ install(TARGETS
   imu_lib
   imu_manager
   motor_manager
+  insole_manager
   device_comm
   dynamixel_packet_builder
   central_node

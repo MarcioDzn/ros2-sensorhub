@@ -41,6 +41,7 @@ int DeviceComm::init(const char* device, int baudrate)
         return -1;
     }
 
+    
     // configurações
     if (tcgetattr(fd_, &config) != 0) {
         std::cerr << "Erro em tcgetattr(): " << strerror(errno) << std::endl;
@@ -113,6 +114,12 @@ int DeviceComm::writeData(const std::vector<uint8_t>& data)
 }
 
 int DeviceComm::readData(uint8_t* buffer, int length)
+{
+    if (fd_ < 0) return -1;
+    return read(fd_, buffer, length);
+}
+
+int DeviceComm::readStringData(char *buffer, int length)
 {
     if (fd_ < 0) return -1;
     return read(fd_, buffer, length);

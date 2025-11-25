@@ -5,6 +5,7 @@
 #include <cstring>
 #include <iostream>
 #include <vector>
+#include <string>
 
 #include <cerrno>
 #include <fcntl.h>
@@ -22,6 +23,7 @@ class DeviceComm
         int setBaudRate(int speed);
         int writeData(const std::vector<uint8_t>& data);
         int readData(uint8_t* buffer, int length);
+        int readStringData(char *buffer, int length);
 
     private:
         int fd_;

@@ -11,6 +11,7 @@
 
 #include "managers/imu_manager.hpp"
 #include "managers/motor_manager.hpp"
+#include "managers/insole_manager.hpp"
 
 
 using IMUData = interfaces::msg::IMUData;
@@ -25,6 +26,7 @@ class CentralNode : public rclcpp::Node
     private:
         std::unique_ptr<IMUManager> imu_manager_;
         std::unique_ptr<MotorManager> motor_manager_;
+        std::unique_ptr<InsoleManager> insole_manager_;
         
         rclcpp::Service<SetMotorConfig>::SharedPtr motor_service_;
         rclcpp::TimerBase::SharedPtr timer_;

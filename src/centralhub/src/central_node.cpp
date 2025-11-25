@@ -1,8 +1,10 @@
 #include "central_node.hpp"
 #include "managers/imu_manager.hpp"
 #include "managers/motor_manager.hpp"
+#include "managers/insole_manager.hpp"
 
 #define BAUDRATE 2000000
+#define STM_BAUDRATE 115200
 
 using namespace std::chrono_literals;
 
@@ -21,7 +23,7 @@ CentralNode::CentralNode() : Node("central_node")
     
     motor_manager_ = std::make_unique<MotorManager>(this, 1);
     if (motor_manager_->initComm("/dev/ttyUSB0", BAUDRATE) < 0) // inicia a comunicacao serial
-        RCLCPP_ERROR(this->get_logger(), "Erro ao inicializar a comunicacao!");
+        RCLCPP_ERROR(this->get_logger(), "Erro ao inicializar a comunicacao com o USB0!");
     // cria o servidor para executar tarefas do motor
     motor_service_ = this->create_service<SetMotorConfig>("motor_config", std::bind(
         &CentralNode::motor_service_callback, this,
@@ -33,6 +35,12 @@ CentralNode::CentralNode() : Node("central_node")
     imu_manager_->initialize();     
     imu_manager_->createPublishers();
     
+    char buffer[16];
+    insole_manager_ = std::make_unique<InsoleManager>(this);
+    if (insole_manager_->initComm("/dev/ttyACM0", STM_BAUDRATE) < 0)
+        RCLCPP_ERROR(this->get_logger(), "Erro ao inicializar a comunicacao com a palmilha!");
+    insole_manager_->createPublisher();
+    
     // executa o callback a cada <update_rate_ms_> segundos
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(update_rate_ms_), 
@@ -43,6 +51,7 @@ CentralNode::CentralNode() : Node("central_node")
 void CentralNode::timer_callback()
 {
     imu_manager_->publishAll();
+    insole_manager_->publishAll();
 }
 
 //ros2 service call /motor_config interfaces/srv/SetMotorConfig "{motor_id: 1, command: 'set_goal_position', params: [1500]}"
