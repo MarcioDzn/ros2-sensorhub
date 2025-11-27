@@ -37,7 +37,6 @@ IMUNode::IMUNode() : Node("imu_node")
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(update_rate_ms_), 
         std::bind(&IMUNode::timer_callback, this));
-    RCLCPP_INFO(this->get_logger(), "DEBUG 2");
 }
 
 // callback que envia os dados dos 3 sensores
