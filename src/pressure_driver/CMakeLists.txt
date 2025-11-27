@@ -10,6 +10,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(interfaces REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(common_serial REQUIRED)
 
 include_directories(
   include/pressure_driver
@@ -20,6 +21,7 @@ add_executable(pressure_node src/pressure_node.cpp)
 ament_target_dependencies(pressure_node
   rclcpp
   interfaces
+  common_serial
 )
 
 install(TARGETS
