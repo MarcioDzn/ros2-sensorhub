@@ -1,5 +1,5 @@
-#ifndef CENTRAL_NODE_HPP
-#define CENTRAL_NODE_HPP
+#ifndef IMU_NODE_HPP
+#define IMU_NODE_HPP
 
 #include <memory>
 #include <vector>

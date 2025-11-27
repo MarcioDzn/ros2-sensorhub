@@ -15,7 +15,15 @@ include_directories(
   include/pressure_driver
 )
 
+add_executable(pressure_node src/pressure_node.cpp)
+
+ament_target_dependencies(pressure_node
+  rclcpp
+  interfaces
+)
+
 install(TARGETS
+  pressure_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
