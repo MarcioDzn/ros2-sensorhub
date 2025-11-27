@@ -1,4 +1,4 @@
-#include "device_comm/device_comm.hpp"
+#include "serial_handler.hpp"
 
 #include <termios.h>
 #include <sys/ioctl.h>
