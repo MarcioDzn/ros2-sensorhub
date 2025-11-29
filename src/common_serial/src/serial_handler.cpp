@@ -1,21 +1,8 @@
 #include "common_serial/serial_handler.hpp"
 
-#include <termios.h>
 #include <sys/ioctl.h>
 #include <chrono>
 #include <thread>
-
-// Definições de termios2 baseadas no Dynamixel SDK (ROBOTIS)
-struct termios2 {
-  tcflag_t c_iflag;       /* input mode flags */
-  tcflag_t c_oflag;       /* output mode flags */
-  tcflag_t c_cflag;       /* control mode flags */
-  tcflag_t c_lflag;       /* local mode flags */
-  cc_t c_line;            /* line discipline */
-  cc_t c_cc[19];          /* control characters */
-  speed_t c_ispeed;       /* input speed */
-  speed_t c_ospeed;       /* output speed */
-};
 
 #ifndef TCGETS2
 #define TCGETS2     _IOR('T', 0x2A, struct termios2)
@@ -46,6 +33,8 @@ int SerialHandler::setDefaultConfig()
 {
     struct termios config;
     
+    if (fd_ < 0) return -EBADF;
+
     // configurações
     if (tcgetattr(fd_, &config) != 0) {
         fprintf(stderr, "Erro em tcgetattr(): %s" , strerror(errno));
@@ -61,9 +50,6 @@ int SerialHandler::setDefaultConfig()
     config.c_cc[VTIME]  = 0;
     config.c_cc[VMIN]   = 0;
 
-    // limpa o buffer
-    tcflush(fd_, TCIFLUSH);
-
     // aplica as configs
     if (tcsetattr(fd_, TCSANOW, &config) != 0) {
         fprintf(stderr, "Erro ao aplicar configuração: %s", strerror(errno));
@@ -74,21 +60,24 @@ int SerialHandler::setDefaultConfig()
     return 0;
 }
 
-int SerialHandler::setBaudRate(int speed)
+int SerialHandler::setBaudRate(int baud)
 {
     struct termios2 options;
+
+    if (fd_ < 0) return -EBADF;
+    
     if (ioctl(fd_, TCGETS2, &options) != -1)
     {
         options.c_cflag &= ~CBAUD;
         options.c_cflag |= BOTHER;
-        options.c_ispeed = speed;
-        options.c_ospeed = speed;
+        options.c_ispeed = baud;
+        options.c_ospeed = baud;
 
         if (ioctl(fd_, TCSETS2, &options) != -1)
             return 0;
-        return -1; 
+        return -errno; 
     }
-    return -1; 
+    return -errno; 
 }
 
 ssize_t SerialHandler::writeData(const uint8_t* buffer, size_t size)

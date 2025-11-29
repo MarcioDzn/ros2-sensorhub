@@ -10,6 +10,20 @@
 #include <cerrno>
 #include <fcntl.h>
 #include <unistd.h>
+#include <termios.h>
+
+
+// Definições de termios2 baseadas no Dynamixel SDK (ROBOTIS)
+struct termios2 {
+  tcflag_t c_iflag;       /* input mode flags */
+  tcflag_t c_oflag;       /* output mode flags */
+  tcflag_t c_cflag;       /* control mode flags */
+  tcflag_t c_lflag;       /* local mode flags */
+  cc_t c_line;            /* line discipline */
+  cc_t c_cc[19];          /* control characters */
+  speed_t c_ispeed;       /* input speed */
+  speed_t c_ospeed;       /* output speed */
+};
 
 /* 
  * Fonte:
@@ -19,6 +33,9 @@
 class SerialHandler
 {
     public:
+        enum class Parity { NONE, EVEN, ODD };
+        enum class StopBits { ONE, TWO };
+
         SerialHandler();
         virtual ~SerialHandler();
 
