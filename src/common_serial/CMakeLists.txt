@@ -5,12 +5,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# find dependencies
 find_package(ament_cmake REQUIRED)
-
-include_directories(
-  include/common_serial
-)
 
 add_library(serial_handler
   src/serial_handler.cpp
@@ -22,7 +17,8 @@ install(TARGETS serial_handler
   RUNTIME DESTINATION bin
 )
 
-install(DIRECTORY include/
+install(
+  DIRECTORY include/
   DESTINATION include/
 )
 

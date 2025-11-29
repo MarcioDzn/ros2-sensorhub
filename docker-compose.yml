@@ -10,11 +10,11 @@ services:
       - ROS_DOMAIN_ID=42
     volumes:
       # Volumes para usar no pc
-      #- /home/marcio/Documentos/Dev/UEFS/IC/sensorhub:/ros2_ws
+      - /home/marcio/Documentos/Dev/UEFS/IC/sensorhub:/ros2_ws
 
       # Volumes abaixo para usar na raspberry
-      - /home/labpds/Documentos/ros2-sensorhub:/ros2_ws
-      - /home/labpds/WiringPi:/ros2_ws/src/wiringpi
+      #- /home/labpds/Documentos/ros2-sensorhub:/ros2_ws
+      #- /home/labpds/WiringPi:/ros2_ws/src/wiringpi
     devices:
       - /dev/mem:/dev/mem
       - /dev/gpiomem:/dev/gpiomem
