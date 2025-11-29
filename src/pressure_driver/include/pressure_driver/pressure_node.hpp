@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 
+#include "common_serial/serial_handler.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/msg/insole_data.hpp"
 #include "common_serial/serial_handler.hpp"
