@@ -24,13 +24,15 @@ class SerialHandler
 
         int init(const char* device, int baudrate);
         int setBaudRate(int speed);
-        ssize_t writeData(const void* buffer, size_t size);
+        int setDefaultConfig();
+        
         template<typename T>
         ssize_t readData(T *buffer, size_t size);
-        ssize_t readGenericData(void *buffer, size_t size);
-
+        ssize_t writeData(const char* buffer, size_t size);
+        
     private:
-        int setConfigs();
+        
+        ssize_t readGenericData(void *buffer, size_t size);
         
         int fd_;
 };

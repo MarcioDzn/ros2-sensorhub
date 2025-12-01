@@ -38,19 +38,11 @@ int SerialHandler::init(const char* device, int baudrate)
             << std::endl;
         return -1;
     }
-
-    setConfigs();
-    
-    // aplica o baudrate
-    if (setBaudRate(baudrate) != 0) {
-        std::cerr << "Erro ao aplicar baudrate!" << std::endl;
-        return -1;
-    }
     
     return 0;
 }
 
-int SerialHandler::setConfigs()
+int SerialHandler::setDefaultConfig()
 {
     struct termios config;
     
