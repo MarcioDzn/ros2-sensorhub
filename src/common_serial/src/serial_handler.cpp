@@ -96,31 +96,28 @@ int SerialHandler::setBaudRate(int speed)
     return -1; 
 }
 
-int SerialHandler::writeData(const std::vector<uint8_t>& data)
-{
-    // fd deve ser válido
-    if (fd_ < 0) {
-        std::cerr << "Dispositivo não inicializado. Chame init() primeiro.\n";
-        return -1;
-    }
-
-    size_t total_written = 0;
-    while (total_written < data.size()) {
-        ssize_t n = write(fd_, data.data() + total_written, data.size() - total_written);
-        if (n < 0) {
-            std::cerr << "Erro ao escrever: " << std::strerror(errno) << std::endl;
-            return -1;
-        }
-        total_written += n;
-    }
-
-    return static_cast<int>(total_written);
-}
-
-int SerialHandler::readData(char *buffer, int length)
+ssize_t SerialHandler::writeData(const char* buffer, size_t size)
 {
     if (fd_ < 0) return -1;
-    return read(fd_, buffer, length);
+
+    ssize_t n = write(fd_, buffer, size);
+    if (n < 0) return -1;
+
+    return n;
+}
+
+template<typename T>
+ssize_t SerialHandler::readData(T *buffer, size_t size)
+{
+    return readGenericData(buffer, size);
+}
+
+ssize_t SerialHandler::readGenericData(void *buffer, size_t size)
+{
+    if (fd_ < 0) return -1;
+    ssize_t n = read(fd_, buffer, size);
+    if (n < 0) return -1;
+    return n;
 }
 
 SerialHandler::~SerialHandler()

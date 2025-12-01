@@ -24,8 +24,10 @@ class SerialHandler
 
         int init(const char* device, int baudrate);
         int setBaudRate(int speed);
-        int writeData(const std::vector<uint8_t>& data);
-        int readData(char *buffer, int length);
+        ssize_t writeData(const void* buffer, size_t size);
+        template<typename T>
+        ssize_t readData(T *buffer, size_t size);
+        ssize_t readGenericData(void *buffer, size_t size);
 
     private:
         int setConfigs();
