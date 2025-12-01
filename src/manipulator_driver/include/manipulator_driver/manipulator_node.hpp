@@ -6,7 +6,10 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "common_serial/serial_handler.hpp"
+#include "interfaces/srv/set_motor_config.hpp"
 #include "manipulator_manager.hpp"
+
+using SetMotorConfig = interfaces::srv::SetMotorConfig;
 
 class ManipulatorNode : public rclcpp::Node
 {
@@ -26,6 +29,11 @@ class ManipulatorNode : public rclcpp::Node
         void timer_callback();
         void load_parameters();
         void set_parameters();
+        void motor_service_callback(
+                const std::shared_ptr<SetMotorConfig::Request> request,
+                std::shared_ptr<SetMotorConfig::Response> response);
+    
+        rclcpp::Service<SetMotorConfig>::SharedPtr motor_service_;
         
         std::shared_ptr<ManipulatorManager> manipulator_manager_;
         

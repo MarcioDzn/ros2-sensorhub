@@ -61,6 +61,9 @@ void CentralNode::motor_service_callback(
     const std::shared_ptr<SetMotorConfig::Request> request,
     std::shared_ptr<SetMotorConfig::Response> response)
 {
+    auto command = request->command;
+    
+    RCLCPP_INFO(this->get_logger(), "%s", command);
     response->success = false;
     motor_manager_->setId(request->motor_id);
     if (request->command == "set_goal_position"){

@@ -9,11 +9,32 @@ ManipulatorNode::ManipulatorNode()
     : Node("manipulator_node")
 {
     load_parameters();
+    
+    motor_service_ = this->create_service<SetMotorConfig>("motor_config", std::bind(
+        &ManipulatorNode::motor_service_callback, this,
+        std::placeholders::_1, std::placeholders::_2));
 }
 
-// callback que envia os dados do sensor
-void ManipulatorNode::timer_callback()
+// recebe solicitacoes
+void ManipulatorNode::motor_service_callback(
+    const std::shared_ptr<SetMotorConfig::Request> request,
+    std::shared_ptr<SetMotorConfig::Response> response)
 {
+    auto command = request->command;
+    auto id = request->motor_id;
+    RCLCPP_INFO(this->get_logger(), "%s %d", command, id);
+    response->success = false;
+    if (request->command == "set_goal_position"){
+        uint16_t goal_pos = request->params[0];
+        manipulator_manager_->setGoalPosition(request->motor_id, goal_pos);
+        response->success = true;
+    } else if (request->command == "enable_torque"){
+        manipulator_manager_->setTorque(request->motor_id, 1);
+        response->success = true;
+    } else if (request->command == "disable_torque"){
+        manipulator_manager_->setTorque(request->motor_id, 0);
+        response->success = true;
+    }
 }
 
 void ManipulatorNode::load_parameters()
