@@ -55,16 +55,8 @@ bool ManipulatorNode::init_serial(const char* device, int baudrate)
 
 void ManipulatorNode::send_packet()
 {
-    auto n = manipulator_manager_->setTorque(1, 0);
-    RCLCPP_INFO(this->get_logger(), "%d", n);
-
-    
-    //uint8_t instruction_list_goal[] = {0x1E,0xD0,0x07};
-    //uint8_t packet_goal[] = {0xFF,0xFF,0x01,0x05,0x03,0x1E,0xDC,0x05,0xF7};
-    //auto packet_goal = manipulator_manager_->createPacket(0x01, 0x03, instruction_list_goal, 3, out_size);
-    //auto n2 = serial_handler_->writeData(packet_goal, out_size);
-    //RCLCPP_INFO(this->get_logger(), "%d", n2);
-
+    manipulator_manager_->setTorque(1, 1);
+    manipulator_manager_->setGoalPosition(1, 1200);
 }
 
 void ManipulatorNode::set_manipulator_manager()

@@ -52,8 +52,20 @@ uint8_t ManipulatorManager::setTorque(uint8_t id, uint8_t status)
 	uint8_t out_size;
 	uint8_t instruction_list[] = {0x18, status};
     
-    auto packet_torque = createPacket(id, 0x03, instruction_list, 2, out_size);
-    return serial_handler_->writeData(packet_torque, out_size);
+    auto packet = createPacket(id, 0x03, instruction_list, 2, out_size);
+    return serial_handler_->writeData(packet, out_size);
+}
+
+uint8_t ManipulatorManager::setGoalPosition(uint8_t id, uint16_t goal_position)
+{
+	uint8_t lsb = goal_position & 0xFF;        // 8 bits menos significativos
+	uint8_t msb = (goal_position >> 8) & 0xFF; // 8 bits mais significativos
+
+	uint8_t out_size;
+	uint8_t instruction_list[] = {0x1E, lsb, msb};
+    
+    auto packet = createPacket(id, 0x03, instruction_list, 3, out_size);
+    return serial_handler_->writeData(packet, out_size);
 }
 
 

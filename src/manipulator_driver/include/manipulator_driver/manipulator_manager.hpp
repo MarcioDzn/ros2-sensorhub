@@ -14,8 +14,9 @@ class ManipulatorManager
 		explicit ManipulatorManager();
 		~ManipulatorManager();
 	
-		uint8_t setTorque(uint8_t id, uint8_t status);
 		void setSerialHandler(std::shared_ptr<SerialHandler> serial);
+		uint8_t setTorque(uint8_t id, uint8_t status);
+		uint8_t setGoalPosition(uint8_t id, uint16_t goal_position);
 		
 	private:
 		uint8_t* createPacket(uint8_t id, uint8_t instr, uint8_t* parameters, uint8_t parameter_size, uint8_t& out_size);
