@@ -32,7 +32,7 @@ class SerialHandler
             return readGenericData(buffer, size);
         }
         
-        ssize_t writeData(const char* buffer, size_t size);
+        ssize_t writeData(const uint8_t* buffer, size_t size);
         void clearBuffer();
         
     private:

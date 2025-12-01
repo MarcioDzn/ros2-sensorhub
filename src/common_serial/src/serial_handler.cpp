@@ -91,7 +91,7 @@ int SerialHandler::setBaudRate(int speed)
     return -1; 
 }
 
-ssize_t SerialHandler::writeData(const char* buffer, size_t size)
+ssize_t SerialHandler::writeData(const uint8_t* buffer, size_t size)
 {
     if (fd_ < 0) return -1;
 
