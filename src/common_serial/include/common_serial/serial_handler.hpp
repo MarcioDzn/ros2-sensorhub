@@ -27,7 +27,11 @@ class SerialHandler
         int setDefaultConfig();
         
         template<typename T>
-        ssize_t readData(T *buffer, size_t size);
+        ssize_t readData(T *buffer, size_t size)
+        {
+            return readGenericData(buffer, size);
+        }
+        
         ssize_t writeData(const char* buffer, size_t size);
         
     private:

@@ -22,6 +22,7 @@ class PressureNode : public rclcpp::Node
         void timer_callback();
         void load_parameters();
         void set_parameters();
+        void get_pressure_data(char* buffer, size_t max_size);
         
         rclcpp::Publisher<InsoleData>::SharedPtr publisher_;
         

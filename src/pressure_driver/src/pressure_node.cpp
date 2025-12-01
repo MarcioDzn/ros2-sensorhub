@@ -1,6 +1,24 @@
 #include "pressure_node.hpp"
 
+#include <vector>
+#include <sstream>
+
 using namespace std::chrono_literals;
+
+// TODO: criar um utils pra botar esse tipo de funcao
+std::vector<uint16_t> parse_numbers_from_string(const char* buffer)
+{
+    std::vector<uint16_t> values;
+    std::stringstream ss(buffer);
+    std::string token;
+    
+    while (ss >> token)
+    {
+        values.push_back(std::stoi(token));
+    } 
+    
+    return values;
+}
 
 PressureNode::PressureNode() : Node("pressure_node")
 {
@@ -21,6 +39,18 @@ PressureNode::PressureNode() : Node("pressure_node")
 void PressureNode::timer_callback()
 {
     auto message = InsoleData();
+    
+    size_t max_size = 81;
+    char buffer[8 * 16 * 5]; // 8 bits x 16 valores x 5 caracteres pra cada valor
+    get_pressure_data(buffer, max_size);
+    
+    auto values = parse_numbers_from_string(buffer);
+
+    for (size_t i = 0; i < values.size(); ++i)
+    {
+        RCLCPP_INFO(this->get_logger(), "Valor %zu = %d", i, values[i]);
+    }
+    
     publisher_->publish(message);
 }
 
@@ -63,6 +93,20 @@ bool PressureNode::init_serial(const char* device, int baudrate)
     return true;
 }
 
+void PressureNode::get_pressure_data(char* buffer, size_t max_size)
+{
+    size_t i = 0;
+    char c;
+    while(i < max_size-1)
+    {
+        ssize_t n = serial_handler_->readData(&c, 1);
+        if (n <= 0) break; // nada foi lido ou erro
+        buffer[i++] = c;
+        if (c == '\0') break; // chegou ao final da string
+    }
+    buffer[i] = '\0';
+}
+
 PressureNode::~PressureNode() = default;
 
 int main(int argc, char * argv[])
@@ -71,7 +115,7 @@ int main(int argc, char * argv[])
     
     auto node = std::make_shared<PressureNode>();
     
-    char* device = "/dev/ttyACM0";
+    const char* device = "/dev/ttyACM0";
     int baudrate = 115200;
     if ( !node->init_serial(device, baudrate) )
     {

@@ -101,12 +101,6 @@ ssize_t SerialHandler::writeData(const char* buffer, size_t size)
     return n;
 }
 
-template<typename T>
-ssize_t SerialHandler::readData(T *buffer, size_t size)
-{
-    return readGenericData(buffer, size);
-}
-
 ssize_t SerialHandler::readGenericData(void *buffer, size_t size)
 {
     if (fd_ < 0) return -1;
