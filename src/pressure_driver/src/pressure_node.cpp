@@ -3,6 +3,11 @@
 #include <vector>
 #include <sstream>
 
+#define MAX_BUFFER_COLLECT          6 * 16
+#define BUFFER_SIZE                 8 * 16 * 5
+#define DEVICE                      "/dev/ttyACM0"
+#define BAUDRATE                    115200
+
 using namespace std::chrono_literals;
 
 // TODO: criar um utils pra botar esse tipo de funcao
@@ -40,8 +45,8 @@ void PressureNode::timer_callback()
 {
     auto message = InsoleData();
     
-    size_t max_size = 6 * 16;
-    char buffer[8 * 16 * 5]; // 8 bits x 16 valores x 5 caracteres pra cada valor
+    size_t max_size = MAX_BUFFER_COLLECT;
+    char buffer[BUFFER_SIZE]; // 8 bits x 16 valores x 5 caracteres pra cada valor
     get_pressure_data(buffer, max_size);
     
     auto values = parse_numbers_from_string(buffer);
@@ -101,7 +106,6 @@ void PressureNode::get_pressure_data(char* buffer, size_t max_size)
     size_t i = 0;
     char c;
     
-    //
     while(i < max_size-1)
     {
         ssize_t n = serial_handler_->readData(&c, 1);
@@ -120,8 +124,8 @@ int main(int argc, char * argv[])
     
     auto node = std::make_shared<PressureNode>();
     
-    const char* device = "/dev/ttyACM0";
-    int baudrate = 115200;
+    const char* device = DEVICE;
+    int baudrate = BAUDRATE;
     if ( !node->init_serial(device, baudrate) )
     {
         RCLCPP_FATAL(node->get_logger(), "Erro ao configurar porta serial. Finalizando execucao");
