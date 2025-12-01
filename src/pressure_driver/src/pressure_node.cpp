@@ -1,5 +1,5 @@
 #include "pressure_node.hpp"
-#include "serial_node.hpp"
+#include "common_serial/serial_handler.hpp"
 
 using namespace std::chrono_literals;
 
