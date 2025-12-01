@@ -48,17 +48,11 @@ void PressureNode::timer_callback()
 
     serial_handler_->clearBuffer();
     // DEBUG
-    std::stringstream ss;
-    ss << "Valores: ";
     for (size_t i = 0; i < values.size(); ++i)
     {
-        ss << values[i];
-        if (i != values.size() - 1)
-            ss << ", ";
+        message.pressures.push_back(values[i]);
     }
 
-    RCLCPP_INFO(this->get_logger(), "%s", ss.str().c_str());
-    //
     
     publisher_->publish(message);
 }
