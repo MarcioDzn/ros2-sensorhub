@@ -4,14 +4,12 @@ using namespace std::chrono_literals;
 
 PressureNode::PressureNode() : Node("pressure_node")
 {
-    // carrega parametros
     load_parameters();
     
-    auto qos = rclcpp::QoS(10).reliable();
     // cria um publisher pra cada sensor de pressao
-    RCLCPP_INFO(this->get_logger(), 
-        "Criando publisher para o sensor de pressao");
-    auto publisher = this->create_publisher<InsoleData>("/pressure", qos);
+    auto qos = rclcpp::QoS(10).reliable();
+    RCLCPP_INFO(this->get_logger(), "Criando publisher para o sensor de pressao");
+    publisher_ = this->create_publisher<InsoleData>("/pressure", qos);
     
     // executa o callback a cada <update_rate_ms_> segundos
     timer_ = this->create_wall_timer(
@@ -24,7 +22,6 @@ void PressureNode::timer_callback()
 {
     auto message = InsoleData();
     publisher_->publish(message);
-
 }
 
 void PressureNode::load_parameters()
@@ -47,18 +44,21 @@ bool PressureNode::init_serial(const char* device, int baudrate)
         RCLCPP_ERROR(this->get_logger(), "Erro ao inicializar a porta serial");
         return false;
     }
+    RCLCPP_INFO(this->get_logger(), "Inicializacao realizada");
     
     if ( serial_handler_->setDefaultConfig() < 0 )
     {
         RCLCPP_ERROR(this->get_logger(), "Erro ao aplicar a configuracao padrao da porta serial");
         return false;
     }
+    RCLCPP_INFO(this->get_logger(), "Configuracao realizada");
     
     if ( serial_handler_->setBaudRate(baudrate) < 0 )
     {
         RCLCPP_ERROR(this->get_logger(), "Erro ao definir baudrate");
         return false;
     }
+    RCLCPP_INFO(this->get_logger(), "Aplicacao de baurate realizada");
     
     return true;
 }
@@ -79,6 +79,7 @@ int main(int argc, char * argv[])
         rclcpp::shutdown();
         return 1;
     }
+    RCLCPP_INFO(node->get_logger(), "PressureNode inicializado");
     
     rclcpp::spin(node);
     rclcpp::shutdown();

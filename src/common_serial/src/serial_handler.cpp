@@ -48,7 +48,9 @@ int SerialHandler::setDefaultConfig()
     
     // configurações
     if (tcgetattr(fd_, &config) != 0) {
-        std::cerr << "Erro em tcgetattr(): " << strerror(errno) << std::endl;
+        fprintf(stderr, "Erro em tcgetattr(): %s" , strerror(errno));
+        fflush(stderr);
+
         return -1;
     }
 
@@ -64,11 +66,12 @@ int SerialHandler::setDefaultConfig()
 
     // aplica as configs
     if (tcsetattr(fd_, TCSANOW, &config) != 0) {
-        std::cerr << "Erro ao aplicar configuração: " 
-            << strerror(errno) 
-            << std::endl;
+        fprintf(stderr, "Erro ao aplicar configuração: %s", strerror(errno));
+        fflush(stderr);
         return -1;
     }
+    
+    return 0;
 }
 
 int SerialHandler::setBaudRate(int speed)
