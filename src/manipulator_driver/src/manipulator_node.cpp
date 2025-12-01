@@ -5,7 +5,9 @@
 
 using namespace std::chrono_literals;
 
-ManipulatorNode::ManipulatorNode() : Node("manipulator_node")
+ManipulatorNode::ManipulatorNode() 
+    : Node("manipulator_node"), 
+    manipulator_manager_(std::make_unique<ManipulatorManager>())
 {
     load_parameters();
 }
@@ -54,12 +56,17 @@ bool ManipulatorNode::init_serial(const char* device, int baudrate)
 
 void ManipulatorNode::send_packet()
 {
-    uint8_t packet_torque[] = {0xFF, 0xFF, 0x01, 0x04, 0x03, 0x18, 0x01, 0xDE};
-    auto n1 = serial_handler_->writeData(packet_torque, sizeof(packet_torque));
+    uint8_t out_size;
+    uint8_t instruction_list[] = {0x18, 0x01};
+    //uint8_t packet_torque[] = {0xFF, 0xFF, 0x01, 0x04, 0x03, 0x18, 0x01, 0xDE};
+    auto packet_torque = manipulator_manager_->createPacket(0x01, 0x03, instruction_list, 2, out_size);
+    auto n1 = serial_handler_->writeData(packet_torque, out_size);
     RCLCPP_INFO(this->get_logger(), "%d", n1);
     
-    uint8_t packet_goal[] = {0xFF,0xFF,0x01,0x05,0x03,0x1E,0xDC,0x05,0xF7};
-    auto n2 = serial_handler_->writeData(packet_goal, sizeof(packet_goal));
+    uint8_t instruction_list_goal[] = {0x1E,0xD0,0x07};
+    //uint8_t packet_goal[] = {0xFF,0xFF,0x01,0x05,0x03,0x1E,0xDC,0x05,0xF7};
+    auto packet_goal = manipulator_manager_->createPacket(0x01, 0x03, instruction_list_goal, 3, out_size);
+    auto n2 = serial_handler_->writeData(packet_goal, out_size);
     RCLCPP_INFO(this->get_logger(), "%d", n2);
 
 }

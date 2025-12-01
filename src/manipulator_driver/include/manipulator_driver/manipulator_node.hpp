@@ -6,6 +6,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "common_serial/serial_handler.hpp"
+#include "manipulator_manager.hpp"
 
 class ManipulatorNode : public rclcpp::Node
 {
@@ -22,6 +23,7 @@ class ManipulatorNode : public rclcpp::Node
         void set_parameters();
         
         std::unique_ptr<SerialHandler> serial_handler_;
+        std::unique_ptr<ManipulatorManager> manipulator_manager_;
         rclcpp::TimerBase::SharedPtr timer_;
 };
 

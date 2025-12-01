@@ -16,7 +16,15 @@ include_directories(
   include/manipulator_driver
 )
 
-add_executable(manipulator_node src/manipulator_node.cpp)
+add_library(manipulator_manager
+  src/manipulator_manager.cpp
+)
+
+add_executable(manipulator_node src/manipulator_node.cpp
+  src/manipulator_manager.cpp
+)
+
+target_link_libraries(manipulator_node manipulator_manager)
 
 ament_target_dependencies(manipulator_node
   rclcpp
@@ -26,6 +34,7 @@ ament_target_dependencies(manipulator_node
 
 install(TARGETS
   manipulator_node
+  manipulator_manager
   DESTINATION lib/${PROJECT_NAME}
 )
 
