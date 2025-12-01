@@ -29,7 +29,7 @@ struct termios2 {
 
 SerialHandler::SerialHandler() : fd_(-1) {}
 
-int SerialHandler::init(const char* device, int baudrate)
+int SerialHandler::init(const char* device)
 {
     fd_ = open(device, O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (fd_ < 0) {

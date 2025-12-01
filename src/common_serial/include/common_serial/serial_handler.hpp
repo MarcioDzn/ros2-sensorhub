@@ -22,7 +22,7 @@ class SerialHandler
         SerialHandler();
         virtual ~SerialHandler();
 
-        int init(const char* device, int baudrate);
+        int init(const char* device);
         int setBaudRate(int speed);
         int setDefaultConfig();
         
