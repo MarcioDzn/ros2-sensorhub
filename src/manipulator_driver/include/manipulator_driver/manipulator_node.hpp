@@ -17,13 +17,19 @@ class ManipulatorNode : public rclcpp::Node
         bool init_serial(const char* device, int baudrate);
         void send_packet();
         
+        std::shared_ptr<ManipulatorManager> get_manipulator_manager() { return manipulator_manager_; }
+        std::shared_ptr<SerialHandler> get_serial_handler() { return serial_handler_; }
+        void set_serial_handler();
+        void set_manipulator_manager();
+        
     private:
         void timer_callback();
         void load_parameters();
         void set_parameters();
         
-        std::unique_ptr<SerialHandler> serial_handler_;
-        std::unique_ptr<ManipulatorManager> manipulator_manager_;
+        std::shared_ptr<ManipulatorManager> manipulator_manager_;
+        
+        std::shared_ptr<SerialHandler> serial_handler_;
         rclcpp::TimerBase::SharedPtr timer_;
 };
 

@@ -2,6 +2,11 @@
 
 ManipulatorManager::ManipulatorManager() {}
 
+
+void ManipulatorManager::setSerialHandler(std::shared_ptr<SerialHandler> serial) {
+	serial_handler_ = serial;
+}
+    
 uint8_t* ManipulatorManager::createPacket(
 	uint8_t id, 
 	uint8_t instr, 
@@ -39,5 +44,18 @@ uint8_t* ManipulatorManager::createPacket(
 	
 	return packet;
 }
+
+uint8_t ManipulatorManager::setTorque(uint8_t id, uint8_t status)
+{
+	if (status != 0 && status != 1) return -1;
+	
+	uint8_t out_size;
+	uint8_t instruction_list[] = {0x18, status};
+    
+    auto packet_torque = createPacket(id, 0x03, instruction_list, 2, out_size);
+    return serial_handler_->writeData(packet_torque, out_size);
+}
+
+
 
 ManipulatorManager::~ManipulatorManager() = default;

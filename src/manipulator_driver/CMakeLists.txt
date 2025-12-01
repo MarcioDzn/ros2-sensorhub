@@ -20,6 +20,10 @@ add_library(manipulator_manager
   src/manipulator_manager.cpp
 )
 
+ament_target_dependencies(manipulator_manager
+  common_serial
+)
+
 add_executable(manipulator_node src/manipulator_node.cpp
   src/manipulator_manager.cpp
 )
