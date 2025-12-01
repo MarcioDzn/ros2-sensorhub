@@ -109,6 +109,11 @@ ssize_t SerialHandler::readGenericData(void *buffer, size_t size)
     return n;
 }
 
+void SerialHandler::clearBuffer()
+{
+    tcflush(fd_, TCIFLUSH);
+}
+
 SerialHandler::~SerialHandler()
 {
     if (fd_ >= 0) close(fd_);

@@ -33,6 +33,7 @@ class SerialHandler
         }
         
         ssize_t writeData(const char* buffer, size_t size);
+        void clearBuffer();
         
     private:
         

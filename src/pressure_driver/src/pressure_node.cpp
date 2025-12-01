@@ -40,16 +40,25 @@ void PressureNode::timer_callback()
 {
     auto message = InsoleData();
     
-    size_t max_size = 81;
+    size_t max_size = 6 * 16;
     char buffer[8 * 16 * 5]; // 8 bits x 16 valores x 5 caracteres pra cada valor
     get_pressure_data(buffer, max_size);
     
     auto values = parse_numbers_from_string(buffer);
 
+    serial_handler_->clearBuffer();
+    // DEBUG
+    std::stringstream ss;
+    ss << "Valores: ";
     for (size_t i = 0; i < values.size(); ++i)
     {
-        RCLCPP_INFO(this->get_logger(), "Valor %zu = %d", i, values[i]);
+        ss << values[i];
+        if (i != values.size() - 1)
+            ss << ", ";
     }
+
+    RCLCPP_INFO(this->get_logger(), "%s", ss.str().c_str());
+    //
     
     publisher_->publish(message);
 }
@@ -97,6 +106,8 @@ void PressureNode::get_pressure_data(char* buffer, size_t max_size)
 {
     size_t i = 0;
     char c;
+    
+    //
     while(i < max_size-1)
     {
         ssize_t n = serial_handler_->readData(&c, 1);
