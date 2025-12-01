@@ -16,14 +16,16 @@ add_library(serial_handler
   src/serial_handler.cpp
 )
 
-install(TARGETS
-  serial_handler
-  DESTINATION lib/${PROJECT_NAME}
+install(TARGETS serial_handler
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 
 install(DIRECTORY include/
   DESTINATION include/
 )
 
-
+ament_export_libraries(serial_handler)
+ament_export_include_directories("include")
 ament_package()
