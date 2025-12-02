@@ -7,9 +7,11 @@
 #include "rclcpp/rclcpp.hpp"
 #include "common_serial/serial_handler.hpp"
 #include "interfaces/srv/set_motor_config.hpp"
+#include "interfaces/msg/actuator_goal_position.hpp"
 #include "manipulator_manager.hpp"
 
 using SetMotorConfig = interfaces::srv::SetMotorConfig;
+using ActuatorGoalPosition = interfaces::msg::ActuatorGoalPosition;
 
 class ManipulatorNode : public rclcpp::Node
 {
@@ -27,12 +29,14 @@ class ManipulatorNode : public rclcpp::Node
         
     private:
         void timer_callback();
+        void goal_position_callback(const ActuatorGoalPosition& msg);
         void load_parameters();
         void set_parameters();
         void motor_service_callback(
                 const std::shared_ptr<SetMotorConfig::Request> request,
                 std::shared_ptr<SetMotorConfig::Response> response);
     
+        rclcpp::Subscription<ActuatorGoalPosition>::SharedPtr actuator_subscriber_;
         rclcpp::Service<SetMotorConfig>::SharedPtr motor_service_;
         
         std::shared_ptr<ManipulatorManager> manipulator_manager_;

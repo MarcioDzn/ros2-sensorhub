@@ -13,6 +13,7 @@ find_package(builtin_interfaces REQUIRED)
 set(msg_files
   "msg/IMUData.msg"
   "msg/InsoleData.msg"
+  "msg/ActuatorGoalPosition.msg"
 )
 
 set(srv_files

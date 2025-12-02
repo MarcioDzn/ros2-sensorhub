@@ -11,6 +11,8 @@ add_library(serial_handler
   src/serial_handler.cpp
 )
 
+target_include_directories(serial_handler PUBLIC include)
+
 install(TARGETS serial_handler
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib

@@ -10,6 +10,11 @@ ManipulatorNode::ManipulatorNode()
 {
     load_parameters();
     
+    actuator_subscriber_ = this->create_subscription<ActuatorGoalPosition>(
+        "goal_position", 10, std::bind(
+        &ManipulatorNode::goal_position_callback, this, 
+        std::placeholders::_1));
+    
     motor_service_ = this->create_service<SetMotorConfig>("motor_config", std::bind(
         &ManipulatorNode::motor_service_callback, this,
         std::placeholders::_1, std::placeholders::_2));
@@ -35,6 +40,11 @@ void ManipulatorNode::motor_service_callback(
         manipulator_manager_->setTorque(request->motor_id, 0);
         response->success = true;
     }
+}
+
+void ManipulatorNode::goal_position_callback(const ActuatorGoalPosition& msg)
+{
+    manipulator_manager_->setGoalPosition(msg.id, msg.goal);
 }
 
 void ManipulatorNode::load_parameters()
