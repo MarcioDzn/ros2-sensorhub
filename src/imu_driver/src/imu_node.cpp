@@ -51,11 +51,10 @@ void IMUNode::timer_callback()
         message.roll = imu_data[0];
         message.pitch = imu_data[1];
         message.yaw = imu_data[2];
+        
+        message.stamp = this->get_clock()->now();
 
-        RCLCPP_INFO(
-            this->get_logger(), 
-            "[ID %zu] PUBLICANDO\nROLL: %f\nPITCH: %f\nYAW: %f", 
-            id, message.roll, message.pitch, message.yaw);
+
         publishers_[id]->publish(message);
     }
 }

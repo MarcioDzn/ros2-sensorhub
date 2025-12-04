@@ -14,6 +14,7 @@ set(msg_files
   "msg/IMUData.msg"
   "msg/InsoleData.msg"
   "msg/ActuatorGoalPosition.msg"
+  "msg/Stamp.msg"
 )
 
 set(srv_files

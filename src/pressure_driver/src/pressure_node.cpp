@@ -52,12 +52,13 @@ void PressureNode::timer_callback()
     auto values = parse_numbers_from_string(buffer);
 
     serial_handler_->clearBuffer();
-    // DEBUG
+
     for (size_t i = 0; i < values.size(); ++i)
     {
         message.pressures.push_back(values[i]);
     }
-
+    
+    message.stamp = this->get_clock()->now();
     
     publisher_->publish(message);
 }
