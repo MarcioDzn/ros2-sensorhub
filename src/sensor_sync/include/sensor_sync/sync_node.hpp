@@ -5,6 +5,11 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
+
+#include "message_filters/subscriber.h"
+#include "message_filters/synchronizer.h"
+#include "message_filters/sync_policies/approximate_time.h"
+
 #include "interfaces/msg/imu_data.hpp"
 #include "interfaces/msg/insole_data.hpp"
 #include "interfaces/msg/synced_sensor_data.hpp"
@@ -21,19 +26,14 @@ class SyncNode : public rclcpp::Node
 		virtual ~SyncNode();
 		
 	private:
-		void add_to_buffer(std::string topic);
-		void sync_data();
-		void publish_data();
-		
-		void get_imu_data(const IMUData& msg);
-		void get_pressure_data(const InsoleData& msg);
-		
+	
+		void synced_callback(const IMUData::ConstSharedPtr& imu_msg, 
+                             const InsoleData::ConstSharedPtr& pressure_msg);
+		std::shared_ptr<message_filters::Subscriber<IMUData>> imu_sub_;
+		std::shared_ptr<message_filters::Subscriber<InsoleData>> pressure_sub_;
 		rclcpp::Publisher<SyncedSensorData>::SharedPtr publisher_;
-		rclcpp::Subscription<InsoleData>::SharedPtr pressure_subscriptor_;
-		rclcpp::Subscription<IMUData>::SharedPtr imu_subscriptor_;
-				
-		std::vector<InsoleData> pressure_buffer_;
-		std::vector<IMUData> imu_buffer_;
+		
+		std::shared_ptr<message_filters::Synchronizer<SyncPolicy>> sync_;
 		
 };
 

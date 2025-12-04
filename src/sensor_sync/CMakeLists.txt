@@ -9,6 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(interfaces REQUIRED)
+find_package(message_filters REQUIRED)
 
 include_directories(
   include/sensor_sync
@@ -19,6 +20,7 @@ add_executable(sync_node src/sync_node.cpp)
 ament_target_dependencies(sync_node
   rclcpp
   interfaces
+  message_filters
 )
 
 install(TARGETS
