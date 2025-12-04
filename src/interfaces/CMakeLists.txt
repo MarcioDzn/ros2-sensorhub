@@ -15,6 +15,7 @@ set(msg_files
   "msg/InsoleData.msg"
   "msg/ActuatorGoalPosition.msg"
   "msg/Stamp.msg"
+  "msg/SyncedSensorData.msg"
 )
 
 set(srv_files
