@@ -3,20 +3,20 @@
 
 SyncNode::SyncNode() : Node("sync_node")
 {
+	rclcpp::QoS qos = rclcpp::QoS(10);
 	publisher_ = this->create_publisher<SyncedSensorData>("synced_data", 10);
 	
-    imu_sub_.reset(new message_filters::Subscriber<IMUData>(this, "sensor_1/imu"));
-    pressure_sub_.reset(new message_filters::Subscriber<InsoleData>(this, "pressure"));
+	imu_sub_.subscribe(this, "sensor_1/imu", qos.get_rmw_qos_profile());
+	pressure_sub_.subscribe(this, "pressure", qos.get_rmw_qos_profile());
 
-    sync_.reset(new message_filters::Synchronizer<SyncPolicy>(
-        SyncPolicy(10), *imu_sub_, *pressure_sub_));
+    uint32_t queue_size = 10;
+    sync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy>>(
+        SyncPolicy(queue_size), imu_sub_, pressure_sub_);
 
-    const std::chrono::milliseconds SLOP_MS = std::chrono::milliseconds(5);
-    sync_->setInterMessageLowerBound(SLOP_MS);
-    
-    using std::placeholders::_1;
-    using std::placeholders::_2;
-    sync_->registerCallback(std::bind(&SyncNode::synced_callback, this, _1, _2));
+    sync_->registerCallback(
+        std::bind(&SyncNode::synced_callback, this,
+                  std::placeholders::_1,
+                  std::placeholders::_2));
 }
 
 void SyncNode::synced_callback(const IMUData::ConstSharedPtr& imu_msg, 
@@ -24,14 +24,14 @@ void SyncNode::synced_callback(const IMUData::ConstSharedPtr& imu_msg,
 {
     auto synced_msg = std::make_unique<SyncedSensorData>();
 
-    synced_msg->imu_stamp = imu_msg->stamp;
+    synced_msg->imu_data.stamp = imu_msg->stamp;
 
-    synced_msg->roll = imu_msg->roll; // Exemplo: Substitua pelos campos reais
-    synced_msg->pitch = imu_msg->pitch;
-    synced_msg->yaw = imu_msg->yaw;
+    synced_msg->imu_data.roll = imu_msg->roll; 
+    synced_msg->imu_data.pitch = imu_msg->pitch;
+    synced_msg->imu_data.yaw = imu_msg->yaw;
     
-    synced_msg->pressure_stamp = pressure_msg->stamp;
-    synced_msg->pressures = pressure_msg->pressures;
+    synced_msg->pressure_data.stamp = pressure_msg->stamp;
+    synced_msg->pressure_data.pressures = pressure_msg->pressures;
     
     publisher_->publish(std::move(synced_msg));
 

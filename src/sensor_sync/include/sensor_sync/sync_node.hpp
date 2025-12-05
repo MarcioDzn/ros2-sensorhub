@@ -18,6 +18,7 @@
 using IMUData = interfaces::msg::IMUData;
 using InsoleData = interfaces::msg::InsoleData;
 using SyncedSensorData = interfaces::msg::SyncedSensorData;
+using SyncPolicy = message_filters::sync_policies::ApproximateTime<IMUData, InsoleData>;
 
 class SyncNode : public rclcpp::Node
 {
@@ -29,8 +30,8 @@ class SyncNode : public rclcpp::Node
 	
 		void synced_callback(const IMUData::ConstSharedPtr& imu_msg, 
                              const InsoleData::ConstSharedPtr& pressure_msg);
-		std::shared_ptr<message_filters::Subscriber<IMUData>> imu_sub_;
-		std::shared_ptr<message_filters::Subscriber<InsoleData>> pressure_sub_;
+		message_filters::Subscriber<IMUData> imu_sub_;
+		message_filters::Subscriber<InsoleData> pressure_sub_;
 		rclcpp::Publisher<SyncedSensorData>::SharedPtr publisher_;
 		
 		std::shared_ptr<message_filters::Synchronizer<SyncPolicy>> sync_;
