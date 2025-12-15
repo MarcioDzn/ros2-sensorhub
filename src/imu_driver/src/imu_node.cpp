@@ -10,7 +10,9 @@ IMUNode::IMUNode() : Node("imu_node")
     // carrega parametros
     load_parameters();
     
-    auto qos = rclcpp::QoS(10).reliable();
+    auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
+        .best_effort()
+        .durability_volatile();
     for (size_t id = 0; id < imu_ids_.size(); id++)
     {
         // cria e armazena as instâncias dos IMUs
