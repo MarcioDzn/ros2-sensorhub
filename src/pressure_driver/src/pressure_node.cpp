@@ -30,7 +30,9 @@ PressureNode::PressureNode() : Node("pressure_node")
     load_parameters();
     
     // cria um publisher pra cada sensor de pressao
-    auto qos = rclcpp::QoS(10).reliable();
+    auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
+        .best_effort()
+        .durability_volatile();
     RCLCPP_INFO(this->get_logger(), "Criando publisher para o sensor de pressao");
     publisher_ = this->create_publisher<InsoleData>("/pressure", qos);
     
