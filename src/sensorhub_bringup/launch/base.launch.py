@@ -34,5 +34,11 @@ def generate_launch_description():
             package='manipulator_driver',
             executable='manipulator_node',
             output='screen',
+        ),
+
+        Node(
+            package='sensor_sync',
+            executable='sync_node',
+            output='screen',
         )
     ])
