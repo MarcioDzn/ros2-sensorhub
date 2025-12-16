@@ -28,5 +28,11 @@ def generate_launch_description():
             package='pressure_driver',
             executable='pressure_node',
             output='screen',
+        ),
+        
+        Node(
+            package='manipulator_driver',
+            executable='manipulator_node',
+            output='screen',
         )
     ])
