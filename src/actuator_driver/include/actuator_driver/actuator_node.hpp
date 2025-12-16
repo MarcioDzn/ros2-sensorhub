@@ -1,5 +1,5 @@
-#ifndef MANIPULATOR_NODE_HPP
-#define MANIPULATOR_NODE_HPP
+#ifndef ACTUATOR_NODE_HPP
+#define ACTUATOR_NODE_HPP
 
 #include <memory>
 #include <vector>
@@ -8,24 +8,24 @@
 #include "common_serial/serial_handler.hpp"
 #include "interfaces/srv/set_motor_config.hpp"
 #include "interfaces/msg/actuator_goal_position.hpp"
-#include "manipulator_manager.hpp"
+#include "actuator_manager.hpp"
 
 using SetMotorConfig = interfaces::srv::SetMotorConfig;
 using ActuatorGoalPosition = interfaces::msg::ActuatorGoalPosition;
 
-class ManipulatorNode : public rclcpp::Node
+class ActuatorNode : public rclcpp::Node
 {
     public:
-        explicit ManipulatorNode();
-        virtual ~ManipulatorNode();
+        explicit ActuatorNode();
+        virtual ~ActuatorNode();
 
         bool init_serial(const char* device, int baudrate);
         void send_packet();
         
-        std::shared_ptr<ManipulatorManager> get_manipulator_manager() { return manipulator_manager_; }
+        std::shared_ptr<ActuatorManager> get_actuator_manager() { return actuator_manager_; }
         std::shared_ptr<SerialHandler> get_serial_handler() { return serial_handler_; }
         void set_serial_handler();
-        void set_manipulator_manager();
+        void set_actuator_manager();
         
     private:
         void timer_callback();
@@ -39,10 +39,10 @@ class ManipulatorNode : public rclcpp::Node
         rclcpp::Subscription<ActuatorGoalPosition>::SharedPtr actuator_subscriber_;
         rclcpp::Service<SetMotorConfig>::SharedPtr motor_service_;
         
-        std::shared_ptr<ManipulatorManager> manipulator_manager_;
+        std::shared_ptr<ActuatorManager> actuator_manager_;
         
         std::shared_ptr<SerialHandler> serial_handler_;
         rclcpp::TimerBase::SharedPtr timer_;
 };
 
-#endif // MANIPULATOR_NODE_HPP
+#endif // ACTUATOR_NODE_HPP

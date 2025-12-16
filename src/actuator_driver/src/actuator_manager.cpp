@@ -1,13 +1,13 @@
-#include "manipulator_manager.hpp"
+#include "actuator_manager.hpp"
 
-ManipulatorManager::ManipulatorManager() {}
+ActuatorManager::ActuatorManager() {}
 
 
-void ManipulatorManager::setSerialHandler(std::shared_ptr<SerialHandler> serial) {
+void ActuatorManager::setSerialHandler(std::shared_ptr<SerialHandler> serial) {
 	serial_handler_ = serial;
 }
     
-uint8_t* ManipulatorManager::createPacket(
+uint8_t* ActuatorManager::createPacket(
 	uint8_t id, 
 	uint8_t instr, 
 	uint8_t* parameters, 
@@ -45,7 +45,7 @@ uint8_t* ManipulatorManager::createPacket(
 	return packet;
 }
 
-uint8_t ManipulatorManager::setTorque(uint8_t id, uint8_t status)
+uint8_t ActuatorManager::setTorque(uint8_t id, uint8_t status)
 {
 	if (status != 0 && status != 1) return -1;
 	
@@ -56,7 +56,7 @@ uint8_t ManipulatorManager::setTorque(uint8_t id, uint8_t status)
     return serial_handler_->writeData(packet, out_size);
 }
 
-uint8_t ManipulatorManager::setGoalPosition(uint8_t id, uint16_t goal_position)
+uint8_t ActuatorManager::setGoalPosition(uint8_t id, uint16_t goal_position)
 {
 	uint8_t lsb = goal_position & 0xFF;        // 8 bits menos significativos
 	uint8_t msb = (goal_position >> 8) & 0xFF; // 8 bits mais significativos
@@ -70,4 +70,4 @@ uint8_t ManipulatorManager::setGoalPosition(uint8_t id, uint16_t goal_position)
 
 
 
-ManipulatorManager::~ManipulatorManager() = default;
+ActuatorManager::~ActuatorManager() = default;

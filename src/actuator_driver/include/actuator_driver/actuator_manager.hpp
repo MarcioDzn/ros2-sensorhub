@@ -1,5 +1,5 @@
-#ifndef MANIPULATOR_MANAGER_HPP
-#define MANIPULATOR_MANAGER_HPP
+#ifndef ACTUATOR_MANAGER_HPP
+#define ACTUATOR_MANAGER_HPP
 
 #include <cstdint>
 #include <cstdlib>
@@ -8,11 +8,11 @@
 
 #include "common_serial/serial_handler.hpp"
 
-class ManipulatorManager
+class ActuatorManager
 {
 	public:
-		explicit ManipulatorManager();
-		~ManipulatorManager();
+		explicit ActuatorManager();
+		~ActuatorManager();
 	
 		void setSerialHandler(std::shared_ptr<SerialHandler> serial);
 		uint8_t setTorque(uint8_t id, uint8_t status);
@@ -24,4 +24,4 @@ class ManipulatorManager
 		std::shared_ptr<SerialHandler> serial_handler_;	
 };
 
-#endif // MANIPULATOR_MANAGER_HPP
+#endif // ACTUATOR_MANAGER_HPP

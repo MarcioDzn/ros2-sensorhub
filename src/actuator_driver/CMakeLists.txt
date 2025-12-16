@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(manipulator_driver)
+project(actuator_driver)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -13,32 +13,32 @@ find_package(std_msgs REQUIRED)
 find_package(common_serial REQUIRED)
 
 include_directories(
-  include/manipulator_driver
+  include/actuator_driver
 )
 
-add_library(manipulator_manager
-  src/manipulator_manager.cpp
+add_library(actuator_manager
+  src/actuator_manager.cpp
 )
 
-ament_target_dependencies(manipulator_manager
+ament_target_dependencies(actuator_manager
   common_serial
 )
 
-add_executable(manipulator_node src/manipulator_node.cpp
-  src/manipulator_manager.cpp
+add_executable(actuator_node src/actuator_node.cpp
+  src/actuator_manager.cpp
 )
 
-target_link_libraries(manipulator_node manipulator_manager)
+target_link_libraries(actuator_node actuator_manager)
 
-ament_target_dependencies(manipulator_node
+ament_target_dependencies(actuator_node
   rclcpp
   interfaces
   common_serial
 )
 
 install(TARGETS
-  manipulator_node
-  manipulator_manager
+  actuator_node
+  actuator_manager
   DESTINATION lib/${PROJECT_NAME}
 )
 
