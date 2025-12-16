@@ -3,8 +3,11 @@
 
 SyncNode::SyncNode() : Node("sync_node")
 {
-	rclcpp::QoS qos = rclcpp::QoS(10);
-	publisher_ = this->create_publisher<SyncedSensorData>("synced_data", 10);
+    auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
+        .best_effort()
+        .durability_volatile();
+        
+	publisher_ = this->create_publisher<SyncedSensorData>("synced_data", qos);
 	
 	imu_sub_.subscribe(this, "sensor_1/imu", qos.get_rmw_qos_profile());
 	pressure_sub_.subscribe(this, "pressure", qos.get_rmw_qos_profile());
