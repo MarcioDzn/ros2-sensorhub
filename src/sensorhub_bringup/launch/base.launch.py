@@ -31,8 +31,8 @@ def generate_launch_description():
         ),
         
         Node(
-            package='manipulator_driver',
-            executable='manipulator_node',
+            package='actuator_driver',
+            executable='actuator_node',
             output='screen',
         ),
 
