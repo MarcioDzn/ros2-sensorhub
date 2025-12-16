@@ -1,0 +1,8 @@
+imu_node:
+  ros__parameters:
+    update_rate_ms: 200
+    imu_ids: [1, 2, 3]
+    imu_addresses: [40, 41, 40]  # 0x28=40, 0x29=41
+    imu_names: ["sensor_1", "sensor_2", "sensor_3"]
+    euler_orders: [1, 2, 0, 1, 2, 0, 1, 2, 0]
+    multiplex_ids: [0, 1, 0]
