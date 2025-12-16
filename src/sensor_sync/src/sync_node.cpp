@@ -12,10 +12,9 @@ SyncNode::SyncNode() : Node("sync_node")
 	imu_sub_.subscribe(this, "sensor_1/imu", qos.get_rmw_qos_profile());
 	pressure_sub_.subscribe(this, "pressure", qos.get_rmw_qos_profile());
 
-    uint32_t queue_size = 10;
+    uint32_t queue_size = 50;
     sync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy>>(
         SyncPolicy(queue_size), imu_sub_, pressure_sub_);
-
     sync_->registerCallback(
         std::bind(&SyncNode::synced_callback, this,
                   std::placeholders::_1,
