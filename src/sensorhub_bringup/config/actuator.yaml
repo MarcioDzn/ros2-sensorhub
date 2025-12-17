@@ -3,3 +3,8 @@ actuator_node:
     update_rate_ms: 15
     device: "/dev/ttyUSB0"
     baudrate: 2000000
+    actuator_ids: [1, 2, 3]
+    min_deg: 100
+    max_deg: 180
+    angular_resolution: 0.088
+    # TODO: fazer um pra cada motor

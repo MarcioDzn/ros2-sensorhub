@@ -2,23 +2,23 @@ version: "3.9"
 
 services:
   sensorhub:
-    image: ghcr.io/sloretz/ros:jazzy-desktop
+    image: ghcr.io/sloretz/ros:humble-desktop
     container_name: ros2-sensorhub
     privileged: true
     network_mode: host
     environment:
       - ROS_DOMAIN_ID=42
       - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
-      - FASTRTPS_DEFAULT_PROFILES_FILE=/ros2_ws/config/fastdds.xml
+      #- FASTRTPS_DEFAULT_PROFILES_FILE=/ros2_ws/config/fastdds.xml
     volumes:
       #- /home/marcio/Documentos/Dev/UEFS/IC/CoppeliaSim_Edu_V4_10_0_rev0_Ubuntu22_04:/coppelia
       # Volumes para usar no pc
-      #- /home/marcio/Documentos/Dev/UEFS/IC/sensorhub:/ros2_ws
+      - /home/marcio/Documentos/Dev/UEFS/IC/sensorhub:/ros2_ws
 
       # Volumes abaixo para usar na raspberry
-      - /home/labpds/.ros/fastdds.xml:/ros2_ws/config/fastdds.xml
-      - /home/labpds/Documentos/ros2-sensorhub:/ros2_ws
-      - /home/labpds/WiringPi:/ros2_ws/src/wiringpi
+      #- /home/labpds/.ros/fastdds.xml:/ros2_ws/config/fastdds.xml
+      #- /home/labpds/Documentos/ros2-sensorhub:/ros2_ws
+      #- /home/labpds/WiringPi:/ros2_ws/src/wiringpi
     devices:
       - /dev/mem:/dev/mem
       - /dev/gpiomem:/dev/gpiomem
@@ -33,7 +33,7 @@ services:
         make install &&
         echo '*** wiringPi instalado com sucesso. ***' &&
         echo '*** 2/3: Configurando ROS2 workspace... ***' &&
-        source /opt/ros/jazzy/setup.bash &&
+        source /opt/ros/humble/setup.bash &&
         cd /ros2_ws &&
         source install/setup.bash &&
         echo '*** 3/3: Pronto para rodar o central_node como root ***' &&

@@ -44,18 +44,37 @@ void ActuatorNode::motor_service_callback(
 
 void ActuatorNode::goal_position_callback(const ActuatorGoalPosition& msg)
 {
+    bool check_id = false;
+    for(const auto &id : actuator_ids_){
+        if(id == msg.id){
+            check_id = true;
+        }
+    }
+
+    if (!check_id) return;
+
+    double goal_in_deg = msg.goal * angular_resolution_;
+    if (goal_in_deg > max_deg_ || goal_in_deg < min_deg_) return;
+
     actuator_manager_->setGoalPosition(msg.id, msg.goal);
 }
 
 void ActuatorNode::load_parameters()
 {
     this->declare_parameter<int>("update_rate_ms", 15);
+    this->declare_parameter<int>("min_deg", 100);
+    this->declare_parameter<int>("max_deg", 180);
+    this->declare_parameter<int>("angular_resolution", 0.088);
+    this->declare_parameter<std::vector<int>>("actuator_ids", {});
     set_parameters();
 }
 
 void ActuatorNode::set_parameters()
 {
     update_rate_ms_ = this->get_parameter("update_rate_ms").as_int();
+    min_deg_ = this->get_parameter("min_deg").as_int();
+    max_deg_ = this->get_parameter("max_deg").as_int();
+    angular_resolution_ = this->get_parameter("max_deg").as_double();
 }
 
 bool ActuatorNode::init_serial(const char* device, int baudrate)

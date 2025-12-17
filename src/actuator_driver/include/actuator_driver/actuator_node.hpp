@@ -45,6 +45,10 @@ class ActuatorNode : public rclcpp::Node
         rclcpp::TimerBase::SharedPtr timer_;
 
         int update_rate_ms_;
+        int min_deg_;
+        int max_deg_;
+        double angular_resolution_;
+        std::vector<int> actuator_ids_;
 };
 
 #endif // ACTUATOR_NODE_HPP
