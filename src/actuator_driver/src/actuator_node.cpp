@@ -44,6 +44,7 @@ void ActuatorNode::motor_service_callback(
 
 void ActuatorNode::goal_position_callback(const ActuatorGoalPosition& msg)
 {
+    // apenas ids adicionados
     bool check_id = false;
     for(const auto &id : actuator_ids_){
         if(id == msg.id){
@@ -53,10 +54,13 @@ void ActuatorNode::goal_position_callback(const ActuatorGoalPosition& msg)
 
     if (!check_id) return;
 
-    double goal_in_deg = msg.goal * angular_resolution_;
-    if (goal_in_deg > max_deg_ || goal_in_deg < min_deg_) return;
+    // limite de rotação
+    if (msg.goal > max_deg_ || msg.goal < min_deg_) return;
 
-    actuator_manager_->setGoalPosition(msg.id, msg.goal);
+    int16_t goal_unit = static_cast<int16_t>(
+        std::round(msg.goal / angular_resolution_)
+    );
+    actuator_manager_->setGoalPosition(msg.id, goal_unit);
 }
 
 void ActuatorNode::load_parameters()

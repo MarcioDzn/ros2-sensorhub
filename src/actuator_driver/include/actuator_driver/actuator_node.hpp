@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <vector>
+#include <cmath>
 
 #include "rclcpp/rclcpp.hpp"
 #include "common_serial/serial_handler.hpp"
