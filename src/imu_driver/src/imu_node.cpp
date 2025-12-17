@@ -2,7 +2,9 @@
 
 using namespace std::chrono_literals;
 
-IMUNode::IMUNode() : Node("imu_node")
+IMUNode::IMUNode() : Node("imu_node", rclcpp::NodeOptions()
+           .allow_undeclared_parameters(true)
+           .automatically_declare_parameters_from_overrides(true))
 {
     // inicializa o wiringpi
     BNO055IMU::setup_wiringpi();
@@ -13,17 +15,17 @@ IMUNode::IMUNode() : Node("imu_node")
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .best_effort()
         .durability_volatile();
-    for (size_t id = 0; id < imu_ids_.size(); id++)
+    for (const auto &imu_config: imus_config_)
     {
         // cria e armazena as instâncias dos IMUs
-        auto imu = std::make_shared<BNO055IMU>(multiplex_ids_[id], imu_ids_[id], imu_addresses_[id]);
+        auto imu = std::make_shared<BNO055IMU>(imu_config.multiplexer, imu_config.id, imu_config.address);
         imus_.push_back(imu);
         
         // cria um publisher pra cada IMU
         RCLCPP_INFO(this->get_logger(), 
-            "Criando publisher para o sensor %d", imu_ids_[id]);
+            "Criando publisher para o sensor %d", imu_config.id);
         auto publisher = this->create_publisher<IMUData>(
-            "" + imu_names_[id] + "/imu", qos);
+            "" + imu_config.name + "/imu", qos);
         publishers_.push_back(publisher);
     }
     
@@ -44,7 +46,7 @@ IMUNode::IMUNode() : Node("imu_node")
 // callback que envia os dados dos 3 sensores
 void IMUNode::timer_callback()
 {
-    for (size_t id = 0; id < imu_ids_.size(); id++)
+    for (size_t id = 0; id < imus_.size(); id++)
     {
         auto message = IMUData();
         std::vector<double> imu_data;
@@ -61,62 +63,59 @@ void IMUNode::timer_callback()
     }
 }
 
-std::vector<std::vector<int>> IMUNode::chunk_vector(
-    const std::vector<int64_t>& flat, 
-    size_t group_size
-) 
+void IMUNode::parse_imus(std::vector<std::string> param_names)
 {
-    std::vector<std::vector<int>> chunks;
-
-    if (flat.empty()) {
-        RCLCPP_WARN(this->get_logger(), "Vetor de entrada está vazio.");
-        return chunks;
+    std::set<std::string> imu_names;
+    // pega o nome do imu.
+    // ex: sensor_1
+    for (const auto &p : param_names) {
+        auto rest = p.substr(5);
+        auto name = rest.substr(0, rest.find('.'));
+        imu_names.insert(name);
     }
 
-    if (group_size == 0) {
-        RCLCPP_ERROR(this->get_logger(), "group_size não pode ser 0.");
-        return chunks;
-    }
+    for (const auto &name : imu_names) {
+        ImuConfig imu;
+        imu.name = name;
 
-    if (flat.size() % group_size != 0) {
-        RCLCPP_WARN(this->get_logger(),
-            "Tamanho do vetor (%zu) não é múltiplo de group_size (%zu). "
-            "O último grupo pode ficar incompleto.",
-            flat.size(), group_size);
-    }
+        // ex: imu.id = imus.sensor_1.id
+        if (!this->get_parameter("imus." + name + ".id", imu.id)) {
+            throw std::runtime_error("IMU " + name + " sem id");
+        }
 
-    // divide o vetor plano em blocos de tamanho group_size
-    for (size_t i = 0; i < flat.size(); i += group_size) {
-        size_t end = std::min(i + group_size, flat.size());
-        chunks.emplace_back(flat.begin() + i, flat.begin() + end);
-    }
+        if (!this->get_parameter("imus." + name + ".address", imu.address)) {
+            throw std::runtime_error("IMU " + name + " sem address");
+        }
 
-    return chunks;
+        if (this->has_parameter("imus." + name + ".multiplexer")) {
+            this->get_parameter("imus." + name + ".multiplexer", imu.multiplexer);
+        } else {
+            imu.multiplexer = -1;
+        }
+
+        std::vector<int64_t> euler;
+        if (!this->get_parameter("imus." + name + ".euler_order", euler)) {
+            throw std::runtime_error("IMU " + name + " sem euler_order");
+        }
+
+        imu.euler_order[0] = static_cast<int>(euler[0]);
+        imu.euler_order[1] = static_cast<int>(euler[1]);
+        imu.euler_order[2] = static_cast<int>(euler[2]);
+
+        imus_config_.push_back(imu);
+    }
 }
 
 void IMUNode::load_parameters()
 {
-    this->declare_parameter<int>("update_rate_ms", 15);
-    this->declare_parameter<std::vector<int64_t>>("imu_ids", {1, 2, 3});
-    this->declare_parameter<std::vector<int64_t>>("imu_addresses", {0x28, 0x29, 0x28});
-    this->declare_parameter<std::vector<int64_t>>("euler_orders", {1, 2, 0, 1, 2, 0, 1, 2, 0});
-    this->declare_parameter<std::vector<int64_t>>("multiplex_ids", {0, 1, 0});
-    this->declare_parameter<std::vector<std::string>>(
-        "imu_names", {"sensor_1", "sensor_2", "sensor_3"});
-
     set_parameters();
 }
 
 void IMUNode::set_parameters()
 {
-    imu_ids_ = this->get_parameter("imu_ids").as_integer_array();
-    imu_addresses_ = this->get_parameter("imu_addresses").as_integer_array();
-    multiplex_ids_ = this->get_parameter("multiplex_ids").as_integer_array();
-    imu_names_ = this->get_parameter("imu_names").as_string_array();
-    update_rate_ms_ = this->get_parameter("update_rate_ms").as_int();
-
-    auto flat = this->get_parameter("euler_orders").as_integer_array();
-    euler_orders_ = chunk_vector(flat, imu_ids_.size());
+    auto param_names = this->list_parameters({"imus"}, 3).names;
+    this->get_parameter("update_rate_ms", update_rate_ms_);
+    parse_imus(param_names);
 }
 
 IMUNode::~IMUNode() = default;

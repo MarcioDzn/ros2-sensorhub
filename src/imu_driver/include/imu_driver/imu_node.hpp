@@ -17,25 +17,26 @@ class IMUNode : public rclcpp::Node
         virtual ~IMUNode();
 
     private:
+
+        struct ImuConfig {
+            std::string name;
+            int id;
+            int address;
+            int multiplexer;
+            std::array<int, 3> euler_order;
+        };
+
         void timer_callback();
-        std::vector<std::vector<int>> chunk_vector(
-            const std::vector<int64_t>& flat, 
-            size_t group_size);
         void load_parameters();
         void set_parameters();
+        void parse_imus(std::vector<std::string> param_names);
 		
         std::vector<std::shared_ptr<BNO055IMU>> imus_;
         std::vector<rclcpp::Publisher<IMUData>::SharedPtr> publishers_;
         
         rclcpp::TimerBase::SharedPtr timer_;
         int update_rate_ms_;
-        
-        // parâmetros
-        std::vector<int64_t> imu_ids_;
-        std::vector<int64_t> imu_addresses_;
-        std::vector<int64_t> multiplex_ids_;
-        std::vector<std::vector<int>> euler_orders_;
-        std::vector<std::string> imu_names_;
+        std::vector<ImuConfig> imus_config_;
 };
 
 #endif // IMU_NODE_HPP
