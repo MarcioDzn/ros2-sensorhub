@@ -7,7 +7,7 @@ using namespace std::chrono_literals;
 
 ActuatorNode::ActuatorNode() 
     : Node("actuator_node")
-{
+{   
     load_parameters();
     
     actuator_subscriber_ = this->create_subscription<ActuatorGoalPosition>(
@@ -49,15 +49,18 @@ void ActuatorNode::goal_position_callback(const ActuatorGoalPosition& msg)
 
 void ActuatorNode::load_parameters()
 {
+    this->declare_parameter<int>("update_rate_ms", 15);
     set_parameters();
 }
 
 void ActuatorNode::set_parameters()
 {
+    update_rate_ms_ = this->get_parameter("update_rate_ms").as_int();
 }
 
 bool ActuatorNode::init_serial(const char* device, int baudrate)
 {
+    RCLCPP_INFO(this->get_logger(), "Tentando conectar com o dispositivo %s com baudrate %d", device, baudrate);
     serial_handler_ = std::make_unique<SerialHandler>();
     
     if ( serial_handler_->init(device) < 0 )
@@ -102,9 +105,14 @@ int main(int argc, char * argv[])
     rclcpp::init(argc, argv);
     
     auto node = std::make_shared<ActuatorNode>();
-    
-    const char* device = DEVICE;
-    int baudrate = BAUDRATE;
+
+    // parametros do dispositivo serial
+    node->declare_parameter<std::string>("device", DEVICE);
+    node->declare_parameter<int>("baudrate", BAUDRATE);
+
+    std::string device_str = node->get_parameter("device").as_string();
+    const char* device = device_str.c_str();
+    int baudrate = node->get_parameter("baudrate").as_int();
     if ( !node->init_serial(device, baudrate) )
     {
         RCLCPP_FATAL(node->get_logger(), "Erro ao configurar porta serial. Finalizando execucao");

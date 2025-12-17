@@ -43,6 +43,8 @@ class ActuatorNode : public rclcpp::Node
         
         std::shared_ptr<SerialHandler> serial_handler_;
         rclcpp::TimerBase::SharedPtr timer_;
+
+        int update_rate_ms_;
 };
 
 #endif // ACTUATOR_NODE_HPP
