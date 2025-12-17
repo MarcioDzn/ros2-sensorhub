@@ -1,5 +1,5 @@
 actuator_node:
   ros__parameters:
-    update_rate_ms: 200
+    update_rate_ms: 15
     device: "/dev/ttyUSB0"
     baudrate: 2000000

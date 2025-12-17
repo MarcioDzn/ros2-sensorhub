@@ -78,6 +78,8 @@ void PressureNode::set_parameters()
 
 bool PressureNode::init_serial(const char* device, int baudrate)
 {
+    RCLCPP_INFO(this->get_logger(), "Tentando conectar com o dispositivo %s com baudrate %d", device, baudrate);
+    
     serial_handler_ = std::make_unique<SerialHandler>();
     
     if ( serial_handler_->init(device) < 0 )
@@ -127,8 +129,12 @@ int main(int argc, char * argv[])
     
     auto node = std::make_shared<PressureNode>();
     
-    const char* device = DEVICE;
-    int baudrate = BAUDRATE;
+    node->declare_parameter<std::string>("device", DEVICE);
+    node->declare_parameter<int>("baudrate", BAUDRATE);
+
+    std::string device_str = node->get_parameter("device").as_string();
+    const char* device = device_str.c_str();
+    int baudrate = node->get_parameter("baudrate").as_int();
     if ( !node->init_serial(device, baudrate) )
     {
         RCLCPP_FATAL(node->get_logger(), "Erro ao configurar porta serial. Finalizando execucao");

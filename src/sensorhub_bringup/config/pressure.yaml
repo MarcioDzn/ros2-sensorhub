@@ -1,0 +1,5 @@
+pressure_node:
+  ros__parameters:
+    update_rate_ms: 15
+    device: "/dev/ttyACM0"
+    baudrate: 115200

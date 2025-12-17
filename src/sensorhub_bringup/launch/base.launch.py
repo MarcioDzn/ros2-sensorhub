@@ -16,6 +16,12 @@ def generate_launch_description():
         'actuator.yaml'
     ])
 
+    pressure_params = PathJoinSubstitution([
+        FindPackageShare('sensorhub_bringup'),
+        'config',
+        'pressure.yaml'
+    ])
+
     return LaunchDescription([
         Node(
             package='imu_driver',
@@ -28,6 +34,7 @@ def generate_launch_description():
             package='pressure_driver',
             executable='pressure_node',
             output='screen',
+            parameters=[pressure_params]
         ),
         
         Node(
