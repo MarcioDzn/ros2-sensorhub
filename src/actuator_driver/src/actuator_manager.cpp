@@ -62,7 +62,9 @@ uint8_t ActuatorManager::setTorque(uint8_t id, uint8_t status)
 	uint8_t instruction_list[] = {0x18, status};
     
     auto packet = createPacket(id, 0x03, instruction_list, 2, out_size);
-    return serial_handler_->writeData(packet, out_size);
+   	ssize_t result = serial_handler_->writeData(packet, out_size);
+	free(packet);
+	return result;
 }
 
 uint8_t ActuatorManager::setGoalPosition(uint8_t id, uint16_t goal_position)
@@ -74,16 +76,33 @@ uint8_t ActuatorManager::setGoalPosition(uint8_t id, uint16_t goal_position)
 	uint8_t instruction_list[] = {0x1E, lsb, msb};
     
     auto packet = createPacket(id, 0x03, instruction_list, 3, out_size);
-    return serial_handler_->writeData(packet, out_size);
+    ssize_t result = serial_handler_->writeData(packet, out_size);
+	free(packet);
+	return result;
 }
 
-/*
-uint8_t ActuatorManager::getPresentPosition(uint8_t id)
+
+uint16_t ActuatorManager::getPresentPosition(uint8_t id)
 {
-    auto packet = createPacket(id, 0x03, instruction_list, 3, out_size);
-    return serial_handler_->writeData(packet, out_size);
+	uint8_t out_size;
+	uint8_t instruction_list[] = {0x24, 0x02};
+
+    auto packet = createPacket(id, 0x02, instruction_list, 2, out_size);
+    ssize_t result_tx = serial_handler_->writeData(packet, out_size);
+	free(packet);
+	if (result_tx <= 0) return -1;
+
+	StatusPacket status_packet;
+	int result_rx = readStatus(id, status_packet);
+	if (result_rx != 0) return -1;
+
+	uint16_t value =
+    	static_cast<uint16_t>(status_packet.params[0]) |
+    	(static_cast<uint16_t>(status_packet.params[1]) << 8);
+
+	return value;
 }
-*/
+
 
 /*
  * função inteiramente baseada em:
@@ -102,11 +121,16 @@ int ActuatorManager::readPacket(uint8_t* packet)
 
 	while(true)
 	{
-
 		if (std::chrono::steady_clock::now() - start > TIMEOUT)
       		return -2; // timeout
 
-		read_size += serial_handler_->readData(packet, packet_size - read_size);
+		ssize_t n = serial_handler_->readData(packet + read_size,
+											packet_size - read_size);
+
+		if (n <= 0)
+			continue;
+
+		read_size += static_cast<size_t>(n);
 
 		// se já tiver pego todos os dados importantes
 		// ou pelo menos a quantidade necessária
@@ -186,6 +210,8 @@ int ActuatorManager::readStatus(uint8_t id, StatusPacket& out)
 
 	out.id = rxbuffer[PKT_ID];
 	out.error = error;
+
+	if (error != 0) return -1; 
 
 	for (uint8_t i = 0; i < length-2; i++)
 	{
