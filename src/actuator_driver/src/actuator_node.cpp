@@ -55,7 +55,11 @@ void ActuatorNode::goal_position_callback(const ActuatorGoalPosition& msg)
     if (!check_id) return;
 
     // limite de rotação
+    // rotaciona o atuador n graus a partir da pos atual
+    // sendo o grau positivo ou negativo
+    // TODO: capturar posicao atual do motor
     if (msg.goal > max_deg_ || msg.goal < min_deg_) return;
+    if (msg.goal < 0) return;
 
     int16_t goal_unit = static_cast<int16_t>(
         std::round(msg.goal / angular_resolution_)

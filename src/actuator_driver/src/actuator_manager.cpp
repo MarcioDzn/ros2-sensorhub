@@ -1,7 +1,16 @@
 #include "actuator_manager.hpp"
 
-ActuatorManager::ActuatorManager() {}
+#define PKT_HEADER0             0
+#define PKT_HEADER1             1
+#define PKT_ID                  2
+#define PKT_LENGTH              3
+#define PKT_INSTRUCTION         4
+#define PKT_ERROR               4
+#define PKT_PARAMETER0          5
 
+#define RXPACKET_MAX_LEN    (250)
+
+ActuatorManager::ActuatorManager() {}
 
 void ActuatorManager::setSerialHandler(std::shared_ptr<SerialHandler> serial) {
 	serial_handler_ = serial;
@@ -68,6 +77,122 @@ uint8_t ActuatorManager::setGoalPosition(uint8_t id, uint16_t goal_position)
     return serial_handler_->writeData(packet, out_size);
 }
 
+/*
+uint8_t ActuatorManager::getPresentPosition(uint8_t id)
+{
+    auto packet = createPacket(id, 0x03, instruction_list, 3, out_size);
+    return serial_handler_->writeData(packet, out_size);
+}
+*/
 
+/*
+ * função inteiramente baseada em:
+ * https://github.com/ROBOTIS-GIT/DynamixelSDK/blob/jazzy/c%2B%2B/src/dynamixel_sdk/protocol1_packet_handler.cpp
+*/
+int ActuatorManager::readPacket(uint8_t* packet)
+{
+	int result = -1;
+
+	size_t packet_size = 6; // tamanho minimo (HEADER0 HEADER1 ID LENGTH ERROR CHKSUM)
+	size_t read_size = 0;
+	uint8_t checksum = 0;
+
+	auto start = std::chrono::steady_clock::now();
+  	constexpr auto TIMEOUT = std::chrono::milliseconds(20);
+
+	while(true)
+	{
+
+		if (std::chrono::steady_clock::now() - start > TIMEOUT)
+      		return -2; // timeout
+
+		read_size += serial_handler_->readData(packet, packet_size - read_size);
+
+		// se já tiver pego todos os dados importantes
+		// ou pelo menos a quantidade necessária
+		if (read_size >= packet_size)
+		{
+			uint8_t i = 0;
+			for (i = 0; i < (read_size-1); i++)
+				if (packet[i] == 0xFF && packet[i+1] == 0xFF) 
+					break;
+
+			if (i == 0)
+			{
+				if (packet[PKT_ID] > 0xFD ||                  // unavailable ID
+					packet[PKT_LENGTH] > RXPACKET_MAX_LEN ||  // unavailable Length
+					packet[PKT_ERROR] > 0x7F)                 // unavailable Error
+				{
+					// remove o primeiro byte no pacote
+					for (uint16_t s = 0; s < read_size - 1; s++)
+						packet[s] = packet[1 + s];
+					read_size -= 1;
+					continue;
+				}
+
+				// recalcula o tamanho exato do pacote
+				if (packet_size != packet[PKT_LENGTH] + PKT_LENGTH + 1)
+				{
+					packet_size = packet[PKT_LENGTH] + PKT_LENGTH + 1;
+					continue;
+				}
+
+				if (read_size < packet_size)
+				{
+					// TODO: checar timeout
+					continue;
+				}
+
+				// calcula checksum
+				checksum = 0;
+				for (uint16_t i = 2; i < packet_size - 1; i++)   // exceto header, checksum
+					checksum += packet[i];
+				checksum = ~checksum;
+
+				// verifica checksum
+				if (packet[packet_size - 1] == checksum)
+				{
+					result = 0;
+				}
+				else
+				{
+					result = -1;
+				}
+				break;
+				
+			} else 
+			{
+				for (uint8_t s = 0; s < read_size - i; s++)
+				{
+					packet[s] = packet[s+i];
+				}
+				read_size -= i;
+			}
+		}
+	}
+
+	return result;
+}
+
+int ActuatorManager::readStatus(uint8_t id, StatusPacket& out)
+{
+	uint8_t rxbuffer[RXPACKET_MAX_LEN];
+
+	if (readPacket(rxbuffer) != 0) return -1;
+	if (id != rxbuffer[PKT_ID]) return -1;
+
+	uint8_t length = rxbuffer[PKT_LENGTH];
+	uint8_t error = rxbuffer[PKT_ERROR];
+
+	out.id = rxbuffer[PKT_ID];
+	out.error = error;
+
+	for (uint8_t i = 0; i < length-2; i++)
+	{
+		out.params[i] = rxbuffer[PKT_PARAMETER0+i];
+	}
+
+	return 0;
+}
 
 ActuatorManager::~ActuatorManager() = default;
