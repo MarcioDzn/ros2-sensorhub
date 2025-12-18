@@ -54,7 +54,7 @@ uint8_t* ActuatorManager::createPacket(
 	return packet;
 }
 
-uint8_t ActuatorManager::setTorque(uint8_t id, uint8_t status)
+int ActuatorManager::setTorque(uint8_t id, uint8_t status)
 {
 	if (status != 0 && status != 1) return -1;
 	
@@ -67,7 +67,7 @@ uint8_t ActuatorManager::setTorque(uint8_t id, uint8_t status)
 	return result;
 }
 
-uint8_t ActuatorManager::setGoalPosition(uint8_t id, uint16_t goal_position)
+int ActuatorManager::setGoalPosition(uint8_t id, uint16_t goal_position)
 {
 	uint8_t lsb = goal_position & 0xFF;        // 8 bits menos significativos
 	uint8_t msb = (goal_position >> 8) & 0xFF; // 8 bits mais significativos
