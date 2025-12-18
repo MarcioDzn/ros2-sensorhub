@@ -82,7 +82,7 @@ uint8_t ActuatorManager::setGoalPosition(uint8_t id, uint16_t goal_position)
 }
 
 
-uint16_t ActuatorManager::getPresentPosition(uint8_t id)
+int ActuatorManager::getPresentPosition(uint8_t id, uint16_t& out)
 {
 	uint8_t out_size;
 	uint8_t instruction_list[] = {0x24, 0x02};
@@ -94,13 +94,12 @@ uint16_t ActuatorManager::getPresentPosition(uint8_t id)
 
 	StatusPacket status_packet;
 	int result_rx = readStatus(id, status_packet);
-	if (result_rx != 0) return -1;
+	if (result_rx != 0) return -2;
 
-	uint16_t value =
-    	static_cast<uint16_t>(status_packet.params[0]) |
+	out = static_cast<uint16_t>(status_packet.params[0]) |
     	(static_cast<uint16_t>(status_packet.params[1]) << 8);
 
-	return value;
+	return 0;
 }
 
 
