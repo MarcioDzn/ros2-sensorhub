@@ -18,6 +18,7 @@ class ActuatorManager
 		void setSerialHandler(std::shared_ptr<SerialHandler> serial);
 		int setTorque(uint8_t id, uint8_t status);
 		int setGoalPosition(uint8_t id, uint16_t goal_position);
+		int getPresentPosition(uint8_t id, uint16_t& out);
 		
 	private:
 		struct StatusPacket
@@ -30,7 +31,6 @@ class ActuatorManager
 		uint8_t* createPacket(uint8_t id, uint8_t instr, uint8_t* parameters, uint8_t parameter_size, uint8_t& out_size);
 		int readPacket(uint8_t* packet);
 		int readStatus(uint8_t id, StatusPacket& out);
-		int getPresentPosition(uint8_t id, uint16_t& out);
 		
 		std::shared_ptr<SerialHandler> serial_handler_;	
 };
