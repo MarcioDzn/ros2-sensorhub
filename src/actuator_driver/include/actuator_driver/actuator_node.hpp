@@ -4,6 +4,8 @@
 #include <memory>
 #include <vector>
 #include <cmath>
+#include <map>
+#include <string>
 
 #include "rclcpp/rclcpp.hpp"
 #include "common_serial/serial_handler.hpp"
@@ -17,39 +19,52 @@ using ActuatorGoalPosition = interfaces::msg::ActuatorGoalPosition;
 class ActuatorNode : public rclcpp::Node
 {
     public:
-        explicit ActuatorNode();
+        // Structs movidas para o topo para que os mapas abaixo as conheçam
+        struct Actuator
+        {
+            int id;
+            int min_deg; // int é melhor para cálculos de grau
+            int max_deg;
+            std::string device; // MUDANÇA: de char* para std::string
+        }; // Faltava o ; aqui
+
+        struct ActuatorType
+        {
+            double angular_resolution;
+            std::map<int, Actuator> actuators;
+        }; // Faltava o ; aqui
+
+        explicit ActuatorNode(const rclcpp::NodeOptions & options);
         virtual ~ActuatorNode();
 
-        bool init_serial(const char* device, int baudrate);
-        void send_packet();
+        // Retorno mudado para SerialHandler* para bater com o .cpp
+        SerialHandler* init_serial(const char* device, int baudrate);
         
-        std::shared_ptr<ActuatorManager> get_actuator_manager() { return actuator_manager_; }
-        std::shared_ptr<SerialHandler> get_serial_handler() { return serial_handler_; }
-        void set_serial_handler();
+        void send_packet();
         void set_actuator_manager();
         
+        std::unique_ptr<ActuatorManager>& get_actuator_manager() { return actuator_manager_; }
+        
+        // Getter corrigido para plural (combina com o mapa serial_handlers_)
+        std::map<std::string, std::shared_ptr<SerialHandler>>& get_serial_handlers() { return serial_handlers_; }
+
     private:
-        void timer_callback();
         void goal_position_callback(const ActuatorGoalPosition& msg);
         void load_parameters();
-        void set_parameters();
         void motor_service_callback(
-                const std::shared_ptr<SetMotorConfig::Request> request,
-                std::shared_ptr<SetMotorConfig::Response> response);
-    
+            const std::shared_ptr<SetMotorConfig::Request> request,
+            std::shared_ptr<SetMotorConfig::Response> response);
+            
+        // Agora o compilador já sabe o que é ActuatorType
+        std::map<std::string, ActuatorType> actuators_;
+        std::map<std::string, std::shared_ptr<SerialHandler>> serial_handlers_;
+
         rclcpp::Subscription<ActuatorGoalPosition>::SharedPtr actuator_subscriber_;
         rclcpp::Service<SetMotorConfig>::SharedPtr motor_service_;
         
-        std::shared_ptr<ActuatorManager> actuator_manager_;
+        std::unique_ptr<ActuatorManager> actuator_manager_;
         
-        std::shared_ptr<SerialHandler> serial_handler_;
-        rclcpp::TimerBase::SharedPtr timer_;
-
         int update_rate_ms_;
-        int min_deg_;
-        int max_deg_;
-        double angular_resolution_;
-        std::vector<int> actuator_ids_;
 };
 
 #endif // ACTUATOR_NODE_HPP

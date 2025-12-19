@@ -1,10 +1,29 @@
 actuator_node:
   ros__parameters:
     update_rate_ms: 15
-    device: "/dev/ttyUSB0"
-    baudrate: 2000000
-    actuator_ids: [1, 2, 3]
-    min_deg: 100
-    max_deg: 180
-    angular_resolution: 0.088
-    # TODO: fazer um pra cada motor
+
+    devices: 
+      usb0: 
+        path: /dev/ttyUSB0
+        baudrate: 2000000
+
+    dynamixel:
+      angular_resolution: 0.088
+
+      actuator_1:
+        id: 1
+        min_deg: 100
+        max_deg: 180
+        device: usb0
+
+      actuator_2:
+        id: 2
+        min_deg: 100
+        max_deg: 180
+        device: usb0
+
+      actuator_3:
+        id: 3
+        min_deg: 100
+        max_deg: 180
+        device: usb0
