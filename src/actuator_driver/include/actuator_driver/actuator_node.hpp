@@ -19,25 +19,23 @@ using ActuatorGoalPosition = interfaces::msg::ActuatorGoalPosition;
 class ActuatorNode : public rclcpp::Node
 {
     public:
-        // Structs movidas para o topo para que os mapas abaixo as conheçam
         struct Actuator
         {
             int id;
-            int min_deg; // int é melhor para cálculos de grau
+            int min_deg; 
             int max_deg;
-            std::string device; // MUDANÇA: de char* para std::string
-        }; // Faltava o ; aqui
+            std::string device; 
+        }; 
 
         struct ActuatorType
         {
             double angular_resolution;
             std::map<int, Actuator> actuators;
-        }; // Faltava o ; aqui
+        }; 
 
         explicit ActuatorNode(const rclcpp::NodeOptions & options);
         virtual ~ActuatorNode();
 
-        // Retorno mudado para SerialHandler* para bater com o .cpp
         SerialHandler* init_serial(const char* device, int baudrate);
         
         void send_packet();
@@ -45,7 +43,6 @@ class ActuatorNode : public rclcpp::Node
         
         std::unique_ptr<ActuatorManager>& get_actuator_manager() { return actuator_manager_; }
         
-        // Getter corrigido para plural (combina com o mapa serial_handlers_)
         std::map<std::string, std::shared_ptr<SerialHandler>>& get_serial_handlers() { return serial_handlers_; }
 
     private:
@@ -55,7 +52,6 @@ class ActuatorNode : public rclcpp::Node
             const std::shared_ptr<SetMotorConfig::Request> request,
             std::shared_ptr<SetMotorConfig::Response> response);
             
-        // Agora o compilador já sabe o que é ActuatorType
         std::map<std::string, ActuatorType> actuators_;
         std::map<std::string, std::shared_ptr<SerialHandler>> serial_handlers_;
 
