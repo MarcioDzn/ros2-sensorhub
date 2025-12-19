@@ -148,13 +148,13 @@ void ActuatorNode::load_parameters()
 
             Actuator act;
             act.id = value.get<int>();
-            act.min_deg = all_params.count(prefix + ".min_deg") ? all_params.at(prefix + ".min_deg").get<int>() : -180;
-            act.max_deg = all_params.count(prefix + ".max_deg") ? all_params.at(prefix + ".max_deg").get<int>() : 180;
+            act.min_deg = all_params.count(prefix + ".min_deg") ? all_params.at(prefix + ".min_deg").get<int>() : 0;
+            act.max_deg = all_params.count(prefix + ".max_deg") ? all_params.at(prefix + ".max_deg").get<int>() : 360;
             act.device  = all_params.count(prefix + ".device")  ? all_params.at(prefix + ".device").get<std::string>() : "usb0";
 
             actuators_[type].actuators[act.id] = act;
             
-            RCLCPP_INFO(this->get_logger(), "Motor dinâmico: [%s] ID %d carregado.", type.c_str(), act.id);
+            RCLCPP_INFO(this->get_logger(), "Atuador: [%s] ID %d carregado.", type.c_str(), act.id);
         }
     }
 }
