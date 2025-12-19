@@ -27,23 +27,56 @@ void ActuatorNode::motor_service_callback(
 {
     auto command = request->command;
     auto id = request->motor_id;
-    RCLCPP_INFO(this->get_logger(), "%s %d", command.c_str(), id);
     response->success = false;
-    if (request->command == "set_goal_position"){
-        uint16_t goal_pos = request->params[0];
-        actuator_manager_->setGoalPosition(request->motor_id, goal_pos);
-        response->success = true;
-    } else if (request->command == "enable_torque"){
-        actuator_manager_->setTorque(request->motor_id, 1);
-        response->success = true;
-    } else if (request->command == "disable_torque"){
-        actuator_manager_->setTorque(request->motor_id, 0);
-        response->success = true;
+
+    Actuator found_actuator;
+    bool actuator_exists = false;
+    for (auto const& [type, type_struct] : actuators_) {
+        if (type_struct.actuators.count(id)) {
+            found_actuator = type_struct.actuators.at(id);
+            actuator_exists = true;
+            break;
+        }
+    }
+
+    if (!actuator_exists) {
+        RCLCPP_ERROR(this->get_logger(), "SERVICO: ATUADOR DE ID %d NAO ENCONTRADO NO YAML", id);
+        return;
+    }
+
+    // troca o serial_handler a depender do path do device
+    bool handler_set = false;
+    for (auto const& [path, handler] : serial_handlers_) {
+        if (path.find(found_actuator.device) != std::string::npos) {
+            actuator_manager_->setSerialHandler(handler);
+            handler_set = true;
+            break;
+        }
+    }
+
+    if (!handler_set) {
+        RCLCPP_ERROR(this->get_logger(), "SERVICO: SERIAL PARA O DISPOSITIVO %s NAO ENCONTRADA", found_actuator.device.c_str());
+        return;
+    }
+
+    // executa o comando
+    RCLCPP_INFO(this->get_logger(), "Executando '%s' no Atuador %d (%s)", command.c_str(), id, found_actuator.device.c_str());
+
+    if (command == "set_goal_position") {
+        uint16_t goal_pos = static_cast<uint16_t>(request->params[0]);
+        if (actuator_manager_->setGoalPosition(id, goal_pos) == 0) response->success = true;
+    } 
+    else if (command == "enable_torque") {
+        if (actuator_manager_->setTorque(id, 1) == 0) response->success = true;
+    } 
+    else if (command == "disable_torque") {
+        if (actuator_manager_->setTorque(id, 0) == 0) response->success = true;
     }
 }
 
 void ActuatorNode::goal_position_callback(const ActuatorGoalPosition& msg)
 {
+    // busca o tipo do atuador
     ActuatorType actuator_type;
     try {
         actuator_type = actuators_.at(msg.type);
@@ -52,23 +85,48 @@ void ActuatorNode::goal_position_callback(const ActuatorGoalPosition& msg)
         return;
     }
 
+    // busca atuador pelo id
     Actuator actuator;
     try {
         actuator = actuator_type.actuators.at(msg.id);
     } catch (const std::out_of_range& e) {
-        RCLCPP_ERROR(this->get_logger(), "ID %d NAO CADASTRADO", msg.id);
+        RCLCPP_ERROR(this->get_logger(), "ID %d NAO CADASTRADO NO TIPO %s", msg.id, msg.type.c_str());
         return;
     }
 
-    uint16_t pres_pos;
-    if (actuator_manager_->getPresentPosition(actuator.id, pres_pos) != 0) return;
+    // troca o serial_handler a depender do path do device
+    bool handler_set = false;
+    for (auto const& [path, handler] : serial_handlers_) {
+        if (path.find(actuator.device) != std::string::npos) {
+            actuator_manager_->setSerialHandler(handler);
+            handler_set = true;
+            break;
+        }
+    }
 
-    double goal_pos_deg = (pres_pos * actuator_type.angular_resolution) + msg.goal;
+    if (!handler_set) {
+        RCLCPP_ERROR(this->get_logger(), "SERIAL HANDLER PARA O DISPOSITIVO %s NAO ENCONTRADO", actuator.device.c_str());
+        return;
+    }
+    // -------------------------------------------------------
 
-    if (goal_pos_deg > actuator.max_deg || goal_pos_deg < actuator.min_deg) return;
+    double goal_pos_deg = msg.goal;
+    if (goal_pos_deg > actuator.max_deg || goal_pos_deg < actuator.min_deg) {
+        RCLCPP_WARN(this->get_logger(), 
+            "COMANDO ABSOLUTO PARA ATUADOR %d FORA DOS LIMITES (%d a %d): %.2f", 
+            actuator.id, actuator.min_deg, actuator.max_deg, goal_pos_deg);
+        return;
+    }
 
+    // converte de graus pra a unidade do dynamixel
     int16_t goal_pos = static_cast<int16_t>(std::round(goal_pos_deg / actuator_type.angular_resolution));
-    actuator_manager_->setGoalPosition(actuator.id, goal_pos);
+    
+    if (actuator_manager_->setGoalPosition(actuator.id, goal_pos) != 0) {
+        RCLCPP_ERROR(this->get_logger(), "ERRO AO ENVIAR POSICAO ABSOLUTA PARA MOTOR %d", actuator.id);
+    } else {
+        RCLCPP_DEBUG(this->get_logger(), "Motor %d movido para %.2f deg (%d steps)", 
+            actuator.id, goal_pos_deg, goal_pos);
+    }
 }
 
 void ActuatorNode::load_parameters()
