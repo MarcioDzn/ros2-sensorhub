@@ -42,6 +42,67 @@ PressureNode::PressureNode() : Node("pressure_node")
         std::bind(&PressureNode::timer_callback, this));
 }
 
+void PressureNode::load_hardware_config()
+{
+    auto all_params = this->get_node_parameters_interface()->get_parameter_overrides();
+    int active_ports = 0;
+    for (const auto & [name, value] : all_params) {
+        // busca configurações de devices: devices.<nome>.path
+        if (name.find("devices.") == 0 && name.find(".path") != std::string::npos) {
+            std::string prefix = name.substr(0, name.rfind(".path"));
+            std::string path = value.get<std::string>();
+            
+            int baudrate = all_params.count(prefix + ".baudrate") ? 
+                           all_params.at(prefix + ".baudrate").get<int>() : 115200;
+
+            RCLCPP_INFO(this->get_logger(), "Iniciando Hardware: %s @ %d bps", path.c_str(), baudrate);
+
+            auto handler = std::make_shared<SerialHandler>();
+            
+            if (handler->init(path.c_str()) < 0) {
+                RCLCPP_ERROR(this->get_logger(), "FALHA AO ABRIR PORTA SERIAL: %s", path.c_str());
+                continue; 
+            }
+            handler->setDefaultConfig();
+            handler->setBaudRate(baudrate);
+
+            hardware_map_[path] = {handler};
+            active_ports++;
+
+            RCLCPP_INFO(this->get_logger(), "Porta %s configurada com sucesso.", path.c_str());
+        }
+    }
+
+    if (active_ports == 0) {
+        RCLCPP_FATAL(this->get_logger(), "NENHUMA porta serial pôde ser aberta. O nó não pode funcionar.");
+        throw std::runtime_error("Falha total na inicialização do hardware serial.");
+    } else {
+        RCLCPP_INFO(this->get_logger(), "Inicialização concluída. %d porta(s) ativa(s).", active_ports);
+    }
+}
+
+void PressureNode::load_pressure_sensors_config()
+{
+    auto all_params = this->get_node_parameters_interface()->get_parameter_overrides();
+
+    for (const auto & [name, value] : all_params)
+    {
+        if (name.find(".pressure_") != std::string::npos && name.find(".id") != std::string::npos) {
+            
+            std::string prefix = name.substr(0, name.rfind(".id"));
+            std::string type = name.substr(0, name.find("."));
+
+            PressureSensor press;
+            press.id = value.get<int>();
+            press.device  = all_params.count(prefix + ".device")  ? all_params.at(prefix + ".device").get<std::string>() : "acm0";
+
+            pressure_sensors_[press.id] = press;
+            
+            RCLCPP_INFO(this->get_logger(), "Sensor de pressao ID %d carregado.", press.id);
+        }
+    }
+}
+
 // callback que envia os dados do sensor
 void PressureNode::timer_callback()
 {

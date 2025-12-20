@@ -1,5 +1,22 @@
 pressure_node:
   ros__parameters:
     update_rate_ms: 15
-    device: "/dev/ttyACM0"
-    baudrate: 115200
+
+    devices: 
+      acm0: 
+        path: /dev/ttyACM0
+        baudrate: 115200
+
+      acm1: 
+        path: /dev/ttyACM1
+        baudrate: 115200
+
+
+    sensors:
+      pressure_1:
+        id: 1
+        device: acm0
+
+      pressure_2:
+        id: 2
+        device: acm1

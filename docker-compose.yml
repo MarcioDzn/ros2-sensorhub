@@ -14,6 +14,8 @@ services:
       #- /home/marcio/Documentos/Dev/UEFS/IC/CoppeliaSim_Edu_V4_10_0_rev0_Ubuntu22_04:/coppelia
       # Volumes para usar no pc
       - /home/marcio/Documentos/Dev/UEFS/IC/sensorhub:/ros2_ws
+      - /tmp:/tmp
+      - /dev/pts:/dev/pts
 
       # Volumes abaixo para usar na raspberry
       #- /home/labpds/.ros/fastdds.xml:/ros2_ws/config/fastdds.xml
