@@ -38,7 +38,7 @@ class PressureNode : public rclcpp::Node
         void timer_callback();
         void load_parameters();
         void set_parameters();
-        void get_pressure_data(char* buffer, size_t max_size);
+        bool get_pressure_data(std::shared_ptr<SerialHandler> handler, char* buffer, size_t max_size);
 
         std::map<std::string, DeviceInterface> hardware_map_;
         std::map<int, PressureSensor> pressure_sensors_;

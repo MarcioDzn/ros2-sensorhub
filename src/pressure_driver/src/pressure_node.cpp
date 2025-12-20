@@ -11,22 +11,28 @@
 using namespace std::chrono_literals;
 
 // TODO: criar um utils pra botar esse tipo de funcao
-std::vector<uint16_t> parse_numbers_from_string(const char* buffer)
+std::vector<uint16_t> parse_numbers_from_string(const std::string& input)
 {
     std::vector<uint16_t> values;
-    std::stringstream ss(buffer);
+    std::stringstream ss(input);
     std::string token;
     
-    while (ss >> token)
-    {
-        values.push_back(std::stoi(token));
+    while (ss >> token) {
+        try {
+            values.push_back(static_cast<uint16_t>(std::stoul(token)));
+        } catch (...) {
+            // Ignora tokens que não são números (ruído)
+            continue;
+        }
     } 
-    
     return values;
 }
 
 PressureNode::PressureNode(const rclcpp::NodeOptions & options) : Node("pressure_node", options)
 {
+    load_hardware_config();
+    load_pressure_sensors_config();
+
     load_parameters();
     
     // cria um publisher pra cada sensor de pressao
@@ -103,27 +109,34 @@ void PressureNode::load_pressure_sensors_config()
     }
 }
 
-// callback que envia os dados do sensor
 void PressureNode::timer_callback()
 {
-    auto message = InsoleData();
-    
-    size_t max_size = MAX_BUFFER_COLLECT;
-    char buffer[BUFFER_SIZE]; // 8 bits x 16 valores x 5 caracteres pra cada valor
-    get_pressure_data(buffer, max_size);
-    
-    auto values = parse_numbers_from_string(buffer);
+    // Itera sobre todos os hardwares inicializados
+    for (auto const& [path, interface] : hardware_map_) {
+        
+        char buffer[BUFFER_SIZE];
+        // Passamos o handler específico desta porta para a função de leitura
+        if (get_pressure_data(interface.serial, buffer, MAX_BUFFER_COLLECT)) {
+            
+            auto values = parse_numbers_from_string(buffer);
+            
+            if (values.empty()) continue;
 
-    serial_handler_->clearBuffer();
+            auto message = InsoleData();
+            message.stamp = this->get_clock()->now();
+            // Supondo que sua mensagem tenha um campo para identificar a origem
+            // message.device_path = path; 
 
-    for (size_t i = 0; i < values.size(); ++i)
-    {
-        message.pressures.push_back(values[i]);
+            for (uint16_t val : values) {
+                message.pressures.push_back(val);
+            }
+            
+            publisher_->publish(message);
+            
+            // Limpa o buffer da serial para evitar acúmulo de dados antigos (lag)
+            interface.serial->clearBuffer();
+        }
     }
-    
-    message.stamp = this->get_clock()->now();
-    
-    publisher_->publish(message);
 }
 
 void PressureNode::load_parameters()
@@ -137,49 +150,20 @@ void PressureNode::set_parameters()
     update_rate_ms_ = this->get_parameter("update_rate_ms").as_int();
 }
 
-bool PressureNode::init_serial(const char* device, int baudrate)
-{
-    RCLCPP_INFO(this->get_logger(), "Tentando conectar com o dispositivo %s com baudrate %d", device, baudrate);
-    
-    serial_handler_ = std::make_unique<SerialHandler>();
-    
-    if ( serial_handler_->init(device) < 0 )
-    {
-        RCLCPP_ERROR(this->get_logger(), "Erro ao inicializar a porta serial");
-        return false;
-    }
-    RCLCPP_INFO(this->get_logger(), "Inicializacao realizada");
-    
-    if ( serial_handler_->setDefaultConfig() < 0 )
-    {
-        RCLCPP_ERROR(this->get_logger(), "Erro ao aplicar a configuracao padrao da porta serial");
-        return false;
-    }
-    RCLCPP_INFO(this->get_logger(), "Configuracao realizada");
-    
-    if ( serial_handler_->setBaudRate(baudrate) < 0 )
-    {
-        RCLCPP_ERROR(this->get_logger(), "Erro ao definir baudrate");
-        return false;
-    }
-    RCLCPP_INFO(this->get_logger(), "Aplicacao de baurate realizada");
-    
-    return true;
-}
-
-void PressureNode::get_pressure_data(char* buffer, size_t max_size)
+bool PressureNode::get_pressure_data(std::shared_ptr<SerialHandler> handler, char* buffer, size_t max_size)
 {
     size_t i = 0;
     char c;
     
     while(i < max_size-1)
     {
-        ssize_t n = serial_handler_->readData(&c, 1);
-        if (n <= 0) break; // nada foi lido ou erro
+        ssize_t n = handler->readData(&c, 1);
+        if (n <= 0) break; 
         buffer[i++] = c;
-        if (c == '\0') break; // chegou ao final da string
+        if (c == '\0') break; 
     }
     buffer[i] = '\0';
+    return (i > 0);
 }
 
 PressureNode::~PressureNode() = default;
