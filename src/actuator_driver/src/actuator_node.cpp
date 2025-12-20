@@ -30,26 +30,28 @@ void ActuatorNode::load_hardware_config()
     auto all_params = this->get_node_parameters_interface()->get_parameter_overrides();
 
     for (const auto & [name, value] : all_params) {
-        // procura por parametros devices.X.path
+        // busca configurações de devices: devices.<nome>.path
         if (name.find("devices.") == 0 && name.find(".path") != std::string::npos) {
-            
             std::string prefix = name.substr(0, name.rfind(".path"));
             std::string path = value.get<std::string>();
             
-            // pega baudrate ou usa padrao
             int baudrate = all_params.count(prefix + ".baudrate") ? 
                            all_params.at(prefix + ".baudrate").get<int>() : 2000000;
 
-            RCLCPP_INFO(this->get_logger(), "Configurando Hardware: %s @ %d", path.c_str(), baudrate);
+            RCLCPP_INFO(this->get_logger(), "Iniciando Hardware: %s @ %d bps", path.c_str(), baudrate);
 
             auto handler = std::make_shared<SerialHandler>();
-            if (handler->init(path.c_str()) < 0 || handler->setBaudRate(baudrate) < 0) {
-                RCLCPP_ERROR(this->get_logger(), "Falha ao abrir porta %s", path.c_str());
+            
+            if (handler->init(path.c_str()) < 0) {
+                RCLCPP_ERROR(this->get_logger(), "FALHA AO ABRIR PORTA SERIAL: %s", path.c_str());
                 continue; 
             }
+            handler->setDefaultConfig();
+            handler->setBaudRate(baudrate);
 
+            // cria um manager próprio pra a porta
             auto manager = std::make_shared<ActuatorManager>();
-            manager->setSerialHandler(handler.get());
+            manager->setSerialHandler(handler);
 
             hardware_map_[path] = {handler, manager};
         }
@@ -91,8 +93,6 @@ void ActuatorNode::motor_service_callback(
     std::shared_ptr<SetMotorConfig::Response> response)
 {
     auto command = request->command;
-    auto id = request->motor_id;
-
     response->success = false;
 
     // encontra o atuador

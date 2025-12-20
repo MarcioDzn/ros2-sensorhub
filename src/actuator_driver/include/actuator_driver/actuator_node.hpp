@@ -46,17 +46,12 @@ class ActuatorNode : public rclcpp::Node
         
         void send_packet();
         void set_actuator_manager();
-        
-        std::unique_ptr<ActuatorManager>& get_actuator_manager() { return actuator_manager_; }
-        
-        std::map<std::string, std::shared_ptr<SerialHandler>>& get_serial_handlers() { return serial_handlers_; }
 
     private:
         void load_actuators_config();
         void load_hardware_config();
 
         void goal_position_callback(const ActuatorGoalPosition::SharedPtr msg);
-        void load_parameters();
         void motor_service_callback(
             const std::shared_ptr<SetMotorConfig::Request> request,
             std::shared_ptr<SetMotorConfig::Response> response);
