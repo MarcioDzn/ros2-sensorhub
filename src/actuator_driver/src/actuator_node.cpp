@@ -28,7 +28,7 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions & options)
 void ActuatorNode::load_hardware_config()
 {
     auto all_params = this->get_node_parameters_interface()->get_parameter_overrides();
-
+    int active_ports = 0;
     for (const auto & [name, value] : all_params) {
         // busca configurações de devices: devices.<nome>.path
         if (name.find("devices.") == 0 && name.find(".path") != std::string::npos) {
@@ -54,7 +54,17 @@ void ActuatorNode::load_hardware_config()
             manager->setSerialHandler(handler);
 
             hardware_map_[path] = {handler, manager};
+            active_ports++;
+
+            RCLCPP_INFO(this->get_logger(), "Porta %s configurada com sucesso.", path.c_str());
         }
+    }
+
+    if (active_ports == 0) {
+        RCLCPP_FATAL(this->get_logger(), "NENHUMA porta serial pôde ser aberta. O nó não pode funcionar.");
+        throw std::runtime_error("Falha total na inicialização do hardware serial.");
+    } else {
+        RCLCPP_INFO(this->get_logger(), "Inicialização concluída. %d porta(s) ativa(s).", active_ports);
     }
 }
 
