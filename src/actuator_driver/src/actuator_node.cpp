@@ -8,7 +8,8 @@ using namespace std::chrono_literals;
 ActuatorNode::ActuatorNode(const rclcpp::NodeOptions & options) 
     : Node("actuator_node", options)
 {   
-    load_parameters();
+    load_actuators_config();
+    load_hardware_config();
     
     actuator_subscriber_ = this->create_subscription<ActuatorGoalPosition>(
         "goal_position", 10, std::bind(
@@ -47,6 +48,36 @@ void ActuatorNode::load_hardware_config()
             manager->setSerialHandler(handler.get());
 
             hardware_map_[path] = {handler, manager};
+        }
+    }
+}
+
+void ActuatorNode::load_actuators_config()
+{
+    auto all_params = this->get_node_parameters_interface()->get_parameter_overrides();
+
+    for (const auto & [name, value] : all_params)
+    {
+        if (name.find(".actuator_") != std::string::npos && name.find(".id") != std::string::npos) {
+            
+            std::string prefix = name.substr(0, name.rfind(".id"));
+            std::string type = name.substr(0, name.find("."));
+
+            if (actuators_config_.find(type) == actuators_config_.end()) {
+                std::string res_key = type + ".angular_resolution";
+                actuators_config_[type].angular_resolution = all_params.count(res_key) ? 
+                    all_params.at(res_key).get<double>() : 0.088;
+            }
+
+            Actuator act;
+            act.id = value.get<int>();
+            act.min_deg = all_params.count(prefix + ".min_deg") ? all_params.at(prefix + ".min_deg").get<int>() : 0;
+            act.max_deg = all_params.count(prefix + ".max_deg") ? all_params.at(prefix + ".max_deg").get<int>() : 360;
+            act.device  = all_params.count(prefix + ".device")  ? all_params.at(prefix + ".device").get<std::string>() : "usb0";
+
+            actuators_config_[type].actuators[act.id] = act;
+            
+            RCLCPP_INFO(this->get_logger(), "Atuador: [%s] ID %d carregado.", type.c_str(), act.id);
         }
     }
 }
@@ -157,36 +188,6 @@ void ActuatorNode::goal_position_callback(const ActuatorGoalPosition& msg)
     } else {
         RCLCPP_DEBUG(this->get_logger(), "Motor %d movido para %.2f deg (%d steps)", 
             actuator.id, goal_pos_deg, goal_pos);
-    }
-}
-
-void ActuatorNode::load_parameters()
-{
-    auto all_params = this->get_node_parameters_interface()->get_parameter_overrides();
-
-    for (const auto & [name, value] : all_params)
-    {
-        if (name.find(".actuator_") != std::string::npos && name.find(".id") != std::string::npos) {
-            
-            std::string prefix = name.substr(0, name.rfind(".id"));
-            std::string type = name.substr(0, name.find("."));
-
-            if (actuators_.find(type) == actuators_.end()) {
-                std::string res_key = type + ".angular_resolution";
-                actuators_[type].angular_resolution = all_params.count(res_key) ? 
-                    all_params.at(res_key).get<double>() : 0.088;
-            }
-
-            Actuator act;
-            act.id = value.get<int>();
-            act.min_deg = all_params.count(prefix + ".min_deg") ? all_params.at(prefix + ".min_deg").get<int>() : 0;
-            act.max_deg = all_params.count(prefix + ".max_deg") ? all_params.at(prefix + ".max_deg").get<int>() : 360;
-            act.device  = all_params.count(prefix + ".device")  ? all_params.at(prefix + ".device").get<std::string>() : "usb0";
-
-            actuators_[type].actuators[act.id] = act;
-            
-            RCLCPP_INFO(this->get_logger(), "Atuador: [%s] ID %d carregado.", type.c_str(), act.id);
-        }
     }
 }
 
