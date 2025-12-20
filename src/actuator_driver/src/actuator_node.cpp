@@ -20,6 +20,37 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions & options)
         std::placeholders::_1, std::placeholders::_2));
 }
 
+void ActuatorNode::load_hardware_config()
+{
+    auto all_params = this->get_node_parameters_interface()->get_parameter_overrides();
+
+    for (const auto & [name, value] : all_params) {
+        // procura por parametros devices.X.path
+        if (name.find("devices.") == 0 && name.find(".path") != std::string::npos) {
+            
+            std::string prefix = name.substr(0, name.rfind(".path"));
+            std::string path = value.get<std::string>();
+            
+            // pega baudrate ou usa padrao
+            int baudrate = all_params.count(prefix + ".baudrate") ? 
+                           all_params.at(prefix + ".baudrate").get<int>() : 2000000;
+
+            RCLCPP_INFO(this->get_logger(), "Configurando Hardware: %s @ %d", path.c_str(), baudrate);
+
+            auto handler = std::make_shared<SerialHandler>();
+            if (handler->init(path.c_str()) < 0 || handler->setBaudRate(baudrate) < 0) {
+                RCLCPP_ERROR(this->get_logger(), "Falha ao abrir porta %s", path.c_str());
+                continue; 
+            }
+
+            auto manager = std::make_shared<ActuatorManager>();
+            manager->setSerialHandler(handler.get());
+
+            hardware_map_[path] = {handler, manager};
+        }
+    }
+}
+
 // recebe solicitacoes
 void ActuatorNode::motor_service_callback(
     const std::shared_ptr<SetMotorConfig::Request> request,
