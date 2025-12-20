@@ -26,7 +26,7 @@ struct PressureSensor
 class PressureNode : public rclcpp::Node
 {
     public:
-        explicit PressureNode();
+        explicit PressureNode(const rclcpp::NodeOptions & options);
         virtual ~PressureNode();
 
         bool init_serial(const char* device, int baudrate);
@@ -42,7 +42,7 @@ class PressureNode : public rclcpp::Node
 
         std::map<std::string, DeviceInterface> hardware_map_;
         std::map<int, PressureSensor> pressure_sensors_;
-        
+
         rclcpp::Publisher<InsoleData>::SharedPtr publisher_;
         
         std::unique_ptr<SerialHandler> serial_handler_;

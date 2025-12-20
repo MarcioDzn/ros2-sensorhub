@@ -25,7 +25,7 @@ std::vector<uint16_t> parse_numbers_from_string(const char* buffer)
     return values;
 }
 
-PressureNode::PressureNode() : Node("pressure_node")
+PressureNode::PressureNode(const rclcpp::NodeOptions & options) : Node("pressure_node", options)
 {
     load_parameters();
     
@@ -188,22 +188,10 @@ int main(int argc, char * argv[])
 {
     rclcpp::init(argc, argv);
     
-    auto node = std::make_shared<PressureNode>();
-    
-    node->declare_parameter<std::string>("device", DEVICE);
-    node->declare_parameter<int>("baudrate", BAUDRATE);
-
-    std::string device_str = node->get_parameter("device").as_string();
-    const char* device = device_str.c_str();
-    int baudrate = node->get_parameter("baudrate").as_int();
-    if ( !node->init_serial(device, baudrate) )
-    {
-        RCLCPP_FATAL(node->get_logger(), "Erro ao configurar porta serial. Finalizando execucao");
-        rclcpp::shutdown();
-        return 1;
-    }
-    RCLCPP_INFO(node->get_logger(), "PressureNode inicializado");
-    
+    auto options = rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true);
+    auto node = std::make_shared<PressureNode>(options);
+        
+    RCLCPP_INFO(node->get_logger(), "Nó iniciado.");
     rclcpp::spin(node);
     rclcpp::shutdown();
     return 0;
