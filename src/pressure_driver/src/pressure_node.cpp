@@ -21,7 +21,6 @@ std::vector<uint16_t> parse_numbers_from_string(const std::string& input)
         try {
             values.push_back(static_cast<uint16_t>(std::stoul(token)));
         } catch (...) {
-            // Ignora tokens que não são números (ruído)
             continue;
         }
     } 
@@ -35,13 +34,6 @@ PressureNode::PressureNode(const rclcpp::NodeOptions & options) : Node("pressure
 
     load_parameters();
     
-    // cria um publisher pra cada sensor de pressao
-    auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
-        .best_effort()
-        .durability_volatile();
-    RCLCPP_INFO(this->get_logger(), "Criando publisher para o sensor de pressao");
-    publisher_ = this->create_publisher<InsoleData>("/pressure", qos);
-    
     // executa o callback a cada <update_rate_ms_> segundos
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(update_rate_ms_), 
@@ -53,7 +45,6 @@ void PressureNode::load_hardware_config()
     auto all_params = this->get_node_parameters_interface()->get_parameter_overrides();
     int active_ports = 0;
     for (const auto & [name, value] : all_params) {
-        // busca configurações de devices: devices.<nome>.path
         if (name.find("devices.") == 0 && name.find(".path") != std::string::npos) {
             std::string prefix = name.substr(0, name.rfind(".path"));
             std::string path = value.get<std::string>();
@@ -91,6 +82,10 @@ void PressureNode::load_pressure_sensors_config()
 {
     auto all_params = this->get_node_parameters_interface()->get_parameter_overrides();
 
+    auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
+        .best_effort()
+        .durability_volatile();
+
     for (const auto & [name, value] : all_params)
     {
         if (name.find(".pressure_") != std::string::npos && name.find(".id") != std::string::npos) {
@@ -103,6 +98,9 @@ void PressureNode::load_pressure_sensors_config()
             press.device  = all_params.count(prefix + ".device")  ? all_params.at(prefix + ".device").get<std::string>() : "acm0";
 
             pressure_sensors_[press.id] = press;
+
+            std::string topic_name = "/pressure/sensor_" + std::to_string(press.id);
+            publishers_[press.id] = this->create_publisher<InsoleData>(topic_name, qos);
             
             RCLCPP_INFO(this->get_logger(), "Sensor de pressao ID %d carregado.", press.id);
         }
@@ -111,29 +109,31 @@ void PressureNode::load_pressure_sensors_config()
 
 void PressureNode::timer_callback()
 {
-    // Itera sobre todos os hardwares inicializados
     for (auto const& [path, interface] : hardware_map_) {
-        
         char buffer[BUFFER_SIZE];
-        // Passamos o handler específico desta porta para a função de leitura
         if (get_pressure_data(interface.serial, buffer, MAX_BUFFER_COLLECT)) {
             
             auto values = parse_numbers_from_string(buffer);
-            
             if (values.empty()) continue;
 
-            auto message = InsoleData();
-            message.stamp = this->get_clock()->now();
-            // Supondo que sua mensagem tenha um campo para identificar a origem
-            // message.device_path = path; 
+            int current_sensor_id = -1;
+            for (auto const& [id, sensor] : pressure_sensors_) {
+                if (path.find(sensor.device) != std::string::npos) {
+                    current_sensor_id = id;
+                    break;
+                }
+            }
 
-            for (uint16_t val : values) {
-                message.pressures.push_back(val);
+            if (current_sensor_id != -1 && publishers_.count(current_sensor_id)) {
+                auto message = InsoleData();
+                message.stamp = this->get_clock()->now();
+                for (uint16_t val : values) {
+                    message.pressures.push_back(val);
+                }
+                
+                publishers_[current_sensor_id]->publish(message);
             }
             
-            publisher_->publish(message);
-            
-            // Limpa o buffer da serial para evitar acúmulo de dados antigos (lag)
             interface.serial->clearBuffer();
         }
     }

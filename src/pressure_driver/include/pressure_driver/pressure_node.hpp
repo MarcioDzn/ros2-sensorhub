@@ -43,9 +43,8 @@ class PressureNode : public rclcpp::Node
         std::map<std::string, DeviceInterface> hardware_map_;
         std::map<int, PressureSensor> pressure_sensors_;
 
-        rclcpp::Publisher<InsoleData>::SharedPtr publisher_;
+        std::map<int, rclcpp::Publisher<InsoleData>::SharedPtr> publishers_;
         
-        std::unique_ptr<SerialHandler> serial_handler_;
         rclcpp::TimerBase::SharedPtr timer_;
         int update_rate_ms_;
 };
