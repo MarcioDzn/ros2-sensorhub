@@ -12,13 +12,17 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions & options)
     load_hardware_config();
     
     actuator_subscriber_ = this->create_subscription<ActuatorGoalPosition>(
-        "goal_position", 10, std::bind(
-        &ActuatorNode::goal_position_callback, this, 
-        std::placeholders::_1));
+        "goal_position", 10, 
+        [this](const ActuatorGoalPosition::SharedPtr msg) {
+            this->goal_position_callback(msg);
+        });
     
-    motor_service_ = this->create_service<SetMotorConfig>("motor_config", std::bind(
-        &ActuatorNode::motor_service_callback, this,
-        std::placeholders::_1, std::placeholders::_2));
+    motor_service_ = this->create_service<SetMotorConfig>("motor_config", 
+        [this](const std::shared_ptr<SetMotorConfig::Request> req, std::shared_ptr<SetMotorConfig::Response> res) {
+            this->motor_service_callback(req, res);
+        });
+
+    RCLCPP_INFO(this->get_logger(), "Nó ActuatorNode iniciado com sucesso.");
 }
 
 void ActuatorNode::load_hardware_config()
@@ -82,7 +86,6 @@ void ActuatorNode::load_actuators_config()
     }
 }
 
-// recebe solicitacoes
 void ActuatorNode::motor_service_callback(
     const std::shared_ptr<SetMotorConfig::Request> request,
     std::shared_ptr<SetMotorConfig::Response> response)
@@ -173,38 +176,6 @@ void ActuatorNode::goal_position_callback(const ActuatorGoalPosition::SharedPtr 
     } else {
         RCLCPP_DEBUG(this->get_logger(), "Motor %d movido para %.2f", actuator.id, msg->goal);
     }
-}
-
-SerialHandler* ActuatorNode::init_serial(const char* device, int baudrate)
-{
-    RCLCPP_INFO(this->get_logger(), "Tentando conectar com o dispositivo %s com baudrate %d", device, baudrate);
-    auto handler = std::make_unique<SerialHandler>();
-    
-    if ( handler->init(device) < 0 )
-    {
-        RCLCPP_ERROR(this->get_logger(), "Erro ao inicializar a porta serial");
-        return nullptr;
-    }
-    RCLCPP_INFO(this->get_logger(), "Inicializacao realizada");
-    
-    if ( handler->setDefaultConfig() < 0 )
-    {
-        RCLCPP_ERROR(this->get_logger(), "Erro ao aplicar a configuracao padrao da porta serial");
-        return nullptr;
-    }
-    RCLCPP_INFO(this->get_logger(), "Configuracao realizada");
-    
-    if ( handler->setBaudRate(baudrate) < 0 )
-    {
-        RCLCPP_ERROR(this->get_logger(), "Erro ao definir baudrate");
-        return nullptr;
-    }
-    RCLCPP_INFO(this->get_logger(), "Aplicacao de baurate realizada");
-    
-    serial_handlers_[device] = std::move(handler);
-    RCLCPP_INFO(this->get_logger(), "Inicializacao concluida");
-    
-    return serial_handlers_[device].get();
 }
 
 ActuatorNode::~ActuatorNode() = default;
