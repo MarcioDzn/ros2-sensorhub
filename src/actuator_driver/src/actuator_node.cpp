@@ -106,16 +106,6 @@ void ActuatorNode::motor_service_callback(
         return;
     }
 
-    // troca o serial_handler a depender do path do device
-    bool handler_set = false;
-    for (auto const& [path, handler] : serial_handlers_) {
-        if (path.find(found_actuator.device) != std::string::npos) {
-            actuator_manager_->setSerialHandler(handler);
-            handler_set = true;
-            break;
-        }
-    }
-
     if (!handler_set) {
         RCLCPP_ERROR(this->get_logger(), "SERVICO: SERIAL PARA O DISPOSITIVO %s NAO ENCONTRADA", found_actuator.device.c_str());
         return;
@@ -136,58 +126,42 @@ void ActuatorNode::motor_service_callback(
     }
 }
 
-void ActuatorNode::goal_position_callback(const ActuatorGoalPosition& msg)
+void ActuatorNode::goal_position_callback(const ActuatorGoalPosition::SharedPtr msg)
 {
-    // busca o tipo do atuador
-    ActuatorType actuator_type;
-    try {
-        actuator_type = actuators_.at(msg.type);
-    } catch (const std::out_of_range& e) {
-        RCLCPP_ERROR(this->get_logger(), "TIPO %s NAO CADASTRADO", msg.type.c_str());
+
+    if (actuators_config_.count(msg->type) == 0) {
+        RCLCPP_ERROR(this->get_logger(), "Tipo %s desconhecido", msg->type.c_str());
         return;
     }
 
-    // busca atuador pelo id
-    Actuator actuator;
-    try {
-        actuator = actuator_type.actuators.at(msg.id);
-    } catch (const std::out_of_range& e) {
-        RCLCPP_ERROR(this->get_logger(), "ID %d NAO CADASTRADO NO TIPO %s", msg.id, msg.type.c_str());
+    auto& type_struct = actuators_config_[msg->type];
+    if (type_struct.actuators.count(msg->id) == 0) {
+        RCLCPP_ERROR(this->get_logger(), "ID %d não cadastrado no tipo %s", msg->id, msg->type.c_str());
         return;
     }
 
-    // troca o serial_handler a depender do path do device
-    bool handler_set = false;
-    for (auto const& [path, handler] : serial_handlers_) {
-        if (path.find(actuator.device) != std::string::npos) {
-            actuator_manager_->setSerialHandler(handler);
-            handler_set = true;
-            break;
-        }
-    }
+    Actuator actuator = type_struct.actuators[msg->id];
 
-    if (!handler_set) {
-        RCLCPP_ERROR(this->get_logger(), "SERIAL HANDLER PARA O DISPOSITIVO %s NAO ENCONTRADO", actuator.device.c_str());
-        return;
-    }
-    // -------------------------------------------------------
-
-    double goal_pos_deg = msg.goal;
-    if (goal_pos_deg > actuator.max_deg || goal_pos_deg < actuator.min_deg) {
-        RCLCPP_WARN(this->get_logger(), 
-            "COMANDO ABSOLUTO PARA ATUADOR %d FORA DOS LIMITES (%d a %d): %.2f", 
-            actuator.id, actuator.min_deg, actuator.max_deg, goal_pos_deg);
+    // busca pela interface correta
+    auto hw_it = hardware_map_.find(actuator.device);
+    if (hw_it == hardware_map_.end()) {
+        RCLCPP_ERROR(this->get_logger(), "Hardware %s não inicializado para motor %d", actuator.device.c_str(), actuator.id);
         return;
     }
 
-    // converte de graus pra a unidade do dynamixel
-    int16_t goal_pos = static_cast<int16_t>(std::round(goal_pos_deg / actuator_type.angular_resolution));
+    auto& manager = hw_it->second.manager;
     
-    if (actuator_manager_->setGoalPosition(actuator.id, goal_pos) != 0) {
-        RCLCPP_ERROR(this->get_logger(), "ERRO AO ENVIAR POSICAO ABSOLUTA PARA MOTOR %d", actuator.id);
+    if (msg->goal > actuator.max_deg || msg->goal < actuator.min_deg) {
+        RCLCPP_WARN(this->get_logger(), "Comando fora dos limites: ID %d Goal %.2f", actuator.id, msg->goal);
+        return;
+    }
+
+    int16_t goal_pos_native = static_cast<int16_t>(std::round(msg->goal / type_struct.angular_resolution));
+    
+    if (manager->setGoalPosition(actuator.id, goal_pos_native) != 0) {
+        RCLCPP_ERROR(this->get_logger(), "Erro de comunicação ao mover motor %d", actuator.id);
     } else {
-        RCLCPP_DEBUG(this->get_logger(), "Motor %d movido para %.2f deg (%d steps)", 
-            actuator.id, goal_pos_deg, goal_pos);
+        RCLCPP_DEBUG(this->get_logger(), "Motor %d movido para %.2f", actuator.id, msg->goal);
     }
 }
 
@@ -223,17 +197,6 @@ SerialHandler* ActuatorNode::init_serial(const char* device, int baudrate)
     return serial_handlers_[device].get();
 }
 
-void ActuatorNode::send_packet()
-{
-    actuator_manager_->setTorque(1, 1);
-    actuator_manager_->setGoalPosition(1, 1200);
-}
-
-void ActuatorNode::set_actuator_manager()
-{
-    actuator_manager_ = std::make_unique<ActuatorManager>();
-}
-
 ActuatorNode::~ActuatorNode() = default;
 
 int main(int argc, char * argv[])
@@ -242,30 +205,6 @@ int main(int argc, char * argv[])
     
     auto options = rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true);
     auto node = std::make_shared<ActuatorNode>(options);
-
-    auto all_params = node->get_node_parameters_interface()->get_parameter_overrides();
-
-    for (const auto & [name, value] : all_params) {
-        if (name.find("devices.") == 0 && name.find(".path") != std::string::npos) {
-            std::string prefix = name.substr(0, name.rfind(".path"));
-            std::string path = value.get<std::string>();
-            
-            int baudrate = all_params.count(prefix + ".baudrate") ? 
-                           all_params.at(prefix + ".baudrate").get<int>() : 2000000;
-
-            if (node->init_serial(path.c_str(), baudrate) == nullptr) {
-                RCLCPP_FATAL(node->get_logger(), "Falha fatal na porta %s", path.c_str());
-                return 1;
-            }
-        }
-    }
-    
-    node->set_actuator_manager();
-    
-    // Vincula a serial ao manager
-    if (!node->get_serial_handlers().empty()) {
-        node->get_actuator_manager()->setSerialHandler(node->get_serial_handlers().begin()->second);
-    }
         
     RCLCPP_INFO(node->get_logger(), "Nó iniciado.");
     rclcpp::spin(node);

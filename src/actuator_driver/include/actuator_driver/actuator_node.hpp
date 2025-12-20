@@ -55,7 +55,7 @@ class ActuatorNode : public rclcpp::Node
         void load_actuators_config();
         void load_hardware_config();
 
-        void goal_position_callback(const ActuatorGoalPosition& msg);
+        void goal_position_callback(const ActuatorGoalPosition::SharedPtr msg);
         void load_parameters();
         void motor_service_callback(
             const std::shared_ptr<SetMotorConfig::Request> request,
