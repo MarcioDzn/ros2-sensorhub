@@ -16,23 +16,29 @@
 using SetMotorConfig = interfaces::srv::SetMotorConfig;
 using ActuatorGoalPosition = interfaces::msg::ActuatorGoalPosition;
 
+struct DeviceInterface
+{
+    std::shared_ptr<SerialHandler> serial;
+    std::shared_ptr<ActuatorManager> manager;
+};
+
+struct Actuator
+{
+    int id;
+    int min_deg; 
+    int max_deg;
+    std::string device; 
+}; 
+
+struct ActuatorType
+{
+    double angular_resolution;
+    std::map<int, Actuator> actuators;
+}; 
+
 class ActuatorNode : public rclcpp::Node
 {
     public:
-        struct Actuator
-        {
-            int id;
-            int min_deg; 
-            int max_deg;
-            std::string device; 
-        }; 
-
-        struct ActuatorType
-        {
-            double angular_resolution;
-            std::map<int, Actuator> actuators;
-        }; 
-
         explicit ActuatorNode(const rclcpp::NodeOptions & options);
         virtual ~ActuatorNode();
 
@@ -46,19 +52,20 @@ class ActuatorNode : public rclcpp::Node
         std::map<std::string, std::shared_ptr<SerialHandler>>& get_serial_handlers() { return serial_handlers_; }
 
     private:
+        void load_actuators_config();
+        void load_hardware_config();
+
         void goal_position_callback(const ActuatorGoalPosition& msg);
         void load_parameters();
         void motor_service_callback(
             const std::shared_ptr<SetMotorConfig::Request> request,
             std::shared_ptr<SetMotorConfig::Response> response);
-            
-        std::map<std::string, ActuatorType> actuators_;
-        std::map<std::string, std::shared_ptr<SerialHandler>> serial_handlers_;
 
+        std::map<std::string, DeviceInterface> hardware_map_;
+        std::map<std::string, ActuatorType> actuators_config_;
+            
         rclcpp::Subscription<ActuatorGoalPosition>::SharedPtr actuator_subscriber_;
         rclcpp::Service<SetMotorConfig>::SharedPtr motor_service_;
-        
-        std::unique_ptr<ActuatorManager> actuator_manager_;
         
         int update_rate_ms_;
 };
