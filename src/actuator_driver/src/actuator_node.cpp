@@ -89,41 +89,51 @@ void ActuatorNode::motor_service_callback(
 {
     auto command = request->command;
     auto id = request->motor_id;
+
     response->success = false;
 
+    // encontra o atuador
     Actuator found_actuator;
-    bool actuator_exists = false;
-    for (auto const& [type, type_struct] : actuators_) {
-        if (type_struct.actuators.count(id)) {
-            found_actuator = type_struct.actuators.at(id);
-            actuator_exists = true;
+    bool exists = false;
+    
+    for (auto const& [type, type_struct] : actuators_config_) {
+        if (type_struct.actuators.count(request->motor_id)) {
+            found_actuator = type_struct.actuators.at(request->motor_id);
+            exists = true;
             break;
         }
     }
 
-    if (!actuator_exists) {
-        RCLCPP_ERROR(this->get_logger(), "SERVICO: ATUADOR DE ID %d NAO ENCONTRADO NO YAML", id);
+    if (!exists) {
+        RCLCPP_ERROR(this->get_logger(), "Service: ID %d não encontrado", request->motor_id);
         return;
     }
 
-    if (!handler_set) {
-        RCLCPP_ERROR(this->get_logger(), "SERVICO: SERIAL PARA O DISPOSITIVO %s NAO ENCONTRADA", found_actuator.device.c_str());
+    // encontra o hardware correto
+    auto hw_it = hardware_map_.find(found_actuator.device);
+    if (hw_it == hardware_map_.end()) {
+        RCLCPP_ERROR(this->get_logger(), "Service: Device %s offline", found_actuator.device.c_str());
         return;
     }
+
+    auto& manager = hw_it->second.manager;
 
     // executa o comando
-    RCLCPP_INFO(this->get_logger(), "Executando '%s' no Atuador %d (%s)", command.c_str(), id, found_actuator.device.c_str());
+    RCLCPP_INFO(this->get_logger(), "Service: '%s' em ID %d", request->command.c_str(), request->motor_id);
 
-    if (command == "set_goal_position") {
-        uint16_t goal_pos = static_cast<uint16_t>(request->params[0]);
-        if (actuator_manager_->setGoalPosition(id, goal_pos) == 0) response->success = true;
+    int result = -1;
+    if (request->command == "set_goal_position" && !request->params.empty()) {
+        uint16_t goal = static_cast<uint16_t>(request->params[0]);
+        result = manager->setGoalPosition(request->motor_id, goal);
     } 
-    else if (command == "enable_torque") {
-        if (actuator_manager_->setTorque(id, 1) == 0) response->success = true;
+    else if (request->command == "enable_torque") {
+        result = manager->setTorque(request->motor_id, 1);
     } 
-    else if (command == "disable_torque") {
-        if (actuator_manager_->setTorque(id, 0) == 0) response->success = true;
+    else if (request->command == "disable_torque") {
+        result = manager->setTorque(request->motor_id, 0);
     }
+
+    if (result == 0) response->success = true;
 }
 
 void ActuatorNode::goal_position_callback(const ActuatorGoalPosition::SharedPtr msg)
