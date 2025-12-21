@@ -33,6 +33,8 @@ PressureNode::PressureNode(const rclcpp::NodeOptions & options) : Node("pressure
     load_pressure_sensors_config();
 
     load_parameters();
+
+    create_publishers();
     
     // executa o callback a cada <update_rate_ms_> segundos
     timer_ = this->create_wall_timer(
@@ -82,10 +84,6 @@ void PressureNode::load_pressure_sensors_config()
 {
     auto all_params = this->get_node_parameters_interface()->get_parameter_overrides();
 
-    auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
-        .best_effort()
-        .durability_volatile();
-
     for (const auto & [name, value] : all_params)
     {
         if (name.find(".pressure_") != std::string::npos && name.find(".id") != std::string::npos) {
@@ -98,12 +96,22 @@ void PressureNode::load_pressure_sensors_config()
             press.device  = all_params.count(prefix + ".device")  ? all_params.at(prefix + ".device").get<std::string>() : "acm0";
 
             pressure_sensors_[press.id] = press;
-
-            std::string topic_name = "/pressure/sensor_" + std::to_string(press.id);
-            publishers_[press.id] = this->create_publisher<InsoleData>(topic_name, qos);
             
             RCLCPP_INFO(this->get_logger(), "Sensor de pressao ID %d carregado.", press.id);
         }
+    }
+}
+
+void PressureNode::create_publishers()
+{
+    auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
+        .best_effort()
+        .durability_volatile();
+
+    for (const auto &press : pressure_sensors_)
+    {
+        std::string topic_name = "/pressure/sensor_" + std::to_string(press.first);
+        publishers_[press.first] = this->create_publisher<InsoleData>(topic_name, qos);
     }
 }
 

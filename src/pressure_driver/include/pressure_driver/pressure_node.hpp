@@ -34,6 +34,7 @@ class PressureNode : public rclcpp::Node
     private:
         void load_hardware_config();
         void load_pressure_sensors_config();
+        void create_publishers();
 
         void timer_callback();
         void load_parameters();
