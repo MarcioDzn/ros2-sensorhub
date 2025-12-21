@@ -56,27 +56,20 @@ void PressureNode::load_hardware_config()
 
             RCLCPP_INFO(this->get_logger(), "Iniciando Hardware: %s @ %d bps", path.c_str(), baudrate);
 
-            auto handler = std::make_shared<SerialHandler>();
-            
-            if (handler->init(path.c_str()) < 0) {
+            if (setup_serial_port(path, baudrate))
+            {
+                RCLCPP_INFO(this->get_logger(), "Porta %s configurada com sucesso.", path.c_str());
+                active_ports++;
+            } else
+            {
                 RCLCPP_ERROR(this->get_logger(), "FALHA AO ABRIR PORTA SERIAL: %s", path.c_str());
-                continue; 
             }
-            handler->setDefaultConfig();
-            handler->setBaudRate(baudrate);
-
-            hardware_map_[path] = {handler};
-            active_ports++;
-
-            RCLCPP_INFO(this->get_logger(), "Porta %s configurada com sucesso.", path.c_str());
         }
     }
 
     if (active_ports == 0) {
         RCLCPP_FATAL(this->get_logger(), "NENHUMA porta serial pôde ser aberta. O nó não pode funcionar.");
         throw std::runtime_error("Falha total na inicialização do hardware serial.");
-    } else {
-        RCLCPP_INFO(this->get_logger(), "Inicialização concluída. %d porta(s) ativa(s).", active_ports);
     }
 }
 
@@ -113,6 +106,22 @@ void PressureNode::create_publishers()
         std::string topic_name = "/pressure/sensor_" + std::to_string(press.first);
         publishers_[press.first] = this->create_publisher<InsoleData>(topic_name, qos);
     }
+}
+
+bool PressureNode::setup_serial_port(const std::string &path, const int baudrate)
+{
+    auto handler = std::make_shared<SerialHandler>();
+    
+    if (handler->init(path.c_str()) < 0) {
+        RCLCPP_DEBUG(this->get_logger(), "Erro de IO ao inicializar %s", path.c_str());
+        return false;
+    }
+
+    handler->setDefaultConfig();
+    handler->setBaudRate(baudrate);
+    
+    hardware_map_[path] = {handler};
+    return true;
 }
 
 void PressureNode::timer_callback()
