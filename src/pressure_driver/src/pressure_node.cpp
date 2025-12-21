@@ -88,6 +88,13 @@ void PressureNode::load_pressure_sensors_config()
             press.device  = all_params.count(prefix + ".device")  ? all_params.at(prefix + ".device").get<std::string>() : "acm0";
 
             pressure_sensors_[press.id] = press;
+
+            // associa o path ao id
+            for (auto const& [path, interface] : hardware_map_) {
+                if (path.find(press.device) != std::string::npos) {
+                    device_path_to_id_[path] = press.id;
+                }
+            }
             
             RCLCPP_INFO(this->get_logger(), "Sensor de pressao ID %d carregado.", press.id);
         }
@@ -131,13 +138,7 @@ void PressureNode::timer_callback()
             
             auto values = parse_numbers_from_string(buffer);
 
-            int current_sensor_id = -1;
-            for (auto const& [id, sensor] : pressure_sensors_) {
-                if (path.find(sensor.device) != std::string::npos) {
-                    current_sensor_id = id;
-                    break;
-                }
-            }
+            int current_sensor_id = device_path_to_id_[path];
 
             if (!values.empty())
             {
@@ -155,9 +156,7 @@ void PressureNode::publish_sensor_data(
     if (publishers_.count(sensor_id)) {
         auto message = InsoleData();
         message.stamp = this->get_clock()->now();
-        for (uint16_t val : values) {
-            message.pressures.push_back(val);
-        }
+        message.pressures.assign(values.begin(), values.end());
         
         publishers_[sensor_id]->publish(message);
     }
