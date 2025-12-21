@@ -9,18 +9,25 @@ services:
     environment:
       - ROS_DOMAIN_ID=42
       - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      
       #- FASTRTPS_DEFAULT_PROFILES_FILE=/ros2_ws/config/fastdds.xml
     volumes:
-      #- /home/marcio/Documentos/Dev/UEFS/IC/CoppeliaSim_Edu_V4_10_0_rev0_Ubuntu22_04:/coppelia
+      # - /home/marcio/Documentos/Dev/UEFS/IC/CoppeliaSim_Edu_V4_10_0_rev0_Ubuntu22_04:/coppelia
       # Volumes para usar no pc
-      - /home/marcio/Documentos/Dev/UEFS/IC/sensorhub:/ros2_ws
+      - ${ROS2_WORKSPACE_PATH:-./sensorhub}:/ros2_ws
+
+      # Volumes compartilhados
       - /tmp:/tmp
       - /dev/pts:/dev/pts
 
-      # Volumes abaixo para usar na raspberry
-      #- /home/labpds/.ros/fastdds.xml:/ros2_ws/config/fastdds.xml
-      #- /home/labpds/Documentos/ros2-sensorhub:/ros2_ws
-      #- /home/labpds/WiringPi:/ros2_ws/src/wiringpi
+      # Volumes para usar na raspberry
+      # - ${FASTDDS_CONFIG_PATH}:/ros2_ws/config/fastdds.xml
+      # - ${WIRINGPI_PATH}:/ros2_ws/src/wiringpi
+
+      # Mantendo apenas pra verificação posterior
+      # - /home/labpds/.ros/fastdds.xml:/ros2_ws/config/fastdds.xml
+      # - /home/labpds/Documentos/ros2-sensorhub:/ros2_ws
+      # - /home/labpds/WiringPi:/ros2_ws/src/wiringpi
     devices:
       - /dev/mem:/dev/mem
       - /dev/gpiomem:/dev/gpiomem
@@ -28,16 +35,19 @@ services:
     stdin_open: true
     command: >
       bash -i -c "
-        echo '*** 1/3: Instalando wiringPi (como root)... ***' &&
+        echo '=== [1/3] Instalando WiringPi ===' &&
         cd /ros2_ws/src/wiringpi/wiringPi &&
-        make clean &&
-        make &&
-        make install &&
-        echo '*** wiringPi instalado com sucesso. ***' &&
-        echo '*** 2/3: Configurando ROS2 workspace... ***' &&
+        make clean && make && make install &&
+        echo '✓ WiringPi instalado com sucesso' &&
+        
+        echo '=== [2/3] Configurando ROS2 Workspace ===' &&
         source /opt/ros/humble/setup.bash &&
         cd /ros2_ws &&
         source install/setup.bash &&
-        echo '*** 3/3: Pronto para rodar o central_node como root ***' &&
+        echo '✓ ROS2 workspace configurado' &&
+        
+        echo '=== [3/3] Ambiente pronto ===' &&
+        echo 'Execute: ros2 run <pacote> <node>' &&
+        echo 'ou compile com: colcon build --symlink-install --executor sequential' &&
         bash
       "
