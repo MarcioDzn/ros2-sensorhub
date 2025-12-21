@@ -40,10 +40,11 @@ class PressureNode : public rclcpp::Node
             const std::map<std::string, 
             rclcpp::ParameterValue>& params, 
             const std::string& prefix); 
+        void publish_sensor_data(
+            int sensor_id, const std::vector<uint16_t>& values);
 
         void timer_callback();
         void load_parameters();
-        void set_parameters();
         bool get_pressure_data(std::shared_ptr<SerialHandler> handler, char* buffer, size_t max_size);
 
         std::map<std::string, DeviceInterface> hardware_map_;

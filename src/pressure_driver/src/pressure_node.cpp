@@ -130,7 +130,6 @@ void PressureNode::timer_callback()
         if (get_pressure_data(interface.serial, buffer, MAX_BUFFER_COLLECT)) {
             
             auto values = parse_numbers_from_string(buffer);
-            if (values.empty()) continue;
 
             int current_sensor_id = -1;
             for (auto const& [id, sensor] : pressure_sensors_) {
@@ -140,14 +139,9 @@ void PressureNode::timer_callback()
                 }
             }
 
-            if (current_sensor_id != -1 && publishers_.count(current_sensor_id)) {
-                auto message = InsoleData();
-                message.stamp = this->get_clock()->now();
-                for (uint16_t val : values) {
-                    message.pressures.push_back(val);
-                }
-                
-                publishers_[current_sensor_id]->publish(message);
+            if (!values.empty())
+            {
+                publish_sensor_data(current_sensor_id, values);
             }
             
             interface.serial->clearBuffer();
@@ -155,14 +149,23 @@ void PressureNode::timer_callback()
     }
 }
 
+void PressureNode::publish_sensor_data(
+    int sensor_id, const std::vector<uint16_t>& values)
+{
+    if (publishers_.count(sensor_id)) {
+        auto message = InsoleData();
+        message.stamp = this->get_clock()->now();
+        for (uint16_t val : values) {
+            message.pressures.push_back(val);
+        }
+        
+        publishers_[sensor_id]->publish(message);
+    }
+}
+
 void PressureNode::load_parameters()
 {
     this->declare_parameter<int>("update_rate_ms", 15);
-    set_parameters();
-}
-
-void PressureNode::set_parameters()
-{
     update_rate_ms_ = this->get_parameter("update_rate_ms").as_int();
 }
 
