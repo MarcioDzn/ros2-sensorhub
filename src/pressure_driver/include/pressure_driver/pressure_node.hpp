@@ -36,6 +36,10 @@ class PressureNode : public rclcpp::Node
         void load_pressure_sensors_config();
         void create_publishers();
         bool setup_serial_port(const std::string &path, const int baudrate);
+        int extract_baudrate(
+            const std::map<std::string, 
+            rclcpp::ParameterValue>& params, 
+            const std::string& prefix); 
 
         void timer_callback();
         void load_parameters();

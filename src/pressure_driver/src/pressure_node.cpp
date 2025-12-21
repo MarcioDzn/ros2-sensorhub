@@ -6,7 +6,7 @@
 #define MAX_BUFFER_COLLECT          6 * 16
 #define BUFFER_SIZE                 8 * 16 * 5
 #define DEVICE                      "/dev/ttyACM0"
-#define BAUDRATE                    115200
+#define DEFAULT_BAUDRATE                    115200
 
 using namespace std::chrono_literals;
 
@@ -51,8 +51,7 @@ void PressureNode::load_hardware_config()
             std::string prefix = name.substr(0, name.rfind(".path"));
             std::string path = value.get<std::string>();
             
-            int baudrate = all_params.count(prefix + ".baudrate") ? 
-                           all_params.at(prefix + ".baudrate").get<int>() : 115200;
+            int baudrate = extract_baudrate(all_params, prefix);
 
             RCLCPP_INFO(this->get_logger(), "Iniciando Hardware: %s @ %d bps", path.c_str(), baudrate);
 
@@ -119,7 +118,7 @@ bool PressureNode::setup_serial_port(const std::string &path, const int baudrate
 
     handler->setDefaultConfig();
     handler->setBaudRate(baudrate);
-    
+
     hardware_map_[path] = {handler};
     return true;
 }
@@ -181,6 +180,22 @@ bool PressureNode::get_pressure_data(std::shared_ptr<SerialHandler> handler, cha
     }
     buffer[i] = '\0';
     return (i > 0);
+}
+
+int PressureNode::extract_baudrate(
+    const std::map<std::string, 
+    rclcpp::ParameterValue>& params, 
+    const std::string& prefix) 
+{
+    std::string key = prefix + ".baudrate";
+    if (params.count(key)) {
+        try {
+            return params.at(key).get<int>();
+        } catch (...) {
+            RCLCPP_WARN(this->get_logger(), "Baudrate inválido para %s. Usando 115200.", prefix.c_str());
+        }
+    }
+    return DEFAULT_BAUDRATE; 
 }
 
 PressureNode::~PressureNode() = default;
