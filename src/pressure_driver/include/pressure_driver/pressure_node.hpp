@@ -43,7 +43,9 @@ class PressureNode : public rclcpp::Node
         void create_publishers();
 
         void timer_callback();
-        bool get_pressure_data(std::shared_ptr<SerialHandler> handler, char* buffer, size_t max_size);
+        bool get_pressure_data(
+            std::shared_ptr<SerialHandler> handler, 
+            char* buffer, size_t max_size);
         void publish_sensor_data(
             int sensor_id, const std::vector<uint16_t>& values);
 

@@ -124,6 +124,14 @@ void PressureNode::load_pressure_sensors_config()
             // associa o path ao id
             for (auto const& [path, interface] : hardware_map_) {
                 if (path.find(press.device) != std::string::npos) {
+                    
+                    // o código suporta um sensor por path
+                    if (device_path_to_id_.count(path)) {
+                        RCLCPP_WARN(this->get_logger(), 
+                            "CONFLITO: O path %s já estava associado ao sensor %d. Substituindo pelo sensor %d!", 
+                            path.c_str(), device_path_to_id_[path], press.id);
+                    }
+                    
                     device_path_to_id_[path] = press.id;
                 }
             }
