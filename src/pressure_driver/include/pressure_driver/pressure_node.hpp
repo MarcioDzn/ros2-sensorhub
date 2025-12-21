@@ -33,24 +33,25 @@ class PressureNode : public rclcpp::Node
         
     private:
         void load_hardware_config();
-        void load_pressure_sensors_config();
-        void create_publishers();
         bool setup_serial_port(const std::string &path, const int baudrate);
         int extract_baudrate(
             const std::map<std::string, 
             rclcpp::ParameterValue>& params, 
             const std::string& prefix); 
+
+        void load_pressure_sensors_config();
+        void create_publishers();
+
+        void timer_callback();
+        bool get_pressure_data(std::shared_ptr<SerialHandler> handler, char* buffer, size_t max_size);
         void publish_sensor_data(
             int sensor_id, const std::vector<uint16_t>& values);
 
-        void timer_callback();
         void load_parameters();
-        bool get_pressure_data(std::shared_ptr<SerialHandler> handler, char* buffer, size_t max_size);
 
         std::map<std::string, int> device_path_to_id_;
         std::map<std::string, DeviceInterface> hardware_map_;
         std::map<int, PressureSensor> pressure_sensors_;
-
         std::map<int, rclcpp::Publisher<InsoleData>::SharedPtr> publishers_;
         
         rclcpp::TimerBase::SharedPtr timer_;

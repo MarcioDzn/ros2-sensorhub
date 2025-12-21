@@ -72,6 +72,38 @@ void PressureNode::load_hardware_config()
     }
 }
 
+bool PressureNode::setup_serial_port(const std::string &path, const int baudrate)
+{
+    auto handler = std::make_shared<SerialHandler>();
+    
+    if (handler->init(path.c_str()) < 0) {
+        RCLCPP_DEBUG(this->get_logger(), "Erro de IO ao inicializar %s", path.c_str());
+        return false;
+    }
+
+    handler->setDefaultConfig();
+    handler->setBaudRate(baudrate);
+
+    hardware_map_[path] = {handler};
+    return true;
+}
+
+int PressureNode::extract_baudrate(
+    const std::map<std::string, 
+    rclcpp::ParameterValue>& params, 
+    const std::string& prefix) 
+{
+    std::string key = prefix + ".baudrate";
+    if (params.count(key)) {
+        try {
+            return params.at(key).get<int>();
+        } catch (...) {
+            RCLCPP_WARN(this->get_logger(), "Baudrate inválido para %s. Usando 115200.", prefix.c_str());
+        }
+    }
+    return DEFAULT_BAUDRATE; 
+}
+
 void PressureNode::load_pressure_sensors_config()
 {
     auto all_params = this->get_node_parameters_interface()->get_parameter_overrides();
@@ -114,22 +146,6 @@ void PressureNode::create_publishers()
     }
 }
 
-bool PressureNode::setup_serial_port(const std::string &path, const int baudrate)
-{
-    auto handler = std::make_shared<SerialHandler>();
-    
-    if (handler->init(path.c_str()) < 0) {
-        RCLCPP_DEBUG(this->get_logger(), "Erro de IO ao inicializar %s", path.c_str());
-        return false;
-    }
-
-    handler->setDefaultConfig();
-    handler->setBaudRate(baudrate);
-
-    hardware_map_[path] = {handler};
-    return true;
-}
-
 void PressureNode::timer_callback()
 {
     for (auto const& [path, interface] : hardware_map_) {
@@ -150,24 +166,6 @@ void PressureNode::timer_callback()
     }
 }
 
-void PressureNode::publish_sensor_data(
-    int sensor_id, const std::vector<uint16_t>& values)
-{
-    if (publishers_.count(sensor_id)) {
-        auto message = InsoleData();
-        message.stamp = this->get_clock()->now();
-        message.pressures.assign(values.begin(), values.end());
-        
-        publishers_[sensor_id]->publish(message);
-    }
-}
-
-void PressureNode::load_parameters()
-{
-    this->declare_parameter<int>("update_rate_ms", 15);
-    update_rate_ms_ = this->get_parameter("update_rate_ms").as_int();
-}
-
 bool PressureNode::get_pressure_data(std::shared_ptr<SerialHandler> handler, char* buffer, size_t max_size)
 {
     size_t i = 0;
@@ -184,20 +182,22 @@ bool PressureNode::get_pressure_data(std::shared_ptr<SerialHandler> handler, cha
     return (i > 0);
 }
 
-int PressureNode::extract_baudrate(
-    const std::map<std::string, 
-    rclcpp::ParameterValue>& params, 
-    const std::string& prefix) 
+void PressureNode::publish_sensor_data(
+    int sensor_id, const std::vector<uint16_t>& values)
 {
-    std::string key = prefix + ".baudrate";
-    if (params.count(key)) {
-        try {
-            return params.at(key).get<int>();
-        } catch (...) {
-            RCLCPP_WARN(this->get_logger(), "Baudrate inválido para %s. Usando 115200.", prefix.c_str());
-        }
+    if (publishers_.count(sensor_id)) {
+        auto message = InsoleData();
+        message.stamp = this->get_clock()->now();
+        message.pressures.assign(values.begin(), values.end());
+        
+        publishers_[sensor_id]->publish(message);
     }
-    return DEFAULT_BAUDRATE; 
+}
+
+void PressureNode::load_parameters()
+{
+    this->declare_parameter<int>("update_rate_ms", 15);
+    update_rate_ms_ = this->get_parameter("update_rate_ms").as_int();
 }
 
 PressureNode::~PressureNode() = default;
