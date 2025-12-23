@@ -19,8 +19,8 @@ class ActuatorLink
 
         virtual int write1Byte(uint8_t id, uint8_t address, uint8_t data) = 0;
         virtual int write2Byte(uint8_t id, uint8_t address, uint16_t data) = 0;
-        virtual int read1Byte(uint16_t& read_data) = 0;
-        virtual int read2Byte(uint16_t& read_data) = 0;
+        virtual int read1Byte(uint8_t id, uint8_t address, uint8_t& read_data) = 0;
+        virtual int read2Byte(uint8_t id, uint8_t address, uint16_t& read_data) = 0;
         virtual ~ActuatorLink() = default;
 
     protected:
