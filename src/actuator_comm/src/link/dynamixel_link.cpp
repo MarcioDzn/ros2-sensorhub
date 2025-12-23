@@ -54,6 +54,24 @@ int DynamixelLink::read1Byte(uint8_t id, uint8_t address, uint8_t& read_data)
     return 0;
 }
 
+int DynamixelLink::read2Byte(uint8_t id, uint8_t address, uint16_t& read_data)
+{
+    uint8_t params[2] = {address, 2};
+    auto packet = protocol_->createPacketBase();
+    packet = protocol_->setHeader(packet, id, READ_INSTR);
+    packet = protocol_->setPayload(packet, params, 2);
+    packet = protocol_->setChecksum(packet);
+    
+    if (transport_->writeData(packet.data(), packet.size()) <= 0) return -1;
+
+    StatusPacket status;
+    if (readStatus(id, status) != 0) return -1;
+
+    read_data = static_cast<uint16_t>(status.params[0]) |
+    	(static_cast<uint16_t>(status.params[1]) << 8); 
+    return 0;
+}
+
 
 
 
