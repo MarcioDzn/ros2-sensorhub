@@ -1,4 +1,4 @@
-#include "actuator_comm/dynamixel_protocol.hpp"
+#include "actuator_comm/protocol/dynamixel_protocol.hpp"
 
 #define PACKET_BASE_SIZE        5
 #define MIN_PAYLOAD_SIZE        2

@@ -7,14 +7,19 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(common_serial REQUIRED)
 
-add_library(dynamixel_protocol
-  src/dynamixel_protocol.cpp
+add_library(dynamixel_link
+  src/link/dynamixel_link.cpp
 )
 
-target_include_directories(dynamixel_protocol PUBLIC include)
+target_include_directories(dynamixel_link PUBLIC include)
 
-install(TARGETS dynamixel_protocol
+ament_target_dependencies(dynamixel_link
+  common_serial
+)
+
+install(TARGETS dynamixel_link
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
@@ -25,6 +30,6 @@ install(
   DESTINATION include/
 )
 
-ament_export_libraries(dynamixel_protocol)
+ament_export_libraries(dynamixel_link)
 ament_export_include_directories("include")
 ament_package()
