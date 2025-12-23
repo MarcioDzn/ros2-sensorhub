@@ -4,9 +4,17 @@
 #include <cstdint>
 #include <vector>
 #include <memory>
+#include <chrono>
 
 #include "actuator_comm/protocol/actuator_protocol.hpp"
 #include "common_serial/serial_handler.hpp"
+
+struct StatusPacket
+{
+    uint8_t id;
+    uint8_t error;
+    std::vector<uint8_t> params;
+};
 
 class ActuatorLink
 {
@@ -24,6 +32,9 @@ class ActuatorLink
         virtual ~ActuatorLink() = default;
 
     protected:
+        virtual int readPacket(uint8_t* packet) = 0;
+        virtual int readStatus(uint8_t id, StatusPacket& out) = 0;
+
         std::shared_ptr<ActuatorProtocol> protocol_;
         std::shared_ptr<SerialHandler> transport_;
 };

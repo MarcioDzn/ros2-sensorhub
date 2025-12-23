@@ -1,15 +1,5 @@
 #include "actuator_comm/protocol/dynamixel_protocol.hpp"
 
-#define PACKET_BASE_SIZE        5
-#define MIN_PAYLOAD_SIZE        2
-
-#define PREAMBLE_POS            0
-#define ID_POS                  2
-#define LENGTH_POS              3
-#define INSTRUCTION_POS         4
-#define PARAMETER_POS           5
-
-
 DynamixelProtocol::DynamixelProtocol() {}
 
 std::vector<uint8_t> DynamixelProtocol::createPacketBase()

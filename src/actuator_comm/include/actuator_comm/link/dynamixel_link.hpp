@@ -16,6 +16,10 @@ class DynamixelLink : public ActuatorLink
         int write2Byte(uint8_t id, uint8_t address, uint16_t data) override;
         int read1Byte(uint8_t id, uint8_t address, uint8_t& read_data) override;
         int read2Byte(uint8_t id, uint8_t address, uint16_t& read_data) override;
+
+    private:
+        int readPacket(uint8_t* packet) override;
+        int readStatus(uint8_t id, StatusPacket& out) override;
 };
 
 
