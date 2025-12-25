@@ -1,4 +1,5 @@
 #include "actuator_comm/protocol/dynamixel_protocol.hpp"
+#include <span>
 
 DynamixelProtocol::DynamixelProtocol() {}
 
@@ -23,12 +24,13 @@ std::vector<uint8_t> DynamixelProtocol::setHeader(
 }
 
 std::vector<uint8_t> DynamixelProtocol::setPayload(
-    std::vector<uint8_t> packet, uint8_t* parameters, uint8_t parameter_size)
+    std::vector<uint8_t> packet, std::span<const uint8_t> parameters)
 {
-    packet.resize(PARAMETER_POS+parameter_size);
+	size_t param_size = parameters.size();
+    packet.resize(PARAMETER_POS+param_size);
 
     uint8_t payload_length = packet[LENGTH_POS];
-	for (int i = 0; i<parameter_size; i++)
+	for (int i = 0; i<param_size; i++)
 	{
 		packet[PARAMETER_POS+i]     = parameters[i];
         payload_length++;

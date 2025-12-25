@@ -21,7 +21,7 @@ class DynamixelProtocol : public ActuatorProtocol
         std::vector<uint8_t> setHeader(
             std::vector<uint8_t> packet, uint8_t id, uint8_t instr) override;
         std::vector<uint8_t> setPayload(
-            std::vector<uint8_t> packet, uint8_t* parameters, uint8_t parameter_size) override;
+            std::vector<uint8_t> packet, std::span<const uint8_t> parameters) override;
         std::vector<uint8_t> setChecksum(std::vector<uint8_t>packet) override;
 };
 

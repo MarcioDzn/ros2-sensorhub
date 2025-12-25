@@ -1,6 +1,7 @@
 #ifndef ACTUATOR_PROTOCOL_HPP
 #define ACTUATOR_PROTOCOL_HPP
 
+#include <span>
 #include <cstdint>
 #include <vector>
 
@@ -11,7 +12,7 @@ class ActuatorProtocol
         virtual std::vector<uint8_t> setHeader(
             std::vector<uint8_t> packet, uint8_t id, uint8_t instr) = 0;
         virtual std::vector<uint8_t> setPayload(
-            std::vector<uint8_t> packet, uint8_t* parameters, uint8_t parameter_size) = 0;
+            std::vector<uint8_t> packet, std::span<const uint8_t> parameters) = 0;
         virtual std::vector<uint8_t> setChecksum(std::vector<uint8_t> packet) = 0;
         virtual ~ActuatorProtocol() = default;
 };

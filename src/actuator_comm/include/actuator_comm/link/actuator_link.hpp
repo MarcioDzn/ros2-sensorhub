@@ -32,9 +32,6 @@ class ActuatorLink
         virtual ~ActuatorLink() = default;
 
     protected:
-        virtual int readPacket(uint8_t* packet) = 0;
-        virtual int readStatus(uint8_t id, StatusPacket& out) = 0;
-
         std::shared_ptr<ActuatorProtocol> protocol_;
         std::shared_ptr<SerialHandler> transport_;
 };

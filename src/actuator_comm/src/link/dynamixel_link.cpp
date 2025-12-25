@@ -1,17 +1,11 @@
 #include "actuator_comm/link/dynamixel_link.hpp"
 
-#define WRITE_INSTR         0x03
-#define READ_INSTR          0x02
-
-#define ERROR_POS           4
-#define RXPACKET_MAX_LEN    (250)
-
 int DynamixelLink::write1Byte(uint8_t id, uint8_t address, uint8_t data)
 {
     uint8_t params[2] = {address, data};
     auto packet = protocol_->createPacketBase();
     packet = protocol_->setHeader(packet, id, WRITE_INSTR);
-    packet = protocol_->setPayload(packet, params, 2);
+    packet = protocol_->setPayload(packet, params);
     packet = protocol_->setChecksum(packet);
     
     ssize_t result = transport_->writeData(packet.data(), packet.size());
@@ -28,7 +22,7 @@ int DynamixelLink::write2Byte(uint8_t id, uint8_t address, uint16_t data)
     uint8_t params[3] = {address, lsb, msb};
     auto packet = protocol_->createPacketBase();
     packet = protocol_->setHeader(packet, id, WRITE_INSTR);
-    packet = protocol_->setPayload(packet, params, 3);
+    packet = protocol_->setPayload(packet, params);
     packet = protocol_->setChecksum(packet);
     
     ssize_t result = transport_->writeData(packet.data(), packet.size());
@@ -42,7 +36,7 @@ int DynamixelLink::read1Byte(uint8_t id, uint8_t address, uint8_t& read_data)
     uint8_t params[2] = {address, 1};
     auto packet = protocol_->createPacketBase();
     packet = protocol_->setHeader(packet, id, READ_INSTR);
-    packet = protocol_->setPayload(packet, params, 2);
+    packet = protocol_->setPayload(packet, params);
     packet = protocol_->setChecksum(packet);
     
     if (transport_->writeData(packet.data(), packet.size()) <= 0) return -1;
@@ -59,7 +53,7 @@ int DynamixelLink::read2Byte(uint8_t id, uint8_t address, uint16_t& read_data)
     uint8_t params[2] = {address, 2};
     auto packet = protocol_->createPacketBase();
     packet = protocol_->setHeader(packet, id, READ_INSTR);
-    packet = protocol_->setPayload(packet, params, 2);
+    packet = protocol_->setPayload(packet, params);
     packet = protocol_->setChecksum(packet);
     
     if (transport_->writeData(packet.data(), packet.size()) <= 0) return -1;
@@ -72,10 +66,37 @@ int DynamixelLink::read2Byte(uint8_t id, uint8_t address, uint16_t& read_data)
     return 0;
 }
 
+std::vector<uint8_t> DynamixelLink::getPacket(
+	uint8_t id, uint8_t instr, std::span<const uint8_t> params)
+{
+	auto packet = protocol_->createPacketBase();
+    packet = protocol_->setHeader(packet, id, instr);
+    packet = protocol_->setPayload(packet, params);
+    packet = protocol_->setChecksum(packet);
 
+	return packet;
+}
 
+int DynamixelLink::sendPacket(const std::vector<uint8_t>& packet)
+{
+	if (transport_->writeData(packet.data(), packet.size()) <= 0) 
+		return -1;
+	return 0;
+}
 
-int DynamixelLink::readPacket(uint8_t* packet)
+int DynamixelLink::sendPacketAndReadStatus(
+	uint8_t id, const std::vector<uint8_t>& packet, StatusPacket& status)
+{
+	if (sendPacket(packet) != 0)
+		return -1;
+
+	if (id == 0xFE)
+		return 0; // broadcast não tem status
+
+    return readStatus(id, status);
+}
+
+int DynamixelLink::readPacket(std::array<uint8_t, RXPACKET_MAX_LEN>& packet)
 {
 	int result = -1;
 
@@ -91,7 +112,7 @@ int DynamixelLink::readPacket(uint8_t* packet)
 		if (std::chrono::steady_clock::now() - start > TIMEOUT)
       		return -2; // timeout
 
-		ssize_t n = transport_->readData(packet + read_size,
+		ssize_t n = transport_->readData(packet.data() + read_size,
 											packet_size - read_size);
 
 		if (n <= 0)
@@ -111,7 +132,7 @@ int DynamixelLink::readPacket(uint8_t* packet)
 			if (i == 0)
 			{
 				if (packet[ID_POS] > 0xFD ||                  // unavailable ID
-					packet[ERROR_POS] > RXPACKET_MAX_LEN ||  // unavailable Length
+					packet[LENGTH_POS] > RXPACKET_MAX_LEN ||  // unavailable Length
 					packet[ERROR_POS] > 0x7F)                 // unavailable Error
 				{
 					// remove o primeiro byte no pacote
@@ -161,7 +182,7 @@ int DynamixelLink::readPacket(uint8_t* packet)
 
 int DynamixelLink::readStatus(uint8_t id, StatusPacket& out)
 {
-	uint8_t rxbuffer[RXPACKET_MAX_LEN];
+	std::array<uint8_t, RXPACKET_MAX_LEN> rxbuffer;
 
 	if (readPacket(rxbuffer) != 0) return -1;
 	if (id != rxbuffer[ID_POS]) return -1;
