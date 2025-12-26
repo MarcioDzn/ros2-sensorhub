@@ -14,6 +14,7 @@ find_package(common_serial REQUIRED)
 
 add_library(dynamixel_link
   src/link/dynamixel_link.cpp
+  src/protocol/dynamixel_protocol.cpp
 )
 
 target_include_directories(dynamixel_link PUBLIC include)
