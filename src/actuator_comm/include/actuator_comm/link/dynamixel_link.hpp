@@ -9,7 +9,6 @@
 #define READ_INSTR          0x02
 
 #define ERROR_POS           4
-#define RXPACKET_MAX_LEN    (250)
 
 class DynamixelLink : public ActuatorLink
 {

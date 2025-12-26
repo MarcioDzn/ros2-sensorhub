@@ -5,15 +5,18 @@
 #include <vector>
 #include <memory>
 #include <chrono>
+#include <array>
 
 #include "actuator_comm/protocol/actuator_protocol.hpp"
 #include "common_serial/serial_handler.hpp"
+
+#define RXPACKET_MAX_LEN    (250)
 
 struct StatusPacket
 {
     uint8_t id;
     uint8_t error;
-    std::vector<uint8_t> params;
+    std::array<uint8_t, RXPACKET_MAX_LEN> params;
 };
 
 class ActuatorLink

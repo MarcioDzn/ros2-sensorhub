@@ -23,7 +23,10 @@ ament_target_dependencies(dynamixel_link
   common_serial
 )
 
-install(TARGETS dynamixel_link
+add_executable(test_dynamixel src/main.cpp)
+target_link_libraries(test_dynamixel dynamixel_link)
+
+install(TARGETS dynamixel_link test_dynamixel
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
