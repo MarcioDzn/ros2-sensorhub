@@ -5,10 +5,8 @@ int DynamixelLink::write1Byte(uint8_t id, uint8_t address, uint8_t data)
     uint8_t params[2] = {address, data};
     std::vector<uint8_t> packet = getPacket(id, WRITE_INSTR, params);
     
-    ssize_t result = transport_->writeData(packet.data(), packet.size());
-    if (result < 0) return -1;
-
-    return static_cast<int>(result);
+	StatusPacket status;
+    return sendPacketAndReadStatus(id, packet, status);
 }
 
 int DynamixelLink::write2Byte(uint8_t id, uint8_t address, uint16_t data)
@@ -19,10 +17,8 @@ int DynamixelLink::write2Byte(uint8_t id, uint8_t address, uint16_t data)
     uint8_t params[3] = {address, lsb, msb};
 	std::vector<uint8_t> packet = getPacket(id, WRITE_INSTR, params);
     
-    ssize_t result = transport_->writeData(packet.data(), packet.size());
-    if (result < 0) return -1;
-    
-    return static_cast<int>(result);
+	StatusPacket status;
+    return sendPacketAndReadStatus(id, packet, status);
 }
 
 int DynamixelLink::read1Byte(uint8_t id, uint8_t address, uint8_t& read_data)
@@ -33,10 +29,12 @@ int DynamixelLink::read1Byte(uint8_t id, uint8_t address, uint8_t& read_data)
     if (transport_->writeData(packet.data(), packet.size()) <= 0) return -1;
 
     StatusPacket status;
-    if (readStatus(id, status) != 0) return -1;
-
-    read_data = status.params[0]; 
-    return 0;
+	int result = sendPacketAndReadStatus(id, packet, status);
+    
+    if (result == 0) {
+        read_data = status.params[0];
+    }
+    return result;
 }
 
 int DynamixelLink::read2Byte(uint8_t id, uint8_t address, uint16_t& read_data)
@@ -46,12 +44,14 @@ int DynamixelLink::read2Byte(uint8_t id, uint8_t address, uint16_t& read_data)
     
     if (transport_->writeData(packet.data(), packet.size()) <= 0) return -1;
 
-    StatusPacket status;
-    if (readStatus(id, status) != 0) return -1;
-
-    read_data = static_cast<uint16_t>(status.params[0]) |
-    	(static_cast<uint16_t>(status.params[1]) << 8); 
-    return 0;
+	StatusPacket status;
+    int result = sendPacketAndReadStatus(id, packet, status);
+    
+    if (result == 0) {
+        read_data = static_cast<uint16_t>(status.params[0]) |
+                   (static_cast<uint16_t>(status.params[1]) << 8);
+    }
+    return result;
 }
 
 std::vector<uint8_t> DynamixelLink::getPacket(
