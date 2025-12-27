@@ -12,21 +12,24 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(common_serial REQUIRED)
 
-add_library(dynamixel_link
+
+add_library(dynamixel_controller
+  src/controller/dynamixel_controller.cpp
   src/link/dynamixel_link.cpp
   src/protocol/dynamixel_protocol.cpp
 )
 
-target_include_directories(dynamixel_link PUBLIC include)
+target_include_directories(dynamixel_controller PUBLIC include)
 
-ament_target_dependencies(dynamixel_link
+ament_target_dependencies(dynamixel_controller
   common_serial
 )
 
 add_executable(test_dynamixel src/main.cpp)
-target_link_libraries(test_dynamixel dynamixel_link)
+target_link_libraries(test_dynamixel dynamixel_controller)
 
-install(TARGETS dynamixel_link test_dynamixel
+install(TARGETS dynamixel_controller 
+  test_dynamixel
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
@@ -37,6 +40,6 @@ install(
   DESTINATION include/
 )
 
-ament_export_libraries(dynamixel_link)
+ament_export_libraries(dynamixel_controller)
 ament_export_include_directories("include")
 ament_package()
