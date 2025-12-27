@@ -8,6 +8,8 @@
 #include <chrono>
 
 #include "common_serial/serial_handler.hpp"
+#include "actuator_comm/controller/dynamixel_controller.hpp"
+#include "actuator_comm/controller/actuator_controller.hpp"
 
 class ActuatorManager
 {

@@ -1,6 +1,7 @@
 #ifndef ACTUATOR_LINK_HPP
 #define ACTUATOR_LINK_HPP
 
+#include <span>
 #include <cstdint>
 #include <vector>
 #include <memory>

@@ -1,6 +1,7 @@
 #ifndef ACTUATOR_CONTROLLER_HPP
 #define ACTUATOR_CONTROLLER_HPP
 
+#include <span>
 #include <cstdint>
 
 class ActuatorController

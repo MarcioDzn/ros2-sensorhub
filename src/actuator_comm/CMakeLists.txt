@@ -21,6 +21,8 @@ add_library(dynamixel_controller
 
 target_include_directories(dynamixel_controller PUBLIC include)
 
+target_compile_features(dynamixel_controller PUBLIC cxx_std_20)
+
 ament_target_dependencies(dynamixel_controller
   common_serial
 )
