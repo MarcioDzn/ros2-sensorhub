@@ -40,9 +40,6 @@ class ActuatorNode : public rclcpp::Node
         virtual ~ActuatorNode();
 
         SerialHandler* init_serial(const char* device, int baudrate);
-        
-        void send_packet();
-        void set_actuator_manager();
 
     private:
         void load_actuators_config();
@@ -50,6 +47,8 @@ class ActuatorNode : public rclcpp::Node
 
         std::optional<ActuatorType> get_actuator_type(
             uint8_t id, std::string& type);
+        std::optional<std::shared_ptr<ActuatorController>> get_controller(
+            uint8_t id, std::string device);
 
         void goal_position_callback(const ActuatorGoalPosition::SharedPtr msg);
         void motor_service_callback(

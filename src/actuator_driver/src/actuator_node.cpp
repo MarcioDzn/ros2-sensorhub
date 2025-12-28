@@ -75,51 +75,6 @@ void ActuatorNode::load_hardware_config()
     }
 }
 
-/*
-void ActuatorNode::load_hardware_config()
-{
-    auto all_params = this->get_node_parameters_interface()->get_parameter_overrides();
-    int active_ports = 0;
-    for (const auto & [name, value] : all_params) {
-        // busca configurações de devices: devices.<nome>.path
-        if (name.find("devices.") == 0 && name.find(".path") != std::string::npos) {
-            std::string prefix = name.substr(0, name.rfind(".path"));
-            std::string path = value.get<std::string>();
-            
-            int baudrate = all_params.count(prefix + ".baudrate") ? 
-                           all_params.at(prefix + ".baudrate").get<int>() : 2000000;
-
-            RCLCPP_INFO(this->get_logger(), "Iniciando Hardware: %s @ %d bps", path.c_str(), baudrate);
-
-            auto handler = std::make_shared<SerialHandler>();
-            
-            if (handler->init(path.c_str()) < 0) {
-                RCLCPP_ERROR(this->get_logger(), "FALHA AO ABRIR PORTA SERIAL: %s", path.c_str());
-                continue; 
-            }
-            handler->setDefaultConfig();
-            handler->setBaudRate(baudrate);
-
-            // cria um manager próprio pra a porta
-            auto manager = std::make_shared<ActuatorManager>();
-            manager->setSerialHandler(handler);
-
-            hardware_map_[path] = {handler, manager};
-            active_ports++;
-
-            RCLCPP_INFO(this->get_logger(), "Porta %s configurada com sucesso.", path.c_str());
-        }
-    }
-
-    if (active_ports == 0) {
-        RCLCPP_FATAL(this->get_logger(), "NENHUMA porta serial pôde ser aberta. O nó não pode funcionar.");
-        throw std::runtime_error("Falha total na inicialização do hardware serial.");
-    } else {
-        RCLCPP_INFO(this->get_logger(), "Inicialização concluída. %d porta(s) ativa(s).", active_ports);
-    }
-}
-*/
-
 void ActuatorNode::load_actuators_config()
 {
     auto all_params = this->get_node_parameters_interface()->get_parameter_overrides();
@@ -169,6 +124,19 @@ std::optional<ActuatorType> ActuatorNode::get_actuator_type(uint8_t id, std::str
     return actuator_type;
 }
 
+std::optional<std::shared_ptr<ActuatorController>> ActuatorNode::get_controller(uint8_t id, std::string device)
+{
+    auto it = controller_map_.find(device);
+    if (it == controller_map_.end()) {
+        RCLCPP_ERROR(this->get_logger(),
+            "Hardware %s não inicializado para motor %d",
+            device.c_str(), id);
+        return std::nullopt;
+    }
+
+    return it->second;
+}
+
 void ActuatorNode::motor_service_callback(
     const std::shared_ptr<SetMotorConfig::Request> request,
     std::shared_ptr<SetMotorConfig::Response> response)
@@ -179,21 +147,14 @@ void ActuatorNode::motor_service_callback(
     auto actuator_type_opt = get_actuator_type(request->id, request->type);
     if (!actuator_type_opt)
         return;
-    ActuatorType actuator_type = *actuator_type_opt;
-    Actuator actuator = actuator_type.actuators[request->id];
+    ActuatorType& actuator_type = *actuator_type_opt;
+    Actuator& actuator = actuator_type.actuators[request->id];
 
-    // busca pelo controller correspondente
-    auto it = controller_map_.find(actuator.device);
-    if (it == controller_map_.end()) {
-        RCLCPP_ERROR(this->get_logger(),
-            "Hardware %s não inicializado para motor %d",
-            actuator.device.c_str(), actuator.id);
+    auto controller_opt = get_controller(actuator.id, actuator.device);
+    if (!controller_opt)
         return;
-    }
+    auto controller = *controller_opt;
 
-    auto controller = it->second;
-
-    // executa o comando
     RCLCPP_INFO(this->get_logger(), "Service: '%s' em ID %d", request->command.c_str(), request->id);
 
     int result = -1;
@@ -217,19 +178,13 @@ void ActuatorNode::goal_position_callback(const ActuatorGoalPosition::SharedPtr 
     auto actuator_type_opt = get_actuator_type(msg->id, msg->type);
     if (!actuator_type_opt)
         return;
-    ActuatorType actuator_type = *actuator_type_opt;
-    Actuator actuator = actuator_type.actuators[msg->id];
+    ActuatorType& actuator_type = *actuator_type_opt;
+    Actuator& actuator = actuator_type.actuators[msg->id];
 
-    // busca pelo controller correspondente
-    auto it = controller_map_.find(actuator.device);
-    if (it == controller_map_.end()) {
-        RCLCPP_ERROR(this->get_logger(),
-            "Hardware %s não inicializado para motor %d",
-            actuator.device.c_str(), actuator.id);
+    auto controller_opt = get_controller(actuator.id, actuator.device);
+    if (!controller_opt)
         return;
-    }
-
-    auto controller = it->second;
+    auto controller = *controller_opt;
     
     if (msg->goal > actuator.max_deg || msg->goal < actuator.min_deg) {
         RCLCPP_WARN(this->get_logger(), "Comando fora dos limites: ID %d Goal %.2f", actuator.id, msg->goal);
