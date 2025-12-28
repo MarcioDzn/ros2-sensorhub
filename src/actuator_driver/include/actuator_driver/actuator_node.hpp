@@ -12,15 +12,11 @@
 #include "interfaces/srv/set_motor_config.hpp"
 #include "interfaces/msg/actuator_goal_position.hpp"
 #include "actuator_manager.hpp"
+#include "actuator_comm/controller/dynamixel_controller.hpp"
+#include "actuator_comm/controller/actuator_controller.hpp"
 
 using SetMotorConfig = interfaces::srv::SetMotorConfig;
 using ActuatorGoalPosition = interfaces::msg::ActuatorGoalPosition;
-
-struct DeviceInterface
-{
-    std::shared_ptr<SerialHandler> serial;
-    std::shared_ptr<ActuatorManager> manager;
-};
 
 struct Actuator
 {
@@ -56,7 +52,7 @@ class ActuatorNode : public rclcpp::Node
             const std::shared_ptr<SetMotorConfig::Request> request,
             std::shared_ptr<SetMotorConfig::Response> response);
 
-        std::map<std::string, DeviceInterface> hardware_map_;
+        std::map<std::string, std::shared_ptr<ActuatorController>> controller_map_;
         std::map<std::string, ActuatorType> actuators_config_;
             
         rclcpp::Subscription<ActuatorGoalPosition>::SharedPtr actuator_subscriber_;

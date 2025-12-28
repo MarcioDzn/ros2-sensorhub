@@ -6,6 +6,7 @@ actuator_node:
       usb0: 
         path: /tmp/ttyV0
         baudrate: 2000000
+        actuator_type: dynamixel
 
     dynamixel:
       angular_resolution: 0.088
