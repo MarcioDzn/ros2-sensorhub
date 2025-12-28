@@ -1,4 +1,4 @@
-#include "actuator_comm/controller/dynamixel_controller.hpp"
+#include "dynamixel_controller.hpp"
 
 #define TORQUE_ADDR         0x18
 #define GOAL_POS_ADDR       0x1E

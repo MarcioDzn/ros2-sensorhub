@@ -8,7 +8,7 @@
 #include <chrono>
 #include <array>
 
-#include "actuator_comm/protocol/dynamixel_protocol.hpp"
+#include "dynamixel_protocol.hpp"
 #include "common_serial/serial_handler.hpp"
 
 #define WRITE_INSTR         0x03

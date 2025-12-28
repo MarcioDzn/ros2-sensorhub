@@ -1,4 +1,4 @@
-#include "actuator_comm/link/dynamixel_link.hpp"
+#include "dynamixel_link.hpp"
 
 int DynamixelLink::write1Byte(uint8_t id, uint8_t address, uint8_t data)
 {

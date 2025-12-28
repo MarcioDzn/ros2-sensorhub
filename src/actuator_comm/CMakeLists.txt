@@ -15,15 +15,17 @@ find_package(common_serial REQUIRED)
 
 add_library(actuator_comm
   src/core/actuator_factory.cpp
-  src/controller/dynamixel_controller.cpp
-  src/link/dynamixel_link.cpp
-  src/protocol/dynamixel_protocol.cpp
+  src/dynamixel/dynamixel_controller.cpp
+  src/dynamixel/dynamixel_link.cpp
+  src/dynamixel/dynamixel_protocol.cpp
 )
 
 target_include_directories(actuator_comm
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
+  PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/dynamixel
 )
 
 target_compile_features(actuator_comm PUBLIC cxx_std_20)

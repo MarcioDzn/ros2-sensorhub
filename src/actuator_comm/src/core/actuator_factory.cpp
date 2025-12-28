@@ -1,5 +1,5 @@
 #include "actuator_comm/core/actuator_factory.hpp"
-#include "actuator_comm/controller/dynamixel_controller.hpp"
+#include "dynamixel_controller.hpp"
 
 std::unique_ptr<ActuatorController> 
 ActuatorFactory::createDynamixel()

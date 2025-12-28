@@ -1,4 +1,4 @@
-#include "actuator_comm/protocol/dynamixel_protocol.hpp"
+#include "dynamixel_protocol.hpp"
 #include <span>
 
 DynamixelProtocol::DynamixelProtocol() {}

@@ -5,8 +5,8 @@
 #include <memory>
 
 #include "actuator_comm/controller/actuator_controller.hpp"
-#include "actuator_comm/link/dynamixel_link.hpp"
-#include "actuator_comm/protocol/dynamixel_protocol.hpp"
+#include "dynamixel_link.hpp"
+#include "dynamixel_protocol.hpp"
 
 class DynamixelController : public ActuatorController
 {
