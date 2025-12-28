@@ -6,6 +6,7 @@
 #include <cmath>
 #include <map>
 #include <string>
+#include <optional>
 
 #include "rclcpp/rclcpp.hpp"
 #include "common_serial/serial_handler.hpp"
@@ -46,6 +47,9 @@ class ActuatorNode : public rclcpp::Node
     private:
         void load_actuators_config();
         void load_hardware_config();
+
+        std::optional<ActuatorType> get_actuator_type(
+            uint8_t id, std::string& type);
 
         void goal_position_callback(const ActuatorGoalPosition::SharedPtr msg);
         void motor_service_callback(

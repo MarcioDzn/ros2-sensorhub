@@ -153,25 +153,34 @@ void ActuatorNode::load_actuators_config()
     }
 }
 
+std::optional<ActuatorType> ActuatorNode::get_actuator_type(uint8_t id, std::string& type)
+{
+    if (actuators_config_.count(type) == 0) {
+        RCLCPP_ERROR(this->get_logger(), "Tipo %s desconhecido", type.c_str());
+        return std::nullopt;
+    }
+
+    auto& actuator_type = actuators_config_[type];
+    if (actuator_type.actuators.count(id) == 0) {
+        RCLCPP_ERROR(this->get_logger(), "ID %d não cadastrado no tipo %s", id, type.c_str());
+        return std::nullopt;
+    }
+
+    return actuator_type;
+}
+
 void ActuatorNode::motor_service_callback(
     const std::shared_ptr<SetMotorConfig::Request> request,
     std::shared_ptr<SetMotorConfig::Response> response)
 {
     auto command = request->command;
     response->success = false;
-    
-    if (actuators_config_.count(request->type) == 0) {
-        RCLCPP_ERROR(this->get_logger(), "Tipo %s desconhecido", request->type.c_str());
-        return;
-    }
 
-    auto& type_struct = actuators_config_[request->type];
-    if (type_struct.actuators.count(request->id) == 0) {
-        RCLCPP_ERROR(this->get_logger(), "ID %d não cadastrado no tipo %s", request->id, request->type.c_str());
+    auto actuator_type_opt = get_actuator_type(request->id, request->type);
+    if (!actuator_type_opt)
         return;
-    }
-
-    Actuator actuator = type_struct.actuators[request->id];
+    ActuatorType actuator_type = *actuator_type_opt;
+    Actuator actuator = actuator_type.actuators[request->id];
 
     // busca pelo controller correspondente
     auto it = controller_map_.find(actuator.device);
@@ -205,18 +214,11 @@ void ActuatorNode::motor_service_callback(
 void ActuatorNode::goal_position_callback(const ActuatorGoalPosition::SharedPtr msg)
 {
 
-    if (actuators_config_.count(msg->type) == 0) {
-        RCLCPP_ERROR(this->get_logger(), "Tipo %s desconhecido", msg->type.c_str());
+    auto actuator_type_opt = get_actuator_type(msg->id, msg->type);
+    if (!actuator_type_opt)
         return;
-    }
-
-    auto& type_struct = actuators_config_[msg->type];
-    if (type_struct.actuators.count(msg->id) == 0) {
-        RCLCPP_ERROR(this->get_logger(), "ID %d não cadastrado no tipo %s", msg->id, msg->type.c_str());
-        return;
-    }
-
-    Actuator actuator = type_struct.actuators[msg->id];
+    ActuatorType actuator_type = *actuator_type_opt;
+    Actuator actuator = actuator_type.actuators[msg->id];
 
     // busca pelo controller correspondente
     auto it = controller_map_.find(actuator.device);
@@ -234,7 +236,7 @@ void ActuatorNode::goal_position_callback(const ActuatorGoalPosition::SharedPtr 
         return;
     }
 
-    int16_t goal_pos_native = static_cast<int16_t>(std::round(msg->goal / type_struct.angular_resolution));
+    int16_t goal_pos_native = static_cast<int16_t>(std::round(msg->goal / actuator_type.angular_resolution));
     
     if (controller->setGoalPosition(actuator.id, goal_pos_native) != 0) {
         RCLCPP_ERROR(this->get_logger(), "Erro de comunicação ao mover motor %d", actuator.id);
