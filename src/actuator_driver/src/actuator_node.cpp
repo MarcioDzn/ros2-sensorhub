@@ -48,7 +48,7 @@ void ActuatorNode::load_hardware_config()
             std::shared_ptr<ActuatorController> controller;
             if (actuator_type == "dynamixel") {
                 auto ctrl = ActuatorFactory::createDynamixel();
-                controller = std::move(ctrl);
+                controller = std::shared_ptr<ActuatorController>(std::move(ctrl));
             } else {
                 RCLCPP_FATAL(this->get_logger(),
                     "Tipo de actuator desconhecido: %s", actuator_type.c_str());
