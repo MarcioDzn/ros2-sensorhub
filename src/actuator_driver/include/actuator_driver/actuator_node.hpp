@@ -8,12 +8,14 @@
 #include <string>
 #include <optional>
 
+#include "actuator_comm/controller/actuator_controller.hpp"
+#include "actuator_comm/core/actuator_factory.hpp"
+
 #include "rclcpp/rclcpp.hpp"
 #include "common_serial/serial_handler.hpp"
 #include "interfaces/srv/set_motor_config.hpp"
 #include "interfaces/msg/actuator_goal_position.hpp"
-#include "actuator_comm/controller/dynamixel_controller.hpp"
-#include "actuator_comm/controller/actuator_controller.hpp"
+
 
 using SetMotorConfig = interfaces::srv::SetMotorConfig;
 using ActuatorGoalPosition = interfaces::msg::ActuatorGoalPosition;

@@ -13,25 +13,27 @@ find_package(ament_cmake REQUIRED)
 find_package(common_serial REQUIRED)
 
 
-add_library(dynamixel_controller
+add_library(actuator_comm
+  src/core/actuator_factory.cpp
   src/controller/dynamixel_controller.cpp
   src/link/dynamixel_link.cpp
   src/protocol/dynamixel_protocol.cpp
 )
 
-target_include_directories(dynamixel_controller PUBLIC include)
+target_include_directories(actuator_comm
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
 
-target_compile_features(dynamixel_controller PUBLIC cxx_std_20)
+target_compile_features(actuator_comm PUBLIC cxx_std_20)
 
-ament_target_dependencies(dynamixel_controller
+ament_target_dependencies(actuator_comm
   common_serial
 )
 
-add_executable(test_dynamixel src/main.cpp)
-target_link_libraries(test_dynamixel dynamixel_controller)
 
-install(TARGETS dynamixel_controller 
-  test_dynamixel
+install(TARGETS actuator_comm
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
@@ -42,7 +44,7 @@ install(
   DESTINATION include/
 )
 
-ament_export_libraries(dynamixel_controller)
+ament_export_libraries(actuator_comm)
 ament_export_include_directories("include")
 ament_export_dependencies(common_serial)
 ament_package()
