@@ -20,20 +20,7 @@ include_directories(
   include/actuator_driver
 )
 
-add_library(actuator_manager
-  src/actuator_manager.cpp
-)
-
-ament_target_dependencies(actuator_manager
-  common_serial
-  actuator_comm
-)
-
-add_executable(actuator_node src/actuator_node.cpp
-  src/actuator_manager.cpp
-)
-
-target_link_libraries(actuator_node actuator_manager)
+add_executable(actuator_node src/actuator_node.cpp)
 
 ament_target_dependencies(actuator_node
   rclcpp
@@ -44,7 +31,6 @@ ament_target_dependencies(actuator_node
 
 install(TARGETS
   actuator_node
-  actuator_manager
   DESTINATION lib/${PROJECT_NAME}
 )
 

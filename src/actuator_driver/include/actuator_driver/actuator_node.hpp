@@ -12,7 +12,6 @@
 #include "common_serial/serial_handler.hpp"
 #include "interfaces/srv/set_motor_config.hpp"
 #include "interfaces/msg/actuator_goal_position.hpp"
-#include "actuator_manager.hpp"
 #include "actuator_comm/controller/dynamixel_controller.hpp"
 #include "actuator_comm/controller/actuator_controller.hpp"
 

@@ -44,4 +44,5 @@ install(
 
 ament_export_libraries(dynamixel_controller)
 ament_export_include_directories("include")
+ament_export_dependencies(common_serial)
 ament_package()
