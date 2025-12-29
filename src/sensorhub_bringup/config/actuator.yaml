@@ -1,30 +1,6 @@
-actuator_node:
+base_actuator_node:
   ros__parameters:
     update_rate_ms: 15
-
-    devices: 
-      usb0: 
-        path: /tmp/ttyV0
-        baudrate: 2000000
-        actuator_type: dynamixel
-
-    dynamixel:
-      angular_resolution: 0.088
-
-      actuator_1:
-        id: 1
-        min_deg: 100
-        max_deg: 180
-        device: usb0
-
-      actuator_2:
-        id: 2
-        min_deg: 100
-        max_deg: 180
-        device: usb0
-
-      actuator_3:
-        id: 3
-        min_deg: 100
-        max_deg: 180
-        device: usb0
+    usb_port: "/dev/ttyUSB0"
+    baudrate: 2000000
+    actuator_ids: [1, 2, 3]
