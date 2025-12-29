@@ -20,7 +20,9 @@ include_directories(
   include/actuator_driver
 )
 
-add_executable(actuator_node src/actuator_node.cpp)
+add_executable(actuator_node 
+  src/actuator_node.cpp
+  src/actuator_manager.cpp)
 
 ament_target_dependencies(actuator_node
   rclcpp

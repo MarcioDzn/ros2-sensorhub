@@ -1,53 +1,54 @@
 #include "actuator_manager.hpp"
 
-ActuatorManager::ActuatorManager(std::shared_ptr<rclcpp::Node>& node_ptr) {
-    parameters_ = std::make_unique<ActuatorParams>();
+ActuatorManager::ActuatorManager() {}
 
-    declare_parameters(node_ptr);
-    set_parameters(node_ptr);
+void ActuatorManager::init_node(std::shared_ptr<rclcpp::Node> node)
+{
+    declare_parameters(node);
+    set_parameters(node);
 }
 
-void ActuatorManager::declare_parameters(std::shared_ptr<rclcpp::Node>& node_ptr)
+void ActuatorManager::declare_parameters(std::shared_ptr<rclcpp::Node> node)
 {
-    node_ptr->declare_parameter("usb_port", "/dev/ttyUSB0");
-    node_ptr->declare_parameter("baudrate", 2000000);
-    node_ptr->declare_parameter("actuator_ids", {1, 2, 3});
-    node_ptr->declare_parameter("update_rate_ms", 15);
+    node->declare_parameter("usb_port", "/dev/ttyUSB0");
+    node->declare_parameter("baudrate", 2000000);
+    node->declare_parameter("actuator_ids", std::vector<int64_t>{1, 2, 3});
+    node->declare_parameter("update_rate_ms", 15);
 }
 
-void ActuatorManager::set_parameters(std::shared_ptr<rclcpp::Node>& node_ptr)
+void ActuatorManager::set_parameters(std::shared_ptr<rclcpp::Node> node)
 {
-    parameters_->usb_port = node_ptr->get_parameter("usb_port").as_string();
-    parameters_->baudrate = static_cast<uint32_t>(
-        node_ptr->get_parameter("baudrate").as_int());
-    parameters_->update_rate_ms = node_ptr->get_parameter("update_rate_ms").as_int();
-    std::vector<long> raw_ids = node_ptr->get_parameter("actuator_ids").as_integer_array();
+    parameters_.usb_port = node->get_parameter("usb_port").as_string();
+    parameters_.baudrate = static_cast<uint32_t>(
+        node->get_parameter("baudrate").as_int());
+    parameters_.update_rate_ms = node->get_parameter("update_rate_ms").as_int();
+    std::vector<long> raw_ids = node->get_parameter("actuator_ids").as_integer_array();
     
     // converte de long pra uint8_t
-    parameters_->actuator_ids.clear();
-    parameters_->actuator_ids.reserve(raw_ids.size()); // tamanho certo dos ids
+    parameters_.actuator_ids.clear();
+    parameters_.actuator_ids.reserve(raw_ids.size()); // tamanho certo dos ids
     for (long id : raw_ids)
         if (id >= 0 && id <= 253) // valores suportados por uint8_t
-            parameters_->actuator_ids.push_back(static_cast<uint8_t>(id)); 
+            parameters_.actuator_ids.push_back(static_cast<uint8_t>(id)); 
 
 }
 
-int ActuatorManager::init_comm(std::shared_ptr<rclcpp::Node>& node_ptr) {
+int ActuatorManager::init_comm(std::shared_ptr<rclcpp::Node> node) {
     auto ctrl = ActuatorFactory::createDynamixel();
-    controller_ = std::shared_ptr<ActuatorController>(std::move(ctrl));
+    controller_ = std::move(ctrl);
     
-    if (controller_->init(parameters_->usb_port, parameters_->baudrate) < 0) {
-        RCLCPP_ERROR(node_ptr->get_logger(), 
-            "FALHA AO ABRIR PORTA SERIAL: %s", parameters_->usb_port.c_str());
+    if (controller_->init(parameters_.usb_port, parameters_.baudrate) < 0) {
+        RCLCPP_FATAL(node->get_logger(), 
+            "FALHA AO ABRIR PORTA SERIAL: %s", parameters_.usb_port.c_str());
         return -1; 
     }
 
-    RCLCPP_INFO(node_ptr->get_logger(), "Comunicação serial aberta com sucesso: %s", parameters_->usb_port.c_str());
+    RCLCPP_INFO(node->get_logger(), "Comunicação serial aberta com sucesso: %s", parameters_.usb_port.c_str());
     return 0;
 }
 
 int ActuatorManager::execute_command(
-    std::shared_ptr<rclcpp::Node>& node_ptr, uint8_t id, 
+    std::shared_ptr<rclcpp::Node> node, uint8_t id, 
     const std::string& command, const std::vector<int16_t>& params)
 {
     if (!controller_) 
@@ -66,19 +67,19 @@ int ActuatorManager::execute_command(
 }
 
 int ActuatorManager::set_goal_position(
-    std::shared_ptr<rclcpp::Node>& node_ptr, uint8_t id, uint16_t goal)
+    std::shared_ptr<rclcpp::Node> node, uint8_t id, uint16_t goal)
 {
     if (goal > 4096) {
-        RCLCPP_WARN(node_ptr->get_logger(), "Comando fora dos limites: ID %u Goal %u", id, goal);
+        RCLCPP_WARN(node->get_logger(), "Comando fora dos limites: ID %u Goal %u", id, goal);
         return -1;
     }
     
     if (controller_->setGoalPosition(id, goal) != 0) {
-        RCLCPP_ERROR(node_ptr->get_logger(), "Erro de comunicação ao mover atuador %u", id);
+        RCLCPP_ERROR(node->get_logger(), "Erro de comunicação ao mover atuador %u", id);
         return -1;
     } 
 
-    RCLCPP_DEBUG(node_ptr->get_logger(), "Atuador %u movido para %u", id, goal);
+    RCLCPP_DEBUG(node->get_logger(), "Atuador %u movido para %u", id, goal);
     return 0;
 
 }
