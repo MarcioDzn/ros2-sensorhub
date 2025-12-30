@@ -9,15 +9,20 @@ ActuatorNode::ActuatorNode()
     manager_->init_node(this);
 
     if (manager_->init_comm() < 0)
+    {
+        RCLCPP_FATAL(this->get_logger(), "Falha na inicialização do hardware serial.");
         throw std::runtime_error("Falha na inicialização do hardware serial.");
+    }
 
+    auto parameters = manager_->get_parameters();
     actuator_subscriber_ = this->create_subscription<ActuatorGoalPosition>(
-        "goal_position", 10, 
+        parameters.base_name + "/goal_position", 10, 
         [this](const ActuatorGoalPosition::SharedPtr msg) {
             this->goal_position_callback(msg);
         });
     
-    motor_service_ = this->create_service<SetMotorConfig>("motor_config", 
+    motor_service_ = this->create_service<SetMotorConfig>(
+        parameters.base_name + "/motor_config", 
         [this](const std::shared_ptr<SetMotorConfig::Request> req, 
                 std::shared_ptr<SetMotorConfig::Response> res) {
             this->motor_service_callback(req, res);

@@ -11,6 +11,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 struct ActuatorParams {
+    std::string base_name;
     int update_rate_ms;
     std::string usb_port;
     uint32_t baudrate;
@@ -22,8 +23,6 @@ class ActuatorManager
     public:
         explicit ActuatorManager();
 
-        void get_parameters();
-
         void init_node(rclcpp::Node* node);
         std::shared_ptr<ActuatorController> get_controller() { return controller_; }
         int init_comm();
@@ -31,6 +30,7 @@ class ActuatorManager
             uint8_t id, const std::string& command, const std::vector<int16_t>& params);
         int set_goal_position(rclcpp::Node* node, 
             uint8_t id, uint16_t goal);
+        ActuatorParams get_parameters() { return parameters_; }
 
     private:
         void declare_parameters(rclcpp::Node* node);

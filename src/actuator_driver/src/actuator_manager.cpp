@@ -10,6 +10,7 @@ void ActuatorManager::init_node(rclcpp::Node* node)
 
 void ActuatorManager::declare_parameters(rclcpp::Node* node)
 {
+    node->declare_parameter("base_name", "dxl");
     node->declare_parameter("usb_port", "/dev/ttyUSB0");
     node->declare_parameter("baudrate", 2000000);
     node->declare_parameter("actuator_ids", std::vector<int64_t>{1, 2, 3});
@@ -18,6 +19,7 @@ void ActuatorManager::declare_parameters(rclcpp::Node* node)
 
 void ActuatorManager::set_parameters(rclcpp::Node* node)
 {
+    parameters_.base_name = node->get_parameter("base_name").as_string();
     parameters_.usb_port = node->get_parameter("usb_port").as_string();
     parameters_.baudrate = static_cast<uint32_t>(
         node->get_parameter("baudrate").as_int());
