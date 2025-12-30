@@ -8,21 +8,21 @@ ActuatorNode::ActuatorNode()
     manager_ = std::make_unique<ActuatorManager>();
     manager_->init_node(this);
 
+
     if (manager_->init_comm() != ActuatorError::OK)
     {
         RCLCPP_FATAL(this->get_logger(), "Falha na inicialização do hardware serial.");
-        throw std::runtime_error("Falha na inicialização do hardware serial.");
+        throw std::runtime_error("");
     }
-
+    
     auto& parameters = manager_->get_parameters();
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .best_effort()
         .durability_volatile();
 
-
     actuator_subscriber_ = this->create_subscription<ActuatorGoalPosition>(
-        parameters.base_name + "/goal", qos, 
+        parameters.base_name + "/goal_position", qos, 
         [this](const ActuatorGoalPosition::SharedPtr msg) {
             this->goal_position_callback(msg);
         });
@@ -38,7 +38,7 @@ ActuatorNode::ActuatorNode()
     for (auto id: parameters.actuator_ids)
     {
         auto topic =
-            parameters.base_name + "/current_position/" +
+            parameters.base_name + "/current_position/id_" +
             std::to_string(static_cast<int>(id));
 
         publishers_[id] =

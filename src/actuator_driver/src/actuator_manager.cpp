@@ -67,6 +67,7 @@ ActuatorError ActuatorManager::execute_command(
         ? ActuatorError::OK
         : ActuatorError::CommunicationError;
     }
+    // TODO: get_current_position
 
     return ActuatorError::UnsupportedCommand;
 }
