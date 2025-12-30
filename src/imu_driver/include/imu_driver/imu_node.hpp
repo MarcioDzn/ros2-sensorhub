@@ -5,8 +5,16 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
-#include "imu_lib.hpp"
 #include "interfaces/msg/imu_data.hpp"
+#include "imu_comm/bno055imu.hpp"
+
+struct ImuConfig {
+    std::string name;
+    int id;
+    int address;
+    int multiplexer;
+    std::array<int, 3> euler_order;
+};
 
 using IMUData = interfaces::msg::IMUData;
 
@@ -17,15 +25,6 @@ class IMUNode : public rclcpp::Node
         virtual ~IMUNode();
 
     private:
-
-        struct ImuConfig {
-            std::string name;
-            int id;
-            int address;
-            int multiplexer;
-            std::array<int, 3> euler_order;
-        };
-
         void timer_callback();
         void load_parameters();
         void set_parameters();
