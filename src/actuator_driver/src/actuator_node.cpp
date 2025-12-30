@@ -60,7 +60,7 @@ void ActuatorNode::motor_service_callback(
 {
     response->success = false;
 
-    int result = manager_->execute_command(this, 
+    int result = manager_->execute_command(
         static_cast<uint8_t>(request->id), 
         request->command, request->params);
 
@@ -69,7 +69,7 @@ void ActuatorNode::motor_service_callback(
 
 void ActuatorNode::goal_position_callback(const ActuatorGoalPosition::SharedPtr msg)
 {
-    manager_->set_goal_position(this,
+    manager_->set_goal_position(
         static_cast<uint8_t>(msg->id),
         static_cast<uint16_t>(msg->goal));
 }

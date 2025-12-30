@@ -45,7 +45,6 @@ int ActuatorManager::init_comm() {
 }
 
 int ActuatorManager::execute_command(
-    rclcpp::Node* node, 
     uint8_t id, 
     const std::string& command, 
     const std::vector<int16_t>& params)
@@ -53,10 +52,8 @@ int ActuatorManager::execute_command(
     if (!controller_) 
         return -1;
 
-    if (!is_valid_id(id)) {
-        RCLCPP_WARN(node->get_logger(), "ID inválido: %u", id);
+    if (!is_valid_id(id))
         return -1;
-    }
 
     if (command == "set_goal_position" && !params.empty()) {
         uint16_t goal = static_cast<uint16_t>(params[0]);
@@ -71,27 +68,20 @@ int ActuatorManager::execute_command(
 }
 
 int ActuatorManager::set_goal_position(
-    rclcpp::Node* node, uint8_t id, uint16_t goal)
+    uint8_t id, uint16_t goal)
 {
     if (!controller_) 
         return -1;
 
-    if (!is_valid_id(id)) {
-        RCLCPP_WARN(node->get_logger(), "ID inválido: %u", id);
+    if (!is_valid_id(id))
         return -1;
-    }
 
-    if (goal > 4096) {
-        RCLCPP_WARN(node->get_logger(), "Comando fora dos limites: ID %u Goal %u", id, goal);
+    if (goal > 4096)
         return -1;
-    }
     
-    if (controller_->setGoalPosition(id, goal) != 0) {
-        RCLCPP_ERROR(node->get_logger(), "Erro de comunicação ao mover atuador %u", id);
+    if (controller_->setGoalPosition(id, goal) != 0)
         return -1;
-    } 
 
-    RCLCPP_DEBUG(node->get_logger(), "Atuador %u movido para %u", id, goal);
     return 0;
 
 }
@@ -101,14 +91,11 @@ int ActuatorManager::get_current_position(uint8_t id, uint16_t& curr_pos)
     if (!controller_) 
         return -1;
 
-    if (!is_valid_id(id)) {
+    if (!is_valid_id(id))
         return -1;
-    }
 
     if (controller_->getCurrentPosition(id, curr_pos) < 0)
-    {
         return -1;
-    }
 
     return 0;
 }

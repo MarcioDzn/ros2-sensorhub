@@ -31,10 +31,9 @@ class ActuatorManager
         void init_node(rclcpp::Node* node);
         std::shared_ptr<ActuatorController> get_controller() { return controller_; }
         int init_comm();
-        int execute_command(rclcpp::Node* node, 
-            uint8_t id, const std::string& command, const std::vector<int16_t>& params);
-        int set_goal_position(rclcpp::Node* node, 
-            uint8_t id, uint16_t goal);
+        int execute_command( uint8_t id, const std::string& command, 
+            const std::vector<int16_t>& params);
+        int set_goal_position(uint8_t id, uint16_t goal);
         int get_current_position(uint8_t id, uint16_t& curr_pos);
 
         ActuatorParams get_parameters() { return parameters_; }
