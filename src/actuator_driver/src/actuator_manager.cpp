@@ -67,6 +67,9 @@ int ActuatorManager::execute_command(
 int ActuatorManager::set_goal_position(
     rclcpp::Node* node, uint8_t id, uint16_t goal)
 {
+    if (!controller_) 
+        return -1;
+
     if (goal > 4096) {
         RCLCPP_WARN(node->get_logger(), "Comando fora dos limites: ID %u Goal %u", id, goal);
         return -1;
