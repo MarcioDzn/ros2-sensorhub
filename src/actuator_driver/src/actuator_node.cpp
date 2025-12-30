@@ -8,14 +8,14 @@ ActuatorNode::ActuatorNode()
     manager_ = std::make_unique<ActuatorManager>();
     manager_->init_node(this);
 
+    auto& parameters = manager_->get_parameters();
 
     if (manager_->init_comm() != ActuatorError::OK)
     {
-        RCLCPP_FATAL(this->get_logger(), "Falha na inicialização do hardware serial.");
+        RCLCPP_FATAL(this->get_logger(), 
+            "Falha na inicialização do hardware serial na porta %s.", parameters.usb_port.c_str());
         throw std::runtime_error("");
     }
-    
-    auto& parameters = manager_->get_parameters();
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .best_effort()
