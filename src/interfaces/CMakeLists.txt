@@ -14,6 +14,7 @@ set(msg_files
   "msg/IMUData.msg"
   "msg/InsoleData.msg"
   "msg/ActuatorGoalPosition.msg"
+  "msg/ActuatorCurrentPosition.msg"
   "msg/Stamp.msg"
   "msg/SyncedSensorData.msg"
 )

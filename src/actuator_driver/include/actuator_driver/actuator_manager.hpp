@@ -35,12 +35,14 @@ class ActuatorManager
             uint8_t id, const std::string& command, const std::vector<int16_t>& params);
         int set_goal_position(rclcpp::Node* node, 
             uint8_t id, uint16_t goal);
-        ActuatorParams get_parameters() { return parameters_; }
-        bool is_valid_id(uint8_t id) const;
+        int get_current_position(uint8_t id, uint16_t& curr_pos);
 
+        ActuatorParams get_parameters() { return parameters_; }
+        
     private:
         void declare_parameters(rclcpp::Node* node);
         void load_parameters(rclcpp::Node* node);
+        bool is_valid_id(uint8_t id) const;
 
         ActuatorParams parameters_;
         std::shared_ptr<ActuatorController> controller_;

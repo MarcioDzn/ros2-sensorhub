@@ -96,6 +96,23 @@ int ActuatorManager::set_goal_position(
 
 }
 
+int ActuatorManager::get_current_position(uint8_t id, uint16_t& curr_pos)
+{
+    if (!controller_) 
+        return -1;
+
+    if (!is_valid_id(id)) {
+        return -1;
+    }
+
+    if (controller_->getCurrentPosition(id, curr_pos) < 0)
+    {
+        return -1;
+    }
+
+    return 0;
+}
+
 bool ActuatorManager::is_valid_id(uint8_t id) const
 {
     return std::find(
