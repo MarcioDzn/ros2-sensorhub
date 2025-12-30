@@ -5,7 +5,7 @@ ActuatorManager::ActuatorManager() {}
 void ActuatorManager::init_node(rclcpp::Node* node)
 {
     declare_parameters(node);
-    set_parameters(node);
+    load_parameters(node);
 }
 
 void ActuatorManager::declare_parameters(rclcpp::Node* node)
@@ -17,12 +17,11 @@ void ActuatorManager::declare_parameters(rclcpp::Node* node)
     node->declare_parameter("update_rate_ms", 15);
 }
 
-void ActuatorManager::set_parameters(rclcpp::Node* node)
+void ActuatorManager::load_parameters(rclcpp::Node* node)
 {
     parameters_.base_name = node->get_parameter("base_name").as_string();
     parameters_.usb_port = node->get_parameter("usb_port").as_string();
-    parameters_.baudrate = static_cast<uint32_t>(
-        node->get_parameter("baudrate").as_int());
+    parameters_.baudrate = static_cast<uint32_t>(node->get_parameter("baudrate").as_int());
     parameters_.update_rate_ms = node->get_parameter("update_rate_ms").as_int();
     std::vector<long> raw_ids = node->get_parameter("actuator_ids").as_integer_array();
     

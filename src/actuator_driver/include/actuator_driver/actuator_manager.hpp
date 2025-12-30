@@ -34,7 +34,7 @@ class ActuatorManager
 
     private:
         void declare_parameters(rclcpp::Node* node);
-        void set_parameters(rclcpp::Node* node);
+        void load_parameters(rclcpp::Node* node);
 
         ActuatorParams parameters_;
         std::shared_ptr<ActuatorController> controller_;
