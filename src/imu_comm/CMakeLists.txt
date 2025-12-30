@@ -29,8 +29,6 @@ target_include_directories(imu_comm
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
-  PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/driver
 )
 
 target_compile_features(imu_comm PUBLIC cxx_std_20)

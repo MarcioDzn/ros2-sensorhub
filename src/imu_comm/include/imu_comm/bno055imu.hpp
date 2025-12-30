@@ -4,7 +4,7 @@
 #include <vector>
 #include <cstdint>
 
-#include "bno055.h"
+#include "imu_comm/driver/bno055.h"
 
 class BNO055IMU {
     public:
