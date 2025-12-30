@@ -6,9 +6,9 @@ ActuatorNode::ActuatorNode()
     : Node("actuator_node")
 {   
     manager_ = std::make_unique<ActuatorManager>();
-    manager_->init_node(this->shared_from_this());
+    manager_->init_node(this);
 
-    if (manager_->init_comm(this->shared_from_this()) < 0)
+    if (manager_->init_comm() < 0)
         throw std::runtime_error("Falha na inicialização do hardware serial.");
 
     actuator_subscriber_ = this->create_subscription<ActuatorGoalPosition>(
@@ -32,7 +32,7 @@ void ActuatorNode::motor_service_callback(
 {
     response->success = false;
 
-    int result = manager_->execute_command(this->shared_from_this(), 
+    int result = manager_->execute_command(this, 
         static_cast<uint8_t>(request->id), 
         request->command, request->params);
 
@@ -41,7 +41,7 @@ void ActuatorNode::motor_service_callback(
 
 void ActuatorNode::goal_position_callback(const ActuatorGoalPosition::SharedPtr msg)
 {
-    manager_->set_goal_position(this->shared_from_this(),
+    manager_->set_goal_position(this,
         static_cast<uint8_t>(msg->id),
         static_cast<uint16_t>(msg->goal));
 }

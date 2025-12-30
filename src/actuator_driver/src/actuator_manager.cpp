@@ -2,13 +2,13 @@
 
 ActuatorManager::ActuatorManager() {}
 
-void ActuatorManager::init_node(std::shared_ptr<rclcpp::Node> node)
+void ActuatorManager::init_node(rclcpp::Node* node)
 {
     declare_parameters(node);
     set_parameters(node);
 }
 
-void ActuatorManager::declare_parameters(std::shared_ptr<rclcpp::Node> node)
+void ActuatorManager::declare_parameters(rclcpp::Node* node)
 {
     node->declare_parameter("usb_port", "/dev/ttyUSB0");
     node->declare_parameter("baudrate", 2000000);
@@ -16,7 +16,7 @@ void ActuatorManager::declare_parameters(std::shared_ptr<rclcpp::Node> node)
     node->declare_parameter("update_rate_ms", 15);
 }
 
-void ActuatorManager::set_parameters(std::shared_ptr<rclcpp::Node> node)
+void ActuatorManager::set_parameters(rclcpp::Node* node)
 {
     parameters_.usb_port = node->get_parameter("usb_port").as_string();
     parameters_.baudrate = static_cast<uint32_t>(
@@ -33,22 +33,18 @@ void ActuatorManager::set_parameters(std::shared_ptr<rclcpp::Node> node)
 
 }
 
-int ActuatorManager::init_comm(std::shared_ptr<rclcpp::Node> node) {
+int ActuatorManager::init_comm() {
     auto ctrl = ActuatorFactory::createDynamixel();
     controller_ = std::move(ctrl);
     
     if (controller_->init(parameters_.usb_port, parameters_.baudrate) < 0) {
-        RCLCPP_FATAL(node->get_logger(), 
-            "FALHA AO ABRIR PORTA SERIAL: %s", parameters_.usb_port.c_str());
         return -1; 
     }
-
-    RCLCPP_INFO(node->get_logger(), "Comunicação serial aberta com sucesso: %s", parameters_.usb_port.c_str());
     return 0;
 }
 
 int ActuatorManager::execute_command(
-    std::shared_ptr<rclcpp::Node> node, uint8_t id, 
+    rclcpp::Node* node, uint8_t id, 
     const std::string& command, const std::vector<int16_t>& params)
 {
     if (!controller_) 
@@ -67,7 +63,7 @@ int ActuatorManager::execute_command(
 }
 
 int ActuatorManager::set_goal_position(
-    std::shared_ptr<rclcpp::Node> node, uint8_t id, uint16_t goal)
+    rclcpp::Node* node, uint8_t id, uint16_t goal)
 {
     if (goal > 4096) {
         RCLCPP_WARN(node->get_logger(), "Comando fora dos limites: ID %u Goal %u", id, goal);
