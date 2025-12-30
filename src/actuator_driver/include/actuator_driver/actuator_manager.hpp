@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <algorithm>
 
 #include "actuator_comm/controller/actuator_controller.hpp"
 #include "actuator_comm/core/actuator_factory.hpp"
@@ -18,9 +19,13 @@ struct ActuatorParams {
     std::vector<uint8_t> actuator_ids;
 };
 
-enum class CommandType {
-    SetGoalPosition,
-    SetTorque
+enum class ActuatorError {
+    OK = 0,
+    NotInitialized,
+    InvalidID,
+    InvalidParameter,
+    CommunicationError,
+    UnsupportedCommand
 };
 
 class ActuatorManager
@@ -30,13 +35,13 @@ class ActuatorManager
 
         void init_node(rclcpp::Node* node);
         std::shared_ptr<ActuatorController> get_controller() { return controller_; }
-        int init_comm();
-        int execute_command( uint8_t id, const std::string& command, 
+        ActuatorError init_comm();
+        ActuatorError execute_command( uint8_t id, const std::string& command, 
             const std::vector<int16_t>& params);
-        int set_goal_position(uint8_t id, uint16_t goal);
-        int get_current_position(uint8_t id, uint16_t& curr_pos);
+        ActuatorError set_goal_position(uint8_t id, uint16_t goal);
+        ActuatorError get_current_position(uint8_t id, uint16_t& curr_pos);
 
-        ActuatorParams get_parameters() { return parameters_; }
+        const ActuatorParams& get_parameters() const { return parameters_; }
         
     private:
         void declare_parameters(rclcpp::Node* node);

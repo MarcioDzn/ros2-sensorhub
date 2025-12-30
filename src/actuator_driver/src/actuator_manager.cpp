@@ -34,70 +34,74 @@ void ActuatorManager::load_parameters(rclcpp::Node* node)
 
 }
 
-int ActuatorManager::init_comm() {
+ActuatorError ActuatorManager::init_comm() {
     auto ctrl = ActuatorFactory::createDynamixel();
     controller_ = std::move(ctrl);
     
     if (controller_->init(parameters_.usb_port, parameters_.baudrate) < 0) {
-        return -1; 
+        return ActuatorError::NotInitialized; 
     }
-    return 0;
+    return ActuatorError::OK;
 }
 
-int ActuatorManager::execute_command(
+ActuatorError ActuatorManager::execute_command(
     uint8_t id, 
     const std::string& command, 
     const std::vector<int16_t>& params)
 {
     if (!controller_) 
-        return -1;
+        return ActuatorError::NotInitialized;
 
     if (!is_valid_id(id))
-        return -1;
+        return ActuatorError::InvalidID;
 
     if (command == "set_goal_position" && !params.empty()) {
         uint16_t goal = static_cast<uint16_t>(params[0]);
-        return controller_->setGoalPosition(id, goal);
+        return controller_->setGoalPosition(id, goal) == 0
+        ? ActuatorError::OK
+        : ActuatorError::CommunicationError;
     } 
     else if (command == "set_torque" && !params.empty()) {
         uint16_t torque_status = static_cast<uint16_t>(params[0]);
-        return controller_->setTorque(id, torque_status);
+        return controller_->setTorque(id, torque_status) == 0
+        ? ActuatorError::OK
+        : ActuatorError::CommunicationError;
     }
 
-    return -1;
+    return ActuatorError::UnsupportedCommand;
 }
 
-int ActuatorManager::set_goal_position(
+ActuatorError ActuatorManager::set_goal_position(
     uint8_t id, uint16_t goal)
 {
     if (!controller_) 
-        return -1;
+        return ActuatorError::NotInitialized;
 
     if (!is_valid_id(id))
-        return -1;
+        return ActuatorError::InvalidID;
 
     if (goal > 4096)
-        return -1;
+        return ActuatorError::InvalidParameter;
     
     if (controller_->setGoalPosition(id, goal) != 0)
-        return -1;
+        return ActuatorError::CommunicationError;
 
-    return 0;
+    return ActuatorError::OK;
 
 }
 
-int ActuatorManager::get_current_position(uint8_t id, uint16_t& curr_pos)
+ActuatorError ActuatorManager::get_current_position(uint8_t id, uint16_t& curr_pos)
 {
     if (!controller_) 
-        return -1;
+        return ActuatorError::NotInitialized;
 
     if (!is_valid_id(id))
-        return -1;
+        return ActuatorError::InvalidID;
 
     if (controller_->getCurrentPosition(id, curr_pos) < 0)
-        return -1;
+        return ActuatorError::CommunicationError;
 
-    return 0;
+    return ActuatorError::OK;
 }
 
 bool ActuatorManager::is_valid_id(uint8_t id) const

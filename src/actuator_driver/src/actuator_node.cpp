@@ -8,13 +8,13 @@ ActuatorNode::ActuatorNode()
     manager_ = std::make_unique<ActuatorManager>();
     manager_->init_node(this);
 
-    if (manager_->init_comm() < 0)
+    if (manager_->init_comm() != ActuatorError::OK)
     {
         RCLCPP_FATAL(this->get_logger(), "Falha na inicialização do hardware serial.");
         throw std::runtime_error("Falha na inicialização do hardware serial.");
     }
 
-    auto parameters = manager_->get_parameters();
+    auto& parameters = manager_->get_parameters();
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .best_effort()
@@ -60,11 +60,11 @@ void ActuatorNode::motor_service_callback(
 {
     response->success = false;
 
-    int result = manager_->execute_command(
+    ActuatorError result = manager_->execute_command(
         static_cast<uint8_t>(request->id), 
         request->command, request->params);
 
-    if (result == 0) response->success = true;
+    if (result == ActuatorError::OK) response->success = true;
 }
 
 void ActuatorNode::goal_position_callback(const ActuatorGoalPosition::SharedPtr msg)
@@ -78,11 +78,11 @@ void ActuatorNode::publish_position_callback()
 {
     auto msg = ActuatorCurrentPosition();
 
-    auto parameters = manager_->get_parameters();
+    auto& parameters = manager_->get_parameters();
     for (auto id : parameters.actuator_ids)
     {
         uint16_t curr_pos;
-        if (!manager_->get_current_position(id, curr_pos))
+        if (manager_->get_current_position(id, curr_pos) != ActuatorError::OK)
             continue;
 
         msg.id = id;
