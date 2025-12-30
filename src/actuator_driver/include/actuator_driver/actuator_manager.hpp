@@ -18,6 +18,11 @@ struct ActuatorParams {
     std::vector<uint8_t> actuator_ids;
 };
 
+enum class CommandType {
+    SetGoalPosition,
+    SetTorque
+};
+
 class ActuatorManager
 {
     public:
@@ -31,6 +36,7 @@ class ActuatorManager
         int set_goal_position(rclcpp::Node* node, 
             uint8_t id, uint16_t goal);
         ActuatorParams get_parameters() { return parameters_; }
+        bool is_valid_id(uint8_t id) const;
 
     private:
         void declare_parameters(rclcpp::Node* node);

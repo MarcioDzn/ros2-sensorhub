@@ -45,11 +45,18 @@ int ActuatorManager::init_comm() {
 }
 
 int ActuatorManager::execute_command(
-    rclcpp::Node* node, uint8_t id, 
-    const std::string& command, const std::vector<int16_t>& params)
+    rclcpp::Node* node, 
+    uint8_t id, 
+    const std::string& command, 
+    const std::vector<int16_t>& params)
 {
     if (!controller_) 
         return -1;
+
+    if (!is_valid_id(id)) {
+        RCLCPP_WARN(node->get_logger(), "ID inválido: %u", id);
+        return -1;
+    }
 
     if (command == "set_goal_position" && !params.empty()) {
         uint16_t goal = static_cast<uint16_t>(params[0]);
@@ -69,6 +76,11 @@ int ActuatorManager::set_goal_position(
     if (!controller_) 
         return -1;
 
+    if (!is_valid_id(id)) {
+        RCLCPP_WARN(node->get_logger(), "ID inválido: %u", id);
+        return -1;
+    }
+
     if (goal > 4096) {
         RCLCPP_WARN(node->get_logger(), "Comando fora dos limites: ID %u Goal %u", id, goal);
         return -1;
@@ -82,4 +94,12 @@ int ActuatorManager::set_goal_position(
     RCLCPP_DEBUG(node->get_logger(), "Atuador %u movido para %u", id, goal);
     return 0;
 
+}
+
+bool ActuatorManager::is_valid_id(uint8_t id) const
+{
+    return std::find(
+        parameters_.actuator_ids.begin(),
+        parameters_.actuator_ids.end(),
+        id) != parameters_.actuator_ids.end();
 }
