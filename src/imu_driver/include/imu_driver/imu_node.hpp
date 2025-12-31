@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 
+#include "imu_manager.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/msg/imu_data.hpp"
 #include "imu_comm/bno055imu.hpp"
@@ -31,11 +32,9 @@ class IMUNode : public rclcpp::Node
         void parse_imus(std::vector<std::string> param_names);
 		
         std::vector<std::shared_ptr<BNO055IMU>> imus_;
-        std::vector<rclcpp::Publisher<IMUData>::SharedPtr> publishers_;
-        
+        std::map<int, rclcpp::Publisher<IMUData>::SharedPtr> publishers_;
+        std::shared_ptr<IMUManager> manager_;
         rclcpp::TimerBase::SharedPtr timer_;
-        int update_rate_ms_;
-        std::vector<ImuConfig> imus_config_;
 };
 
 #endif // IMU_NODE_HPP

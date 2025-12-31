@@ -22,8 +22,10 @@ class IMUManager
 
         int init(rclcpp::Node* node);
 
-        std::map<int, std::shared_ptr<BNO055IMU>>
-        get_imus() { return imus_; }
+        const std::map<int, std::shared_ptr<BNO055IMU>>&
+        get_imus() const { return imus_; }
+
+        const IMUParams& get_parameters() const { return parameters_; }
         
     private:
         void declare_parameters(rclcpp::Node* node);
