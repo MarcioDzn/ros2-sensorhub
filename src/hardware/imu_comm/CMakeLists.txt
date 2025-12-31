@@ -40,7 +40,7 @@ else()
   message(STATUS "Fora do Raspberry Pi: usando wiringPi stub")
   target_sources(imu_comm
     PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../wiringpi/wiringPi/wiringPi_stub.c)
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../wiringpi/wiringPi/wiringPi_stub.c)
 endif()
   
 install(TARGETS imu_comm
