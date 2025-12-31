@@ -19,6 +19,7 @@ include_directories(
 # IMU NODE
 add_executable(imu_node 
   src/imu_node.cpp 
+  src/imu_manager.cpp
 )
 
 ament_target_dependencies(imu_node
