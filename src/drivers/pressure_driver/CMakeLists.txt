@@ -17,7 +17,10 @@ include_directories(
   include/pressure_driver
 )
 
-add_executable(pressure_node src/pressure_node.cpp)
+add_executable(pressure_node 
+  src/pressure_node.cpp 
+  src/pressure_manager.cpp
+)
 
 ament_target_dependencies(pressure_node
   rclcpp

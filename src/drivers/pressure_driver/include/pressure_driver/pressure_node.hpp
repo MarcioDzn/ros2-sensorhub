@@ -9,6 +9,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/msg/insole_data.hpp"
 #include "common_serial/serial_handler.hpp"
+#include "pressure_manager.hpp"
 
 using InsoleData = interfaces::msg::InsoleData;
 
@@ -26,35 +27,22 @@ struct PressureSensor
 class PressureNode : public rclcpp::Node
 {
     public:
-        explicit PressureNode(const rclcpp::NodeOptions & options);
+        explicit PressureNode();
         virtual ~PressureNode();
 
         bool init_serial(const char* device, int baudrate);
         
     private:
-        void load_hardware_config();
-        bool setup_serial_port(const std::string &path, const int baudrate);
-        int extract_baudrate(
-            const std::map<std::string, 
-            rclcpp::ParameterValue>& params, 
-            const std::string& prefix); 
-
-        void load_pressure_sensors_config();
-        void create_publishers();
-
         void timer_callback();
-        bool get_pressure_data(
-            std::shared_ptr<SerialHandler> handler, 
-            char* buffer, size_t max_size);
         void publish_sensor_data(
             int sensor_id, const std::vector<uint16_t>& values);
 
         void load_parameters();
 
-        std::map<std::string, int> device_path_to_id_;
-        std::map<std::string, DeviceInterface> hardware_map_;
-        std::map<int, PressureSensor> pressure_sensors_;
-        std::map<int, rclcpp::Publisher<InsoleData>::SharedPtr> publishers_;
+        std::shared_ptr<PressureManager> manager_;
+
+        std::map<uint8_t, PressureSensor> pressure_sensors_;
+        std::map<uint8_t, rclcpp::Publisher<InsoleData>::SharedPtr> publishers_;
         
         rclcpp::TimerBase::SharedPtr timer_;
         int update_rate_ms_;
