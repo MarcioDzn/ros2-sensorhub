@@ -11,6 +11,7 @@ find_package(rclcpp REQUIRED)
 find_package(interfaces REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(common_serial REQUIRED)
+find_package(pressure_comm REQUIRED)
 
 include_directories(
   include/pressure_driver
@@ -22,6 +23,7 @@ ament_target_dependencies(pressure_node
   rclcpp
   interfaces
   common_serial
+  pressure_comm
 )
 
 install(TARGETS
