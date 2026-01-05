@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(sensor_sync)
+project(sync_node)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -12,7 +12,7 @@ find_package(interfaces REQUIRED)
 find_package(message_filters REQUIRED)
 
 include_directories(
-  include/sensor_sync
+  include/sync_node
 )
 
 add_executable(sync_node src/sync_node.cpp)
