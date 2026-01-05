@@ -7,8 +7,8 @@
 #include <memory>
 #include <algorithm>
 
-#include "actuator_comm/controller/actuator_controller.hpp"
-#include "actuator_comm/core/actuator_factory.hpp"
+#include "actuator_driver/controller/actuator_controller.hpp"
+#include "actuator_driver/core/actuator_factory.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 struct ActuatorParams {

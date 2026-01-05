@@ -7,7 +7,7 @@
 #include "imu_manager.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/msg/imu_data.hpp"
-#include "imu_comm/bno055imu.hpp"
+#include "imu_driver/bno055imu.hpp"
 
 struct ImuConfig {
     std::string name;

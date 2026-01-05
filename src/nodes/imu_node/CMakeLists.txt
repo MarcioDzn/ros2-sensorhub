@@ -10,7 +10,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(interfaces REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(imu_comm REQUIRED)
+find_package(imu_driver REQUIRED)
 
 include_directories(
   include/imu_node
@@ -25,7 +25,7 @@ add_executable(imu_node
 ament_target_dependencies(imu_node
   rclcpp
   interfaces
-  imu_comm
+  imu_driver
 )
   
 install(TARGETS

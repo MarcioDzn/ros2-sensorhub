@@ -7,8 +7,8 @@
 #include <memory>
 #include <algorithm>
 
-#include "pressure_comm/pressure_controller.hpp"
-#include "pressure_comm/core/pressure_factory.hpp"
+#include "pressure_driver/pressure_controller.hpp"
+#include "pressure_driver/core/pressure_factory.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 struct PressureParams {

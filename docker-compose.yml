@@ -44,7 +44,6 @@ services:
         echo '=== [2/3] Configurando ROS2 Workspace ===' &&
         source /opt/ros/humble/setup.bash &&
         cd /ros2_ws &&
-        source install/setup.bash &&
         echo '✓ ROS2 workspace configurado' &&
         
         echo '=== [3/3] Ambiente pronto ===' &&

@@ -14,7 +14,7 @@ find_package(rclcpp REQUIRED)
 find_package(interfaces REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(common_serial REQUIRED)
-find_package(actuator_comm REQUIRED)
+find_package(actuator_driver REQUIRED)
 
 include_directories(
   include/actuator_node
@@ -28,7 +28,7 @@ ament_target_dependencies(actuator_node
   rclcpp
   interfaces
   common_serial
-  actuator_comm
+  actuator_driver
 )
 
 install(TARGETS
