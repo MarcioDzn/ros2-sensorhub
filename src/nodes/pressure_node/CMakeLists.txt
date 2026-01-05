@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(imu_driver)
+project(pressure_node)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -10,26 +10,27 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(interfaces REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(imu_comm REQUIRED)
+find_package(common_serial REQUIRED)
+find_package(pressure_comm REQUIRED)
 
 include_directories(
-  include/imu_driver
+  include/pressure_node
 )
 
-# IMU NODE
-add_executable(imu_node 
-  src/imu_node.cpp 
-  src/imu_manager.cpp
+add_executable(pressure_node 
+  src/pressure_node.cpp 
+  src/pressure_manager.cpp
 )
 
-ament_target_dependencies(imu_node
+ament_target_dependencies(pressure_node
   rclcpp
   interfaces
-  imu_comm
+  common_serial
+  pressure_comm
 )
-  
+
 install(TARGETS
-  imu_node
+  pressure_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

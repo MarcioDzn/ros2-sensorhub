@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(actuator_driver)
+project(actuator_node)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -17,7 +17,7 @@ find_package(common_serial REQUIRED)
 find_package(actuator_comm REQUIRED)
 
 include_directories(
-  include/actuator_driver
+  include/actuator_node
 )
 
 add_executable(actuator_node 
