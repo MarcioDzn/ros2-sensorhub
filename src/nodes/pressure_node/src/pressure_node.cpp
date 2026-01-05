@@ -32,7 +32,7 @@ PressureNode::PressureNode() : Node("pressure_node")
     for (const auto &id : parameters.ids)
     {
         std::string topic = parameters.base_name + "/id_" + std::to_string(id);
-        publishers_[id] = this->create_publisher<InsoleData>(topic, qos);
+        publishers_[id] = this->create_publisher<PressureData>(topic, qos);
     }
     
     // executa o callback a cada <update_rate_ms_> segundos
@@ -52,7 +52,7 @@ void PressureNode::timer_callback()
             RCLCPP_WARN(this->get_logger(), "Erro ao buscar dados");
         }
 
-        auto message = InsoleData();
+        auto message = PressureData();
         message.stamp = this->get_clock()->now();
         message.pressures = { data };
         

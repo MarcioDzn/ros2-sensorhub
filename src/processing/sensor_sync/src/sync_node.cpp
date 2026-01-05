@@ -22,7 +22,7 @@ SyncNode::SyncNode() : Node("sync_node")
 }
 
 void SyncNode::synced_callback(const IMUData::ConstSharedPtr& imu_msg, 
-                             const InsoleData::ConstSharedPtr& pressure_msg)
+                             const PressureData::ConstSharedPtr& pressure_msg)
 {
     auto synced_msg = std::make_unique<SyncedSensorData>();
 

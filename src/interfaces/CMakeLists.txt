@@ -12,10 +12,9 @@ find_package(builtin_interfaces REQUIRED)
 
 set(msg_files
   "msg/IMUData.msg"
-  "msg/InsoleData.msg"
+  "msg/PressureData.msg"
   "msg/ActuatorGoalPosition.msg"
   "msg/ActuatorCurrentPosition.msg"
-  "msg/Stamp.msg"
   "msg/SyncedSensorData.msg"
 )
 
