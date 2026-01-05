@@ -24,21 +24,21 @@ def generate_launch_description():
 
     return LaunchDescription([
         Node(
-            package='imu_driver',
+            package='imu_node',
             executable='imu_node',
             output='screen',
             parameters=[imu_params]
         ),
 
         Node(
-            package='pressure_driver',
+            package='pressure_node',
             executable='pressure_node',
             output='screen',
             parameters=[pressure_params]
         ),
         
         Node(
-            package='actuator_driver',
+            package='actuator_node',
             executable='actuator_node',
             output='screen',
             name='base_actuator_node',
