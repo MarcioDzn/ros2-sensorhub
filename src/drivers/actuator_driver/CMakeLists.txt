@@ -46,6 +46,22 @@ install(
   DESTINATION include/
 )
 
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+
+  ament_add_gtest(${PROJECT_NAME}_base_test 
+    test/base_test.cpp
+  )
+
+  target_include_directories(${PROJECT_NAME}_base_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+  )
+
+  target_link_libraries(${PROJECT_NAME}_base_test 
+    actuator_driver
+  )
+endif()
+
 ament_export_libraries(actuator_driver)
 ament_export_include_directories("include")
 ament_export_dependencies(common_serial)
