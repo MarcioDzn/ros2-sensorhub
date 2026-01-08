@@ -40,7 +40,7 @@ class DynamixelLink
         int read2Byte(uint8_t id, uint8_t address, uint16_t& read_data);
     
     protected:
-        int readPacket(std::array<uint8_t, RXPACKET_MAX_LEN>& packet);
+        virtual int readPacket(std::array<uint8_t, RXPACKET_MAX_LEN>& packet);
         int readStatus(uint8_t id, StatusPacket& out);
 
     private:

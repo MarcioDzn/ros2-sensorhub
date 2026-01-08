@@ -4,6 +4,14 @@
 #include "dynamixel/dynamixel_link.hpp"
 #include "dynamixel/dynamixel_protocol.hpp"
 
+class MockDynamixelLink : public DynamixelLink {
+public:
+    using DynamixelLink::DynamixelLink;
+    using DynamixelLink::readStatus;
+    MOCK_METHOD(int, readPacket, 
+        ((std::array<uint8_t, RXPACKET_MAX_LEN>&)), (override));
+};
+
 class MockSerialHandler : public SerialHandler
 {
 public:
@@ -17,6 +25,7 @@ class TestableDynamixelLink : public DynamixelLink {
 public:
     using DynamixelLink::DynamixelLink;  // herda construtores
     using DynamixelLink::readPacket;     // torna readPacket público
+    using DynamixelLink::readStatus;
 };
 
 TEST(actuator_driver, dynamixel_read_packet_success)
@@ -77,7 +86,7 @@ TEST(actuator_driver, dynamixel_read_packet_content)
     std::array<uint8_t, RXPACKET_MAX_LEN> rxbuffer;
 
     std::array<uint8_t, 8> full_rx = {
-        0xFF, 0xFF, 0x01, 0x04, 0x02, 0x03, 0x00, 0xF5
+        0xFF, 0xFF, 0x01, 0x04, 0x00, 0x03, 0x00, 0xF7
     };
     size_t offset = 0;
 
@@ -99,7 +108,7 @@ TEST(actuator_driver, dynamixel_read_packet_content)
     int result = link.readPacket(rxbuffer);
 
     std::array<uint8_t, 8> expected_rx = {
-        0xFF, 0xFF, 0x01, 0x04, 0x02, 0x03, 0x00, 0xF5
+        0xFF, 0xFF, 0x01, 0x04, 0x00, 0x03, 0x00, 0xF7
     };
     EXPECT_TRUE(std::equal(rxbuffer.begin(), rxbuffer.begin() + expected_rx.size(), expected_rx.begin()));
     EXPECT_EQ(result, 0);
@@ -120,7 +129,7 @@ TEST(actuator_driver, dynamixel_read_packet_content_trash)
     // são lixo
     std::array<uint8_t, 11> full_rx = {
         0x23, 0x04, 0xFF, 0xFF, 0x01, 0x04, 
-        0x02, 0x03, 0x00, 0xF5, 0x17
+        0x00, 0x03, 0x00, 0xF7, 0x17
     };
     size_t offset = 0;
 
@@ -142,7 +151,7 @@ TEST(actuator_driver, dynamixel_read_packet_content_trash)
     int result = link.readPacket(rxbuffer);
 
     std::array<uint8_t, 8> expected_rx = {
-        0xFF, 0xFF, 0x01, 0x04, 0x02, 0x03, 0x00, 0xF5
+        0xFF, 0xFF, 0x01, 0x04, 0x00, 0x03, 0x00, 0xF7
     };
     EXPECT_TRUE(std::equal(rxbuffer.begin(), rxbuffer.begin() + expected_rx.size(), expected_rx.begin()));
     EXPECT_EQ(result, 0);
@@ -162,4 +171,115 @@ TEST(actuator_driver, dynamixel_read_packet_content_timeout)
     int result = link.readPacket(rxbuffer);
 
     EXPECT_EQ(result, -2);
+}
+
+TEST(actuator_driver, dynamixel_read_status_success)
+{
+    auto protocol = std::make_shared<DynamixelProtocol>();
+    auto transport = std::make_shared<MockSerialHandler>();
+    MockDynamixelLink link(transport, protocol);
+
+    EXPECT_CALL(link, readPacket(::testing::_))
+        .WillOnce(::testing::Invoke(
+            [&](std::array<uint8_t, RXPACKET_MAX_LEN>& packet) -> int {
+                std::array<uint8_t, 8> rx = {
+                    0xFF, 0xFF, 0x01, 0x04, 0x00, 0x03, 0x00, 0xF7
+                };
+                std::copy(rx.begin(), rx.end(), packet.begin());
+                return 0;
+            }
+        ));
+    
+    StatusPacket status;
+    int result = link.readStatus(1, status);
+
+    EXPECT_EQ(result, 0);
+}
+
+TEST(actuator_driver, dynamixel_read_status_read_packet_error)
+{
+    auto protocol = std::make_shared<DynamixelProtocol>();
+    auto transport = std::make_shared<MockSerialHandler>();
+    MockDynamixelLink link(transport, protocol);
+
+    EXPECT_CALL(link, readPacket(::testing::_))
+        .WillOnce(::testing::Return(0));
+    
+    StatusPacket status;
+    int result = link.readStatus(1, status);
+
+    EXPECT_EQ(result, -1);
+}
+
+
+TEST(actuator_driver, dynamixel_read_status_id_error)
+{
+    auto protocol = std::make_shared<DynamixelProtocol>();
+    auto transport = std::make_shared<MockSerialHandler>();
+    MockDynamixelLink link(transport, protocol);
+
+    EXPECT_CALL(link, readPacket(::testing::_))
+        .WillOnce(::testing::Invoke(
+            [&](std::array<uint8_t, RXPACKET_MAX_LEN>& packet) -> int {
+                std::array<uint8_t, 8> rx = {
+                    0xFF, 0xFF, 0x01, 0x04, 0x00, 0x03, 0x00, 0xF7
+                };
+                std::copy(rx.begin(), rx.end(), packet.begin());
+                return 0;
+            }
+        ));
+    
+    StatusPacket status;
+    int result = link.readStatus(2, status);
+
+    EXPECT_EQ(result, -1);
+}
+
+TEST(actuator_driver, dynamixel_read_status_not_null_error)
+{
+    auto protocol = std::make_shared<DynamixelProtocol>();
+    auto transport = std::make_shared<MockSerialHandler>();
+    MockDynamixelLink link(transport, protocol);
+
+    EXPECT_CALL(link, readPacket(::testing::_))
+        .WillOnce(::testing::Invoke(
+            [&](std::array<uint8_t, RXPACKET_MAX_LEN>& packet) -> int {
+                std::array<uint8_t, 8> rx = {
+                    0xFF, 0xFF, 0x01, 0x04, 0x01, 0x03, 0x00, 0xF7
+                };
+                std::copy(rx.begin(), rx.end(), packet.begin());
+                return 0;
+            }
+        ));
+    
+    StatusPacket status;
+    int result = link.readStatus(1, status);
+
+    EXPECT_EQ(result, -1);
+}
+
+TEST(actuator_driver, dynamixel_read_status_content)
+{
+    auto protocol = std::make_shared<DynamixelProtocol>();
+    auto transport = std::make_shared<MockSerialHandler>();
+    MockDynamixelLink link(transport, protocol);
+
+    EXPECT_CALL(link, readPacket(::testing::_))
+        .WillOnce(::testing::Invoke(
+            [&](std::array<uint8_t, RXPACKET_MAX_LEN>& packet) -> int {
+                std::array<uint8_t, 8> rx = {
+                    0xFF, 0xFF, 0x01, 0x04, 0x00, 0x03, 0x00, 0xF7
+                };
+                std::copy(rx.begin(), rx.end(), packet.begin());
+                return 0;
+            }
+        ));
+    
+    StatusPacket status;
+    int result = link.readStatus(1, status);
+
+    EXPECT_EQ(status.error, 0x00);
+    EXPECT_EQ(status.id, 0x01);
+    EXPECT_EQ(status.params[0], 0x03);
+    EXPECT_EQ(status.params[1], 0x00);
 }
