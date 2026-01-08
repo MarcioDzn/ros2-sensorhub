@@ -12,6 +12,8 @@
 #include <unistd.h>
 #include <termios.h>
 
+#include "itransport.hpp"
+
 
 // Definições de termios2 baseadas no Dynamixel SDK (ROBOTIS)
 struct termios2 {
@@ -30,7 +32,7 @@ struct termios2 {
  * https://blog.mbedded.ninja/programming/operating-systems/linux/linux-serial-ports-using-c-cpp/
 */
 
-class SerialHandler
+class SerialHandler : public ITransport
 {
     public:
         enum class Parity { NONE, EVEN, ODD };
@@ -43,13 +45,18 @@ class SerialHandler
         int setBaudRate(int speed);
         int setDefaultConfig();
         
+        ssize_t readData(uint8_t* buffer, size_t size) override
+        {
+            return readGenericData(buffer, size);
+        }
+
         template<typename T>
         ssize_t readData(T *buffer, size_t size)
         {
             return readGenericData(buffer, size);
         }
         
-        ssize_t writeData(const uint8_t* buffer, size_t size);
+        ssize_t writeData(const uint8_t* buffer, size_t size) override;
         void clearBuffer();
         
     private:
