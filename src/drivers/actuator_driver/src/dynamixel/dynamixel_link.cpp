@@ -67,7 +67,7 @@ std::vector<uint8_t> DynamixelLink::getPacket(
 
 int DynamixelLink::sendPacket(const std::vector<uint8_t>& packet)
 {
-	if (transport_->writeData(packet.data(), packet.size()) <= 0) 
+	if (transport_->writeData(packet.data(), packet.size()) < 0) 
 		return -1;
 	return 0;
 }

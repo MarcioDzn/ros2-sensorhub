@@ -42,11 +42,11 @@ class DynamixelLink
     protected:
         virtual int readPacket(std::array<uint8_t, RXPACKET_MAX_LEN>& packet);
         int readStatus(uint8_t id, StatusPacket& out);
-
-    private:
         int sendPacket(const std::vector<uint8_t>& packet);
         int sendPacketAndReadStatus(
             uint8_t id, const std::vector<uint8_t>& packet, StatusPacket& status);
+            
+    private:
         std::vector<uint8_t> getPacket(
 	        uint8_t id, uint8_t instr, std::span<const uint8_t> params);
 
