@@ -38,15 +38,18 @@ class DynamixelLink
         int write2Byte(uint8_t id, uint8_t address, uint16_t data);
         int read1Byte(uint8_t id, uint8_t address, uint8_t& read_data);
         int read2Byte(uint8_t id, uint8_t address, uint16_t& read_data);
+    
+    protected:
+        int readPacket(std::array<uint8_t, RXPACKET_MAX_LEN>& packet);
+        int readStatus(uint8_t id, StatusPacket& out);
 
     private:
         int sendPacket(const std::vector<uint8_t>& packet);
-        std::vector<uint8_t> getPacket(
-	        uint8_t id, uint8_t instr, std::span<const uint8_t> params);
         int sendPacketAndReadStatus(
             uint8_t id, const std::vector<uint8_t>& packet, StatusPacket& status);
-        int readPacket(std::array<uint8_t, RXPACKET_MAX_LEN>& packet);
-        int readStatus(uint8_t id, StatusPacket& out);
+        std::vector<uint8_t> getPacket(
+	        uint8_t id, uint8_t instr, std::span<const uint8_t> params);
+
 
         std::shared_ptr<DynamixelProtocol> protocol_;
         std::shared_ptr<SerialHandler> transport_;

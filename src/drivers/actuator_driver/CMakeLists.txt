@@ -47,17 +47,21 @@ install(
 )
 
 if(BUILD_TESTING)
-  find_package(ament_cmake_gtest REQUIRED)
+  find_package(ament_cmake_gmock REQUIRED)
 
-  ament_add_gtest(${PROJECT_NAME}_base_test 
-    test/base_test.cpp
+  file(GLOB TEST_SOURCES
+    test/*_test.cpp
   )
 
-  target_include_directories(${PROJECT_NAME}_base_test PRIVATE
+  ament_add_gmock(${PROJECT_NAME}_test
+    ${TEST_SOURCES}
+  )
+
+  target_include_directories(${PROJECT_NAME}_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
   )
 
-  target_link_libraries(${PROJECT_NAME}_base_test 
+  target_link_libraries(${PROJECT_NAME}_test
     actuator_driver
   )
 endif()
