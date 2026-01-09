@@ -68,6 +68,16 @@ if(BUILD_TESTING)
   target_link_libraries(test_protocol
     actuator_driver
   )
+
+  ament_add_gmock(test_serial_tty
+    test/integration/serial_tty_test.cpp
+  )
+  target_include_directories(test_serial_tty PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+  )
+  target_link_libraries(test_serial_tty
+    actuator_driver
+  )
 endif()
 
 ament_export_libraries(actuator_driver)

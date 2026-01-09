@@ -6,7 +6,8 @@ int DynamixelLink::write1Byte(uint8_t id, uint8_t address, uint8_t data)
     std::vector<uint8_t> packet = getPacket(id, WRITE_INSTR, params);
     
 	StatusPacket status;
-    return sendPacketAndReadStatus(id, packet, status);
+    //return sendPacketAndReadStatus(id, packet, status);
+	return sendPacket(packet);
 }
 
 int DynamixelLink::write2Byte(uint8_t id, uint8_t address, uint16_t data)
@@ -18,7 +19,8 @@ int DynamixelLink::write2Byte(uint8_t id, uint8_t address, uint16_t data)
 	std::vector<uint8_t> packet = getPacket(id, WRITE_INSTR, params);
     
 	StatusPacket status;
-    return sendPacketAndReadStatus(id, packet, status);
+    //return sendPacketAndReadStatus(id, packet, status);
+	return sendPacket(packet);
 }
 
 int DynamixelLink::read1Byte(uint8_t id, uint8_t address, uint8_t& read_data)
