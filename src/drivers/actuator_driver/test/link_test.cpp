@@ -24,6 +24,9 @@ public:
         (uint8_t, StatusPacket&), (override));
     MOCK_METHOD(int, sendPacket, 
         (const std::vector<uint8_t>&), (override));
+    MOCK_METHOD(int, sendPacketAndReadStatus, 
+        (uint8_t, const std::vector<uint8_t>&, 
+            StatusPacket&), (override));
 
     // métodos são públicos q permitem que o 
     // Google Mock acesse a lógica protegida da pai
@@ -36,6 +39,10 @@ public:
     int callRealSendPacket(const std::vector<uint8_t>& p) {
         return DynamixelLink::sendPacket(p);
     }
+    int callRealSendPacketAndReadStatus(uint8_t id, 
+        const std::vector<uint8_t>& p, StatusPacket& s) {
+            return DynamixelLink::sendPacketAndReadStatus(id, p, s);
+        }
 };
 
 class MockSerialHandler : public SerialHandler
@@ -376,6 +383,100 @@ TEST(actuator_driver, dynamixel_send_packet_error)
 
     std::vector<uint8_t> packet = {0xFF, 0xFF, 0x01, 0x02, 0x00, 0xFC};
     int result = link.sendPacket(packet);
+
+    EXPECT_EQ(result, -1);
+}
+
+TEST(actuator_driver, dynamixel_send_packet_and_read_status_success)
+{
+    auto protocol = std::make_shared<DynamixelProtocol>();
+    auto transport = std::make_shared<MockSerialHandler>();
+    testing::NiceMock<MockDynamixelLink> link(transport, protocol);
+
+    ON_CALL(link, sendPacketAndReadStatus(::testing::_, ::testing::_, ::testing::_))
+        .WillByDefault(testing::Invoke(&link, 
+            &MockDynamixelLink::callRealSendPacketAndReadStatus));
+
+    EXPECT_CALL(link, sendPacket(::testing::_))
+        .WillOnce(::testing::Invoke(
+            [](const std::vector<uint8_t>& packet) -> int {
+                return 0;
+            }
+        ));
+
+    EXPECT_CALL(link, readStatus(::testing::_, ::testing::_))
+        .WillOnce(::testing::Invoke(
+            [](uint8_t id, StatusPacket& out) -> int {
+                out.id = id;
+                out.error = 0x00;
+                std::array<uint8_t, 2> params = {0x03, 0x00};
+                std::copy(params.begin(), params.end(), out.params);
+
+                return 0;
+            }
+        ));
+
+    std::vector<uint8_t> packet = {0xFF, 0xFF, 0x01, 0x02, 0x00, 0xFC};
+    StatusPacket status;
+    int result = link.sendPacketAndReadStatus(1, packet, status);
+
+    EXPECT_EQ(result, 0);
+    EXPECT_EQ(status.id, 1);
+    EXPECT_EQ(status.error, 0);
+    EXPECT_EQ(status.params[0], 0x03);
+    EXPECT_EQ(status.params[1], 0);
+}
+
+TEST(actuator_driver, dynamixel_send_packet_and_read_status_broadcast_success)
+{
+    auto protocol = std::make_shared<DynamixelProtocol>();
+    auto transport = std::make_shared<MockSerialHandler>();
+    testing::NiceMock<MockDynamixelLink> link(transport, protocol);
+
+    ON_CALL(link, sendPacketAndReadStatus(::testing::_, ::testing::_, ::testing::_))
+        .WillByDefault(testing::Invoke(&link, 
+            &MockDynamixelLink::callRealSendPacketAndReadStatus));
+
+    EXPECT_CALL(link, sendPacket(::testing::_))
+        .WillOnce(::testing::Invoke(
+            [](const std::vector<uint8_t>& packet) -> int {
+                return 0;
+            }
+        ));
+
+    EXPECT_CALL(link, readStatus(::testing::_, ::testing::_))
+        .Times(0);
+        
+    std::vector<uint8_t> packet = {0xFF, 0xFF, 0x01, 0x02, 0x00, 0xFC};
+    StatusPacket status;
+    int result = link.sendPacketAndReadStatus(0xFE, packet, status);
+
+    EXPECT_EQ(result, 0);
+}
+
+TEST(actuator_driver, dynamixel_send_packet_and_read_status_send_packet_error)
+{
+    auto protocol = std::make_shared<DynamixelProtocol>();
+    auto transport = std::make_shared<MockSerialHandler>();
+    testing::NiceMock<MockDynamixelLink> link(transport, protocol);
+
+    ON_CALL(link, sendPacketAndReadStatus(::testing::_, ::testing::_, ::testing::_))
+        .WillByDefault(testing::Invoke(&link, 
+            &MockDynamixelLink::callRealSendPacketAndReadStatus));
+
+    EXPECT_CALL(link, sendPacket(::testing::_))
+        .WillOnce(::testing::Invoke(
+            [](const std::vector<uint8_t>& packet) -> int {
+                return -1;
+            }
+        ));
+
+    EXPECT_CALL(link, readStatus(::testing::_, ::testing::_))
+        .Times(0);
+
+    std::vector<uint8_t> packet = {0xFF, 0xFF, 0x01, 0x02, 0x00, 0xFC};
+    StatusPacket status;
+    int result = link.sendPacketAndReadStatus(1, packet, status);
 
     EXPECT_EQ(result, -1);
 }
