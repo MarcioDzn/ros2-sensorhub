@@ -1,2 +1,2 @@
 IMUData imu_data
-InsoleData pressure_data
+PressureData pressure_data
