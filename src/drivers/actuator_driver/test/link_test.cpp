@@ -340,7 +340,10 @@ TEST(actuator_driver, dynamixel_send_packet_success)
 {
     auto protocol = std::make_shared<DynamixelProtocol>();
     auto transport = std::make_shared<MockSerialHandler>();
-    TestableDynamixelLink link(transport, protocol);
+    testing::NiceMock<MockDynamixelLink> link(transport, protocol);
+
+    ON_CALL(link, sendPacket(::testing::_))
+        .WillByDefault(testing::Invoke(&link, &MockDynamixelLink::callRealSendPacket));
 
     EXPECT_CALL(*transport, writeData(::testing::_, ::testing::_))
         .WillOnce(::testing::Invoke(
@@ -359,7 +362,10 @@ TEST(actuator_driver, dynamixel_send_packet_error)
 {
     auto protocol = std::make_shared<DynamixelProtocol>();
     auto transport = std::make_shared<MockSerialHandler>();
-    TestableDynamixelLink link(transport, protocol);
+    testing::NiceMock<MockDynamixelLink> link(transport, protocol);
+
+    ON_CALL(link, sendPacket(::testing::_))
+        .WillByDefault(testing::Invoke(&link, &MockDynamixelLink::callRealSendPacket));
 
     EXPECT_CALL(*transport, writeData(::testing::_, ::testing::_))
         .WillOnce(::testing::Invoke(
