@@ -14,6 +14,30 @@ public:
     using DynamixelLink::sendPacketAndReadStatus;
 };
 
+class MockDynamixelLink : public DynamixelLink {
+public:
+    using DynamixelLink::DynamixelLink; // Herda construtores
+
+    MOCK_METHOD(int, readPacket, 
+        ((std::array<uint8_t, RXPACKET_MAX_LEN>&)), (override));
+    MOCK_METHOD(int, readStatus, 
+        (uint8_t, StatusPacket&), (override));
+    MOCK_METHOD(int, sendPacket, 
+        (const std::vector<uint8_t>&), (override));
+
+    // métodos são públicos q permitem que o 
+    // Google Mock acesse a lógica protegida da pai
+    int callRealReadPacket(std::array<uint8_t, RXPACKET_MAX_LEN>& b) {
+        return DynamixelLink::readPacket(b);
+    }
+    int callRealReadStatus(uint8_t id, StatusPacket& s) {
+        return DynamixelLink::readStatus(id, s);
+    }
+    int callRealSendPacket(const std::vector<uint8_t>& p) {
+        return DynamixelLink::sendPacket(p);
+    }
+};
+
 class MockSerialHandler : public SerialHandler
 {
 public:
@@ -27,7 +51,12 @@ TEST(actuator_driver, dynamixel_read_packet_success)
 {
     auto protocol = std::make_shared<DynamixelProtocol>();
     auto transport = std::make_shared<MockSerialHandler>();
-    TestableDynamixelLink link(transport, protocol);
+
+    testing::NiceMock<MockDynamixelLink> link(transport, protocol);
+
+    // usa a lógica real de readPacket
+    ON_CALL(link, readPacket(::testing::_))
+        .WillByDefault(testing::Invoke(&link, &MockDynamixelLink::callRealReadPacket));
 
     std::array<uint8_t, RXPACKET_MAX_LEN> rxbuffer;
 
@@ -50,7 +79,10 @@ TEST(actuator_driver, dynamixel_read_packet_checksum_error)
 {
     auto protocol = std::make_shared<DynamixelProtocol>();
     auto transport = std::make_shared<MockSerialHandler>();
-    TestableDynamixelLink link(transport, protocol);
+    testing::NiceMock<MockDynamixelLink> link(transport, protocol);
+
+    ON_CALL(link, readPacket(::testing::_))
+        .WillByDefault(testing::Invoke(&link, &MockDynamixelLink::callRealReadPacket));
 
     std::array<uint8_t, RXPACKET_MAX_LEN> rxbuffer;
 
@@ -76,7 +108,10 @@ TEST(actuator_driver, dynamixel_read_packet_content)
     // de uma vez
     auto protocol = std::make_shared<DynamixelProtocol>();
     auto transport = std::make_shared<MockSerialHandler>();
-    TestableDynamixelLink link(transport, protocol);
+    testing::NiceMock<MockDynamixelLink> link(transport, protocol);
+
+    ON_CALL(link, readPacket(::testing::_))
+        .WillByDefault(testing::Invoke(&link, &MockDynamixelLink::callRealReadPacket));
 
     std::array<uint8_t, RXPACKET_MAX_LEN> rxbuffer;
 
@@ -115,7 +150,10 @@ TEST(actuator_driver, dynamixel_read_packet_content_trash)
     // o readData vai entregar lixo também
     auto protocol = std::make_shared<DynamixelProtocol>();
     auto transport = std::make_shared<MockSerialHandler>();
-    TestableDynamixelLink link(transport, protocol);
+    testing::NiceMock<MockDynamixelLink> link(transport, protocol);
+
+    ON_CALL(link, readPacket(::testing::_))
+        .WillByDefault(testing::Invoke(&link, &MockDynamixelLink::callRealReadPacket));
 
     std::array<uint8_t, RXPACKET_MAX_LEN> rxbuffer;
 
@@ -156,7 +194,10 @@ TEST(actuator_driver, dynamixel_read_packet_content_timeout)
 {
     auto protocol = std::make_shared<DynamixelProtocol>();
     auto transport = std::make_shared<MockSerialHandler>();
-    TestableDynamixelLink link(transport, protocol);
+    testing::NiceMock<MockDynamixelLink> link(transport, protocol);
+
+    ON_CALL(link, readPacket(::testing::_))
+        .WillByDefault(testing::Invoke(&link, &MockDynamixelLink::callRealReadPacket));
 
     std::array<uint8_t, RXPACKET_MAX_LEN> rxbuffer;
 
@@ -172,19 +213,18 @@ TEST(actuator_driver, dynamixel_read_status_success)
 {
     auto protocol = std::make_shared<DynamixelProtocol>();
     auto transport = std::make_shared<MockSerialHandler>();
-    TestableDynamixelLink link(transport, protocol);
+    testing::NiceMock<MockDynamixelLink> link(transport, protocol);
 
-    // mock do serial handler pra o retorno de
-    // readPacket vir do jeito necessário 
-    // com sucesso
+    ON_CALL(link, readStatus(::testing::_, ::testing::_))
+        .WillByDefault(testing::Invoke(&link, &MockDynamixelLink::callRealReadStatus));
+
     std::array<uint8_t, RXPACKET_MAX_LEN> rxbuffer;
-    EXPECT_CALL(*transport, readData(::testing::_, ::testing::_))
+    EXPECT_CALL(link, readPacket(::testing::_))
         .WillOnce(::testing::Invoke(
-            [](uint8_t* buffer, size_t size) -> ssize_t {
+            [](std::array<uint8_t, RXPACKET_MAX_LEN>& packet) -> int {
                 std::array<uint8_t, 6> rx = {0xFF, 0xFF, 0x01, 0x02, 0x00, 0xFC};
-                size_t to_copy = std::min(size, rx.size());
-                std::copy(rx.begin(), rx.begin() + to_copy, buffer);
-                return to_copy;
+                std::copy(rx.begin(), rx.end(), packet.begin());
+                return 0;
             }
         ));
     
@@ -198,19 +238,14 @@ TEST(actuator_driver, dynamixel_read_status_read_packet_error)
 {
     auto protocol = std::make_shared<DynamixelProtocol>();
     auto transport = std::make_shared<MockSerialHandler>();
-    TestableDynamixelLink link(transport, protocol);
+    testing::NiceMock<MockDynamixelLink> link(transport, protocol);
 
-    // checksum errado (apenas pra testar caso de erro)
+    ON_CALL(link, readStatus(::testing::_, ::testing::_))
+        .WillByDefault(testing::Invoke(&link, &MockDynamixelLink::callRealReadStatus));
+
     std::array<uint8_t, RXPACKET_MAX_LEN> rxbuffer;
-    EXPECT_CALL(*transport, readData(::testing::_, ::testing::_))
-        .WillOnce(::testing::Invoke(
-            [](uint8_t* buffer, size_t size) -> ssize_t {
-                std::array<uint8_t, 6> rx = {0xFF, 0xFF, 0x01, 0x02, 0x00, 0xFD};
-                size_t to_copy = std::min(size, rx.size());
-                std::copy(rx.begin(), rx.begin() + to_copy, buffer);
-                return to_copy;
-            }
-        ));
+    EXPECT_CALL(link, readPacket(::testing::_))
+        .WillOnce(::testing::Return(-1));
     
     StatusPacket status;
     int result = link.readStatus(1, status);
@@ -223,17 +258,18 @@ TEST(actuator_driver, dynamixel_read_status_id_error)
 {
     auto protocol = std::make_shared<DynamixelProtocol>();
     auto transport = std::make_shared<MockSerialHandler>();
-    TestableDynamixelLink link(transport, protocol);
+    testing::NiceMock<MockDynamixelLink> link(transport, protocol);
 
-    // readPacket retorna 0 (sucesso)
+    ON_CALL(link, readStatus(::testing::_, ::testing::_))
+        .WillByDefault(testing::Invoke(&link, &MockDynamixelLink::callRealReadStatus));
+
     std::array<uint8_t, RXPACKET_MAX_LEN> rxbuffer;
-    EXPECT_CALL(*transport, readData(::testing::_, ::testing::_))
+    EXPECT_CALL(link, readPacket(::testing::_))
         .WillOnce(::testing::Invoke(
-            [](uint8_t* buffer, size_t size) -> ssize_t {
+            [](std::array<uint8_t, RXPACKET_MAX_LEN>& packet) -> int {
                 std::array<uint8_t, 6> rx = {0xFF, 0xFF, 0x01, 0x02, 0x00, 0xFC};
-                size_t to_copy = std::min(size, rx.size());
-                std::copy(rx.begin(), rx.begin() + to_copy, buffer);
-                return to_copy;
+                std::copy(rx.begin(), rx.end(), packet.begin());
+                return 0;
             }
         ));
     
@@ -243,61 +279,22 @@ TEST(actuator_driver, dynamixel_read_status_id_error)
     EXPECT_EQ(result, -1);
 }
 
-
-TEST(actuator_driver, dynamixel_read_status_not_null_error)
-{
-    auto protocol = std::make_shared<DynamixelProtocol>();
-    auto transport = std::make_shared<MockSerialHandler>();
-    TestableDynamixelLink link(transport, protocol);
-
-    // pacote lido de maneira certa
-    // mas com byte de erro não nulo
-    std::array<uint8_t, RXPACKET_MAX_LEN> rxbuffer;
-    EXPECT_CALL(*transport, readData(::testing::_, ::testing::_))
-        .WillOnce(::testing::Invoke(
-            [](uint8_t* buffer, size_t size) -> ssize_t {
-                std::array<uint8_t, 6> rx = {
-                    0xFF, 0xFF, 0x01, 0x02, 0x01, 0xFB
-                };
-                size_t to_copy = std::min(size, rx.size());
-                std::copy(rx.begin(), rx.begin() + to_copy, buffer);
-                return to_copy;
-            }
-        ));
-    
-    StatusPacket status;
-    int result = link.readStatus(1, status);
-
-    EXPECT_EQ(result, -1);
-}
-
-
 TEST(actuator_driver, dynamixel_read_status_content)
 {
     auto protocol = std::make_shared<DynamixelProtocol>();
     auto transport = std::make_shared<MockSerialHandler>();
-    TestableDynamixelLink link(transport, protocol);
+    testing::NiceMock<MockDynamixelLink> link(transport, protocol);
+
+    ON_CALL(link, readStatus(::testing::_, ::testing::_))
+        .WillByDefault(testing::Invoke(&link, &MockDynamixelLink::callRealReadStatus));
 
     std::array<uint8_t, RXPACKET_MAX_LEN> rxbuffer;
-
-    std::array<uint8_t, 8> full_rx = {
-        0xFF, 0xFF, 0x01, 0x04, 0x00, 0x03, 0x00, 0xF7
-    };
-    size_t offset = 0;
-
-    // readPacket retorna sucesso
-    EXPECT_CALL(*transport, readData(::testing::_, ::testing::_))
-        .WillRepeatedly(::testing::Invoke(
-            [&](uint8_t* buffer, size_t size) -> ssize_t {
-                size_t remaining = full_rx.size() - offset;
-                if (remaining == 0) return 0;
-                
-                // pega no máximo 3 bytes
-                size_t to_copy = std::min<size_t>({size, remaining, 3});
-                std::copy(full_rx.begin() + offset, full_rx.begin() + offset + to_copy, buffer);
-                offset += to_copy;
-
-                return to_copy;
+    EXPECT_CALL(link, readPacket(::testing::_))
+        .WillOnce(::testing::Invoke(
+            [](std::array<uint8_t, RXPACKET_MAX_LEN>& packet) -> int {
+                std::array<uint8_t, 8> rx = {0xFF, 0xFF, 0x01, 0x04, 0x00, 0x03, 0x00, 0xF7};
+                std::copy(rx.begin(), rx.end(), packet.begin());
+                return 0;
             }
         ));
 
@@ -314,29 +311,20 @@ TEST(actuator_driver, dynamixel_read_status_content_status_not_null_error)
 {
     auto protocol = std::make_shared<DynamixelProtocol>();
     auto transport = std::make_shared<MockSerialHandler>();
-    TestableDynamixelLink link(transport, protocol);
+    testing::NiceMock<MockDynamixelLink> link(transport, protocol);
 
+    ON_CALL(link, readStatus(::testing::_, ::testing::_))
+        .WillByDefault(testing::Invoke(&link, &MockDynamixelLink::callRealReadStatus));
+
+    // pacote lido de maneira certa
+    // mas com byte de erro não nulo
     std::array<uint8_t, RXPACKET_MAX_LEN> rxbuffer;
-
-    std::array<uint8_t, 8> full_rx = {
-        0xFF, 0xFF, 0x01, 0x04, 0x01, 0x03, 0x00, 0xF6
-    };
-    size_t offset = 0;
-
-    // readPacket retorna sucesso mas com 
-    // byte de erro não nulo
-    EXPECT_CALL(*transport, readData(::testing::_, ::testing::_))
-        .WillRepeatedly(::testing::Invoke(
-            [&](uint8_t* buffer, size_t size) -> ssize_t {
-                size_t remaining = full_rx.size() - offset;
-                if (remaining == 0) return 0;
-                
-                // pega no máximo 3 bytes
-                size_t to_copy = std::min<size_t>({size, remaining, 3});
-                std::copy(full_rx.begin() + offset, full_rx.begin() + offset + to_copy, buffer);
-                offset += to_copy;
-
-                return to_copy;
+    EXPECT_CALL(link, readPacket(::testing::_))
+        .WillOnce(::testing::Invoke(
+            [](std::array<uint8_t, RXPACKET_MAX_LEN>& packet) -> int {
+                std::array<uint8_t, 8> rx = {0xFF, 0xFF, 0x01, 0x04, 0x01, 0x03, 0x00, 0xF6};
+                std::copy(rx.begin(), rx.end(), packet.begin());
+                return 0;
             }
         ));
 
