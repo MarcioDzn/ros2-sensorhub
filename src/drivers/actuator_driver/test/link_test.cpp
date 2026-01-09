@@ -410,7 +410,7 @@ TEST(actuator_driver, dynamixel_send_packet_and_read_status_success)
                 out.id = id;
                 out.error = 0x00;
                 std::array<uint8_t, 2> params = {0x03, 0x00};
-                std::copy(params.begin(), params.end(), out.params);
+                std::copy(params.begin(), params.end(), out.params.begin());
 
                 return 0;
             }
