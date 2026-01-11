@@ -2,8 +2,8 @@
 
 using namespace std::chrono_literals;
 
-ActuatorNode::ActuatorNode() 
-    : Node("actuator_node")
+ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options) 
+    : Node("actuator_node", options)
 {   
     manager_ = std::make_unique<ActuatorManager>();
     manager_->init_node(this);
@@ -94,11 +94,3 @@ void ActuatorNode::publish_position_callback()
 }
 
 ActuatorNode::~ActuatorNode() = default;
-
-int main(int argc, char * argv[])
-{
-    rclcpp::init(argc, argv);    
-    rclcpp::spin(std::make_shared<ActuatorNode>());
-    rclcpp::shutdown();
-    return 0;
-}

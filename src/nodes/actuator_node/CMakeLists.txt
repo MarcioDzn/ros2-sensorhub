@@ -20,24 +20,39 @@ include_directories(
   include/actuator_node
 )
 
-add_executable(actuator_node 
+add_library(actuator_node_lib SHARED
   src/actuator_node.cpp
-  src/actuator_manager.cpp)
+  src/actuator_manager.cpp
+)
 
-ament_target_dependencies(actuator_node
+ament_target_dependencies(actuator_node_lib
   rclcpp
   interfaces
   common_serial
   actuator_driver
 )
 
+add_executable(actuator_node src/main.cpp)
+target_link_libraries(actuator_node actuator_node_lib)
+
 install(TARGETS
   actuator_node
+  actuator_node_lib
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(DIRECTORY include/
-  DESTINATION include/
-)
+if(BUILD_TESTING)
+  find_package(ament_cmake_gmock REQUIRED)
+
+  ament_add_gmock(test_node
+    test/integration_test.cpp
+  )
+  target_include_directories(test_node PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+  )
+  target_link_libraries(test_node
+    actuator_node_lib
+  )
+endif()
 
 ament_package()

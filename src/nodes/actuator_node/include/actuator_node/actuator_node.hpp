@@ -21,7 +21,7 @@ using ActuatorCurrentPosition = interfaces::msg::ActuatorCurrentPosition;
 class ActuatorNode : public rclcpp::Node
 {
     public:
-        explicit ActuatorNode();
+        explicit ActuatorNode(const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
         virtual ~ActuatorNode();
 
     private:
