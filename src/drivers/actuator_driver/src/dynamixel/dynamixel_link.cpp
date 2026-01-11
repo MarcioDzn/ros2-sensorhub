@@ -148,9 +148,6 @@ int DynamixelLink::readPacket(std::array<uint8_t, RXPACKET_MAX_LEN>& packet)
 			checksum = ~checksum;
 
 			// verifica se o checksum bate
-			std::cout << "DEBUG - ID: " << (int)packet[2] << " LEN: " << (int)packet[3] << std::endl;
-			std::cout << "DEBUG - Calculado: " << std::hex << (int)checksum 
-          	<< " Recebido: " << (int)packet[wait_length - 1] << std::dec << std::endl;
 			if (packet[wait_length - 1] == checksum)
 				return 0;
 			else	
