@@ -86,24 +86,30 @@ void ActuatorNode::goal_position_callback(const Command::SharedPtr msg)
 void ActuatorNode::state_callback()
 {
     auto msg = State();
-
     auto& parameters = manager_->get_parameters();
 
     msg.ids.reserve(parameters.actuator_ids.size());
     msg.positions.reserve(parameters.actuator_ids.size());
 
+    uint8_t error_count = 0;
     for (auto id : parameters.actuator_ids)
     {
         uint16_t curr_pos;
         if (manager_->get_current_position(id, curr_pos) != ActuatorError::OK)
+        {
+            error_count++;
             continue;
+        }
 
         msg.ids.push_back(static_cast<int8_t>(id));
         msg.positions.push_back(static_cast<int16_t>(curr_pos));
         msg.stamp = this->get_clock()->now();
     }
 
-    state_publisher_->publish(msg);
+    // se nenhum atuador enviou a posição
+    // entao nao publica nada
+    if (error_count < parameters.actuator_ids.size())
+        state_publisher_->publish(msg);
 }
 
 ActuatorNode::~ActuatorNode() = default;
