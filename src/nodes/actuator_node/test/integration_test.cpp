@@ -12,6 +12,8 @@
 #include "interfaces/msg/command.hpp"
 #include "interfaces/srv/set_torque.hpp"
 
+using namespace std::chrono_literals;
+
 class ActuatorNodeFixture : public ::testing::Test {
     protected:
         int master_fd;
@@ -41,6 +43,16 @@ class ActuatorNodeFixture : public ::testing::Test {
         close(master_fd);
         close(slave_fd);
     }
+
+    bool waitFor(std::function<bool()> condition, std::chrono::milliseconds timeout = 500ms) {
+        auto start = std::chrono::steady_clock::now();
+        while ((std::chrono::steady_clock::now() - start) < timeout) {
+            if (condition()) return true;
+            rclcpp::spin_some(node);
+            std::this_thread::sleep_for(10ms);
+        }
+        return false;
+    }
 };
 
 TEST_F(ActuatorNodeFixture, publishes_data_success) {
@@ -59,15 +71,10 @@ TEST_F(ActuatorNodeFixture, publishes_data_success) {
 
     // mock do status packet
     uint8_t dummy_response[] = {0xFF, 0xFF, 0x01, 0x04, 0x00, 0x00, 0x00, 0xFA};
+    write(master_fd, dummy_response, sizeof(dummy_response));
 
     // necessário esperar pra dar tempo de publicar os dados
-    auto start_time = std::chrono::steady_clock::now();
-    auto timeout = std::chrono::milliseconds(500); // 0.5 segundos 
-    while (!received && (std::chrono::steady_clock::now() - start_time) < timeout) {
-        write(master_fd, dummy_response, sizeof(dummy_response));
-        rclcpp::spin_some(node);
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
+    bool success = waitFor([&received]() { return received; }, std::chrono::milliseconds(500));
 
     ASSERT_TRUE(received);
     rclcpp::shutdown();
@@ -89,15 +96,10 @@ TEST_F(ActuatorNodeFixture, publishes_data_checksum_error) {
 
     // mock do status packet (com checksum errado)
     uint8_t dummy_response[] = {0xFF, 0xFF, 0x01, 0x04, 0x00, 0x00, 0x00, 0xF3};
+    write(master_fd, dummy_response, sizeof(dummy_response));
 
     // necessário esperar pra dar tempo de publicar os dados
-    auto start_time = std::chrono::steady_clock::now();
-    auto timeout = std::chrono::milliseconds(500); // 0.5 segundos 
-    while (!received && (std::chrono::steady_clock::now() - start_time) < timeout) {
-        write(master_fd, dummy_response, sizeof(dummy_response));
-        rclcpp::spin_some(node);
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
+    bool success = waitFor([&received]() { return received; }, std::chrono::milliseconds(500));
 
     ASSERT_FALSE(received);
     rclcpp::shutdown();
@@ -123,15 +125,10 @@ TEST_F(ActuatorNodeFixture, publishes_data_content) {
     
     // mock do status packet (posicao 512)
     uint8_t dummy_response[] = {0xFF, 0xFF, 0x01, 0x04, 0x00, 0x00, 0x02, 0xF8};
+    write(master_fd, dummy_response, sizeof(dummy_response));
 
     // necessário esperar pra dar tempo de publicar os dados
-    auto start_time = std::chrono::steady_clock::now();
-    auto timeout = std::chrono::milliseconds(500); // 0.5 segundos 
-    while (!received && (std::chrono::steady_clock::now() - start_time) < timeout) {
-        write(master_fd, dummy_response, sizeof(dummy_response));
-        rclcpp::spin_some(node);
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
+    bool success = waitFor([&received]() { return received; }, std::chrono::milliseconds(500));
 
     ASSERT_TRUE(received);
     EXPECT_EQ(id, 1);
