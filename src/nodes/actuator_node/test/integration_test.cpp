@@ -8,7 +8,7 @@
 
 #include "actuator_node.hpp"
 
-#include "interfaces/msg/actuator_current_position.hpp"
+#include "interfaces/msg/state.hpp"
 #include "interfaces/msg/command.hpp"
 #include "interfaces/srv/set_torque.hpp"
 
@@ -49,10 +49,10 @@ TEST_F(ActuatorNodeFixture, publishes_data_success) {
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .best_effort()
         .durability_volatile();
-    auto sub = node->create_subscription<interfaces::msg::ActuatorCurrentPosition>(
-        "dxl/current_position/id_1",
+    auto sub = node->create_subscription<interfaces::msg::State>(
+        "dxl/state",
         qos,
-        [&received](const interfaces::msg::ActuatorCurrentPosition::SharedPtr msg) {
+        [&received](const interfaces::msg::State::SharedPtr msg) {
             received = true;
         }
     );
@@ -79,10 +79,10 @@ TEST_F(ActuatorNodeFixture, publishes_data_checksum_error) {
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .best_effort()
         .durability_volatile();
-    auto sub = node->create_subscription<interfaces::msg::ActuatorCurrentPosition>(
-        "dxl/current_position/id_1",
+    auto sub = node->create_subscription<interfaces::msg::State>(
+        "dxl/state",
         qos,
-        [&received](const interfaces::msg::ActuatorCurrentPosition::SharedPtr msg) {
+        [&received](const interfaces::msg::State::SharedPtr msg) {
             received = true;
         }
     );
@@ -111,13 +111,13 @@ TEST_F(ActuatorNodeFixture, publishes_data_content) {
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .best_effort()
         .durability_volatile();
-    auto sub = node->create_subscription<interfaces::msg::ActuatorCurrentPosition>(
-        "dxl/current_position/id_1",
+    auto sub = node->create_subscription<interfaces::msg::State>(
+        "dxl/state",
         qos,
-        [&received, &id, &curr_pos](const interfaces::msg::ActuatorCurrentPosition::SharedPtr msg) {
+        [&received, &id, &curr_pos](const interfaces::msg::State::SharedPtr msg) {
             received = true;
-            id = msg->id;
-            curr_pos = msg->position;
+            id = msg->ids[0];
+            curr_pos = msg->positions[0];
         }
     );
     
