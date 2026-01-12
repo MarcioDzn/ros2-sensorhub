@@ -14,11 +14,11 @@
 #include "interfaces/srv/set_torque.hpp"
 
 #include "interfaces/msg/command.hpp"
-#include "interfaces/msg/actuator_current_position.hpp"
+#include "interfaces/msg/state.hpp"
 
 using SetTorque = interfaces::srv::SetTorque;
 using Command = interfaces::msg::Command;
-using ActuatorCurrentPosition = interfaces::msg::ActuatorCurrentPosition;
+using State = interfaces::msg::State;
 
 class ActuatorNode : public rclcpp::Node
 {
@@ -28,16 +28,16 @@ class ActuatorNode : public rclcpp::Node
 
     private:
         void goal_position_callback(const Command::SharedPtr msg);
+        void state_callback();
+
         void set_torque_service_callback(
             const std::shared_ptr<SetTorque::Request> request,
             std::shared_ptr<SetTorque::Response> response);
-        void publish_position_callback();
 
         std::shared_ptr<ActuatorManager> manager_;
         
         rclcpp::Subscription<Command>::SharedPtr actuator_subscriber_;
-        std::unordered_map<uint8_t,
-            rclcpp::Publisher<ActuatorCurrentPosition>::SharedPtr> publishers_;
+        rclcpp::Publisher<State>::SharedPtr state_publisher_;
 
         rclcpp::Service<SetTorque>::SharedPtr set_torque_service_;
         

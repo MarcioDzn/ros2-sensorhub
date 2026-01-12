@@ -34,21 +34,14 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
             this->set_torque_service_callback(req, res);
         });
 
-    // criando publishers
-    for (auto id: parameters.actuator_ids)
-    {
-        auto topic =
-            parameters.base_name + "/current_position/id_" +
-            std::to_string(static_cast<int>(id));
 
-        publishers_[id] =
-            this->create_publisher<ActuatorCurrentPosition>(topic, qos);
-    }
+    state_publisher_ = this->create_publisher<State>(
+            parameters.base_name + "/state", qos);
 
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameters.update_rate_ms), 
         [this]() {
-            publish_position_callback();
+            state_callback();
         });
 
     RCLCPP_INFO(this->get_logger(), "Nó ActuatorNode iniciado com sucesso.");
@@ -90,23 +83,27 @@ void ActuatorNode::goal_position_callback(const Command::SharedPtr msg)
     }
 }
 
-void ActuatorNode::publish_position_callback()
+void ActuatorNode::state_callback()
 {
-    auto msg = ActuatorCurrentPosition();
+    auto msg = State();
 
     auto& parameters = manager_->get_parameters();
+
+    msg.ids.reserve(parameters.actuator_ids.size());
+    msg.positions.reserve(parameters.actuator_ids.size());
+
     for (auto id : parameters.actuator_ids)
     {
         uint16_t curr_pos;
         if (manager_->get_current_position(id, curr_pos) != ActuatorError::OK)
             continue;
 
-        msg.id = id;
-        msg.position = curr_pos;
+        msg.ids.push_back(static_cast<int8_t>(id));
+        msg.positions.push_back(static_cast<int16_t>(curr_pos));
         msg.stamp = this->get_clock()->now();
-
-        publishers_[id]->publish(msg);
     }
+
+    state_publisher_->publish(msg);
 }
 
 ActuatorNode::~ActuatorNode() = default;
