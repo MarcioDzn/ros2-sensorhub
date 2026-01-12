@@ -46,7 +46,7 @@ def generate_launch_description():
         ),
 
         Node(
-            package='sensor_sync',
+            package='sync_node',
             executable='sync_node',
             output='screen',
         )
