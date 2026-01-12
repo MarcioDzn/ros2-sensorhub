@@ -15,6 +15,7 @@ set(msg_files
   "msg/PressureData.msg"
   "msg/Command.msg"
   "msg/ActuatorCurrentPosition.msg"
+  "msg/State.msg"
   "msg/SyncedSensorData.msg"
 )
 
