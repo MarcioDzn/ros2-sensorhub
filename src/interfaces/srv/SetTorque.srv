@@ -1,0 +1,4 @@
+int8 id
+bool status
+---
+bool success
