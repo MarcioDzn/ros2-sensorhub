@@ -44,7 +44,7 @@ class ActuatorNodeFixture : public ::testing::Test {
         close(slave_fd);
     }
 
-    bool waitFor(std::function<bool()> condition, std::chrono::milliseconds timeout = 500ms) {
+    bool waitFor(std::function<bool()> condition, std::chrono::milliseconds timeout = 100ms) {
         auto start = std::chrono::steady_clock::now();
         while ((std::chrono::steady_clock::now() - start) < timeout) {
             if (condition()) return true;
@@ -74,7 +74,7 @@ TEST_F(ActuatorNodeFixture, publishes_data_success) {
     write(master_fd, dummy_response, sizeof(dummy_response));
 
     // necessário esperar pra dar tempo de publicar os dados
-    bool success = waitFor([&received]() { return received; }, std::chrono::milliseconds(500));
+    bool success = waitFor([&received]() { return received; }, std::chrono::milliseconds(100));
 
     ASSERT_TRUE(received);
     rclcpp::shutdown();
@@ -99,7 +99,7 @@ TEST_F(ActuatorNodeFixture, publishes_data_checksum_error) {
     write(master_fd, dummy_response, sizeof(dummy_response));
 
     // necessário esperar pra dar tempo de publicar os dados
-    bool success = waitFor([&received]() { return received; }, std::chrono::milliseconds(500));
+    bool success = waitFor([&received]() { return received; }, std::chrono::milliseconds(100));
 
     ASSERT_FALSE(received);
     rclcpp::shutdown();
@@ -128,7 +128,7 @@ TEST_F(ActuatorNodeFixture, publishes_data_content) {
     write(master_fd, dummy_response, sizeof(dummy_response));
 
     // necessário esperar pra dar tempo de publicar os dados
-    bool success = waitFor([&received]() { return received; }, std::chrono::milliseconds(500));
+    bool success = waitFor([&received]() { return received; }, std::chrono::milliseconds(100));
 
     ASSERT_TRUE(received);
     EXPECT_EQ(id, 1);
