@@ -9,8 +9,8 @@
 #include "actuator_node.hpp"
 
 #include "interfaces/msg/actuator_current_position.hpp"
-#include "interfaces/msg/actuator_goal_position.hpp"
-#include "interfaces/srv/set_motor_config.hpp"
+#include "interfaces/msg/command.hpp"
+#include "interfaces/srv/set_torque.hpp"
 
 class ActuatorNodeFixture : public ::testing::Test {
     protected:
@@ -150,13 +150,13 @@ TEST_F(ActuatorNodeFixture, subscribes_data_success) {
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .best_effort()
         .durability_volatile();
-    auto pub = node->create_publisher<interfaces::msg::ActuatorGoalPosition>(
-        "dxl/goal_position",
+    auto pub = node->create_publisher<interfaces::msg::Command>(
+        "dxl/command",
         qos);
 
-    auto msg = interfaces::msg::ActuatorGoalPosition();
-    msg.id = 1;
-    msg.goal = 3000;
+    auto msg = interfaces::msg::Command();
+    msg.ids = {1};
+    msg.goals = {3000};
     pub->publish(msg);
     
     auto start_time = std::chrono::steady_clock::now();
@@ -190,16 +190,14 @@ TEST_F(ActuatorNodeFixture, service_command_success_set_torque_enable_success) {
     fcntl(master_fd, F_SETFL, O_NONBLOCK);
     while (read(master_fd, read_buffer, sizeof(read_buffer)) > 0);
 
-    auto client = node->create_client<interfaces::srv::SetMotorConfig>(
-        "dxl/command");
+    auto client = node->create_client<interfaces::srv::SetTorque>(
+        "dxl/set_torque");
     // precisa esperar o service ficar on
     ASSERT_TRUE(client->wait_for_service(std::chrono::seconds(1)));
 
-    auto request = std::make_shared<interfaces::srv::SetMotorConfig::Request>();
-    request->type = "dynamixel";
+    auto request = std::make_shared<interfaces::srv::SetTorque::Request>();
     request->id = 1;
-    request->command = "set_torque";
-    request->params = {1};
+    request->status = true;
     auto result_future = client->async_send_request(request);
     
     // roda até receber a resposta
