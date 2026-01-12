@@ -10,12 +10,14 @@
 
 #include "actuator_manager.hpp"
 #include "rclcpp/rclcpp.hpp"
+
 #include "interfaces/srv/set_torque.hpp"
-#include "interfaces/msg/actuator_goal_position.hpp"
+
+#include "interfaces/msg/command.hpp"
 #include "interfaces/msg/actuator_current_position.hpp"
 
 using SetTorque = interfaces::srv::SetTorque;
-using ActuatorGoalPosition = interfaces::msg::ActuatorGoalPosition;
+using Command = interfaces::msg::Command;
 using ActuatorCurrentPosition = interfaces::msg::ActuatorCurrentPosition;
 
 class ActuatorNode : public rclcpp::Node
@@ -25,7 +27,7 @@ class ActuatorNode : public rclcpp::Node
         virtual ~ActuatorNode();
 
     private:
-        void goal_position_callback(const ActuatorGoalPosition::SharedPtr msg);
+        void goal_position_callback(const Command::SharedPtr msg);
         void set_torque_service_callback(
             const std::shared_ptr<SetTorque::Request> request,
             std::shared_ptr<SetTorque::Response> response);
@@ -33,10 +35,10 @@ class ActuatorNode : public rclcpp::Node
 
         std::shared_ptr<ActuatorManager> manager_;
         
-        rclcpp::Subscription<ActuatorGoalPosition>::SharedPtr actuator_subscriber_;
+        rclcpp::Subscription<Command>::SharedPtr actuator_subscriber_;
         std::unordered_map<uint8_t,
             rclcpp::Publisher<ActuatorCurrentPosition>::SharedPtr> publishers_;
-            
+
         rclcpp::Service<SetTorque>::SharedPtr set_torque_service_;
         
         rclcpp::TimerBase::SharedPtr timer_;

@@ -21,9 +21,9 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
         .best_effort()
         .durability_volatile();
 
-    actuator_subscriber_ = this->create_subscription<ActuatorGoalPosition>(
-        parameters.base_name + "/goal_position", qos, 
-        [this](const ActuatorGoalPosition::SharedPtr msg) {
+    actuator_subscriber_ = this->create_subscription<Command>(
+        parameters.base_name + "/command", qos, 
+        [this](const Command::SharedPtr msg) {
             this->goal_position_callback(msg);
         });
     
@@ -66,11 +66,28 @@ void ActuatorNode::set_torque_service_callback(
         response->success = true;
 }
 
-void ActuatorNode::goal_position_callback(const ActuatorGoalPosition::SharedPtr msg)
+void ActuatorNode::goal_position_callback(const Command::SharedPtr msg)
 {
-    manager_->set_goal_position(
-        static_cast<uint8_t>(msg->id),
-        static_cast<uint16_t>(msg->goal));
+    const std::vector<int8_t> & ids = msg->ids;
+    const std::vector<int16_t> & goals = msg->goals;
+
+    if (ids.empty())
+        return;
+
+    // cada goal deve estar associado a um atuador
+    if (goals.size() != ids.size())
+        return;
+
+    // envio sequêncial para evitar concorrencia
+    for (size_t i = 0; i < ids.size(); i++)
+    {
+        if (manager_->set_goal_position(
+                static_cast<uint8_t>(ids[i]), 
+                static_cast<uint16_t>(goals[i])) != ActuatorError::OK)
+            RCLCPP_ERROR(this->get_logger(), 
+                "Erro ao mover motor %d para a posicao %d", 
+                static_cast<int>(ids[i]), static_cast<int>(goals[i]));
+    }
 }
 
 void ActuatorNode::publish_position_callback()
