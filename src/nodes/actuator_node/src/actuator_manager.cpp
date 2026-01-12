@@ -44,10 +44,7 @@ ActuatorError ActuatorManager::init_comm() {
     return ActuatorError::OK;
 }
 
-ActuatorError ActuatorManager::execute_command(
-    uint8_t id, 
-    const std::string& command, 
-    const std::vector<int16_t>& params)
+ActuatorError ActuatorManager::set_torque(uint8_t id, uint8_t status) 
 {
     if (!controller_) 
         return ActuatorError::NotInitialized;
@@ -55,25 +52,13 @@ ActuatorError ActuatorManager::execute_command(
     if (!is_valid_id(id))
         return ActuatorError::InvalidID;
 
-    if (command == "set_goal_position" && !params.empty()) {
-        uint16_t goal = static_cast<uint16_t>(params[0]);
-        return controller_->setGoalPosition(id, goal) == 0
-        ? ActuatorError::OK
-        : ActuatorError::CommunicationError;
-    } 
-    else if (command == "set_torque" && !params.empty()) {
-        uint16_t torque_status = static_cast<uint16_t>(params[0]);
-        return controller_->setTorque(id, torque_status) == 0
-        ? ActuatorError::OK
-        : ActuatorError::CommunicationError;
-    }
-    // TODO: get_current_position
+    if (controller_->setTorque(id, status) != 0)
+        return ActuatorError::CommunicationError;
 
-    return ActuatorError::UnsupportedCommand;
+    return ActuatorError::OK;
 }
 
-ActuatorError ActuatorManager::set_goal_position(
-    uint8_t id, uint16_t goal)
+ActuatorError ActuatorManager::set_goal_position(uint8_t id, uint16_t goal)
 {
     if (!controller_) 
         return ActuatorError::NotInitialized;

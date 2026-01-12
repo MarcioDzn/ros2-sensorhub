@@ -27,11 +27,11 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
             this->goal_position_callback(msg);
         });
     
-    motor_service_ = this->create_service<SetMotorConfig>(
-        parameters.base_name + "/command", 
-        [this](const std::shared_ptr<SetMotorConfig::Request> req, 
-                std::shared_ptr<SetMotorConfig::Response> res) {
-            this->motor_service_callback(req, res);
+    set_torque_service_ = this->create_service<SetTorque>(
+        parameters.base_name + "/set_torque", 
+        [this](const std::shared_ptr<SetTorque::Request> req, 
+                std::shared_ptr<SetTorque::Response> res) {
+            this->set_torque_service_callback(req, res);
         });
 
     // criando publishers
@@ -54,17 +54,16 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
     RCLCPP_INFO(this->get_logger(), "Nó ActuatorNode iniciado com sucesso.");
 }
 
-void ActuatorNode::motor_service_callback(
-    const std::shared_ptr<SetMotorConfig::Request> request,
-    std::shared_ptr<SetMotorConfig::Response> response)
+void ActuatorNode::set_torque_service_callback(
+    const std::shared_ptr<SetTorque::Request> request,
+    std::shared_ptr<SetTorque::Response> response)
 {
+    ActuatorError result = manager_->set_torque(
+        static_cast<uint8_t>(request->id), request->status);
+    
     response->success = false;
-
-    ActuatorError result = manager_->execute_command(
-        static_cast<uint8_t>(request->id), 
-        request->command, request->params);
-
-    if (result == ActuatorError::OK) response->success = true;
+    if (result == ActuatorError::OK) 
+        response->success = true;
 }
 
 void ActuatorNode::goal_position_callback(const ActuatorGoalPosition::SharedPtr msg)

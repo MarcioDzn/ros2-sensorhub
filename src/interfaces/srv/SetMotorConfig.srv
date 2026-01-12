@@ -1,8 +1,0 @@
-string type
-int16 id
-string command        "enable_torque", ...
-int16[] params
----
-int16[] result       
-bool success
-string message

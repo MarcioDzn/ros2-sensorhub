@@ -19,7 +19,6 @@ set(msg_files
 )
 
 set(srv_files
-  "srv/SetMotorConfig.srv"
   "srv/SetTorque.srv"
 )
 

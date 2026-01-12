@@ -36,8 +36,8 @@ class ActuatorManager
         void init_node(rclcpp::Node* node);
         std::shared_ptr<ActuatorController> get_controller() { return controller_; }
         ActuatorError init_comm();
-        ActuatorError execute_command( uint8_t id, const std::string& command, 
-            const std::vector<int16_t>& params);
+
+        ActuatorError set_torque(uint8_t id, uint8_t status);
         ActuatorError set_goal_position(uint8_t id, uint16_t goal);
         ActuatorError get_current_position(uint8_t id, uint16_t& curr_pos);
 
