@@ -16,7 +16,7 @@ class ParameterManager {
         std::string get_base_name() { return base_name_; }
         std::string get_usb_port() { return usb_port_; }
         int get_update_rate() { return update_rate_; }
-        int get_gaudrate() { return baudrate_; }
+        int get_baudrate() { return baudrate_; }
         std::vector<uint8_t> get_ids() {return ids_; }
 
     private:
