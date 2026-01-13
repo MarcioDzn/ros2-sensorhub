@@ -23,41 +23,54 @@ PressureNode::PressureNode() : Node("pressure_node")
             "Falha na inicialização do hardware serial em uma da(s) porta(s)");
         throw std::runtime_error("");
     }
-
+    
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .best_effort()
         .durability_volatile();
+    publisher_ = this->create_publisher<PressureState>(parameters.base_name + "/state", qos);
 
-    // CONSERTAR AQUI
-    for (const auto &id : parameters.ids)
-    {
-        std::string topic = parameters.base_name + "/id_" + std::to_string(id);
-        publishers_[id] = this->create_publisher<PressureData>(topic, qos);
-    }
     
     // executa o callback a cada <update_rate_ms_> segundos
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameters.update_rate_ms), 
-        std::bind(&PressureNode::timer_callback, this));
+        std::bind(&PressureNode::state_callback, this));
 }
 
-void PressureNode::timer_callback()
+void PressureNode::state_callback()
 {
+    auto msg = PressureState();
     auto parameters = manager_->get_parameters();
+
+    msg.ids.reserve(parameters.ids.size());
+    msg.pressures.reserve(parameters.ids.size());
+
+    uint8_t error_count = 0;
     for (const auto& id : parameters.ids)
     {
-        uint16_t data;
+        std::vector<uint16_t> data;
+        
         if (manager_->get_data(id, data) != PressureError::OK)
         {
-            RCLCPP_WARN(this->get_logger(), "Erro ao buscar dados");
+            error_count++;
+            continue;
         }
-
-        auto message = PressureData();
-        message.stamp = this->get_clock()->now();
-        message.pressures = { data };
         
-        publishers_[id]->publish(message);
+        PressureData pd;
+        pd.pressures.reserve(data.size());
+        for (auto val : data)
+            pd.pressures.push_back(static_cast<int16_t>(val));
+
+        msg.pressures.push_back(pd);
+        msg.ids.push_back(static_cast<int8_t>(id));
+        msg.stamp = this->get_clock()->now();
     }
+
+    // se nenhuma palmilha enviou a posição
+    // entao nao publica nada
+    if (error_count < parameters.ids.size()) {
+        publisher_->publish(msg);
+        RCLCPP_INFO(this->get_logger(), "PUBLICANDO: %d", msg.ids[1]);
+    }   
 }
 
 PressureNode::~PressureNode() = default;

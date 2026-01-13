@@ -45,7 +45,7 @@ PressureError PressureManager::init_comm() {
     return PressureError::OK;
 }
 
-PressureError PressureManager::get_data(uint8_t id, uint16_t& data)
+PressureError PressureManager::get_data(uint8_t id, std::vector<uint16_t>& data)
 {
     if (!is_valid_id(id))
         return PressureError::InvalidID;
@@ -55,7 +55,6 @@ PressureError PressureManager::get_data(uint8_t id, uint16_t& data)
         return PressureError::InvalidID;
 
     auto& controller = it->second;
-
 
     if (controller->getData(data) < 0)
         return PressureError::CommunicationError;

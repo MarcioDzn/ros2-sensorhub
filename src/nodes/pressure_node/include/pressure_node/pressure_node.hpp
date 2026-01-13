@@ -7,10 +7,12 @@
 
 #include "common_serial/serial_handler.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "interfaces/msg/pressure_state.hpp"
 #include "interfaces/msg/pressure_data.hpp"
 #include "common_serial/serial_handler.hpp"
 #include "pressure_manager.hpp"
 
+using PressureState = interfaces::msg::PressureState;
 using PressureData = interfaces::msg::PressureData;
 
 struct DeviceInterface
@@ -33,16 +35,11 @@ class PressureNode : public rclcpp::Node
         bool init_serial(const char* device, int baudrate);
         
     private:
-        void timer_callback();
-        void publish_sensor_data(
-            int sensor_id, const std::vector<uint16_t>& values);
-
-        void load_parameters();
-
+        void state_callback();
         std::shared_ptr<PressureManager> manager_;
 
         std::map<uint8_t, PressureSensor> pressure_sensors_;
-        std::map<uint8_t, rclcpp::Publisher<PressureData>::SharedPtr> publishers_;
+        rclcpp::Publisher<PressureState>::SharedPtr publisher_;
         
         rclcpp::TimerBase::SharedPtr timer_;
         int update_rate_ms_;

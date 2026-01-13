@@ -4,6 +4,7 @@
 #include <span>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 class PressureController
 {
@@ -11,7 +12,7 @@ class PressureController
         virtual ~PressureController() = default;
 
         virtual int init(std::string device, int baudrate) = 0;
-        virtual int getData(uint16_t& data) = 0;
+        virtual int getData(std::vector<uint16_t>& data) = 0;
 };
 
 #endif // PRESSURE_CONTROLLER_HPP

@@ -15,7 +15,7 @@ int BaseController::init(std::string device, int baudrate)
     return 0;
 }
 
-int BaseController::getData(uint16_t& data)
+int BaseController::getData(std::vector<uint16_t>& data)
 {
     char buffer[BUFFER_SIZE];
 
@@ -23,13 +23,11 @@ int BaseController::getData(uint16_t& data)
         return -1; 
     }
 
-    auto values = parseNumbersFromString(std::string(buffer));
+    data = parseNumbersFromString(std::string(buffer));
 
-    if (values.empty()) {
+    if (data.empty()) {
         return -2;
     }
-
-    data = values.front();
     return 0; 
 }
 

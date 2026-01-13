@@ -18,7 +18,7 @@ class BaseController : public PressureController
         explicit BaseController();
 
         int init(std::string device, int baudrate) override;
-        int getData(uint16_t& data) override;
+        int getData(std::vector<uint16_t>& data) override;
         
     private:
         std::vector<uint16_t> parseNumbersFromString(const std::string& input);

@@ -37,7 +37,7 @@ class PressureManager
         std::map<uint8_t, std::shared_ptr<PressureController>> 
         get_controllers() { return controllers_; }
         PressureError init_comm();
-        PressureError get_data(uint8_t id, uint16_t& data);
+        PressureError get_data(uint8_t id, std::vector<uint16_t>& data);
 
         const PressureParams& get_parameters() const { return parameters_; }
         
