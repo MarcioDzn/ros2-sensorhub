@@ -35,6 +35,7 @@ class ActuatorNode : public rclcpp::Node
             std::shared_ptr<SetTorque::Response> response);
 
         std::shared_ptr<NodeManager> node_manager_;
+        std::shared_ptr<ParameterManager> parameter_manager_;
         
         rclcpp::Subscription<Command>::SharedPtr actuator_subscriber_;
         rclcpp::Publisher<State>::SharedPtr state_publisher_;
