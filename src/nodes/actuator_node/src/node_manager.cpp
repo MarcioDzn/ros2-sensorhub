@@ -10,62 +10,84 @@ ActuatorError NodeManager::init_serial() {
     auto ctrl = ActuatorFactory::createDynamixel();
     controller_ = std::move(ctrl);
     
-    if (controller_->init(parameters_.usb_port, parameters_.baudrate) < 0) {
-        return ActuatorError::NotInitialized; 
+    if (controller_->init(
+        parameter_manager_->get_usb_port(), 
+        parameter_manager_->get_baudrate()) < 0) {
+            return ActuatorError::NotInitialized; 
     }
     return ActuatorError::OK;
 }
 
-ActuatorError NodeManager::set_torque(uint8_t id, uint8_t status) 
+ActuatorError NodeManager::set_torque(const std::vector<uint8_t>& ids, bool status) 
 {
-    if (!controller_) 
-        return ActuatorError::NotInitialized;
+    if (!controller_) return ActuatorError::NotInitialized;
 
-    if (!is_valid_id(id))
-        return ActuatorError::InvalidID;
+    for (uint8_t id : ids) 
+    {
+        if (actuator_manager_->get_actuator_by_id(id) == nullptr)
+            return ActuatorError::InvalidID; 
+    }
 
-    if (controller_->setTorque(id, status) != 0)
-        return ActuatorError::CommunicationError;
+    for (uint8_t id : ids)
+    {
+        if (controller_->setTorque(id, status ? 1 : 0) != 0)
+            return ActuatorError::CommunicationError;
+
+        actuator_manager_->update_torque(id, status);
+    }
 
     return ActuatorError::OK;
 }
 
-ActuatorError NodeManager::set_goal_position(uint8_t id, uint16_t goal)
+ActuatorError NodeManager::set_goal_position(
+    const std::vector<uint8_t>& ids, 
+    const std::vector<uint16_t>& positions)
 {
-    if (!controller_) 
-        return ActuatorError::NotInitialized;
-
-    if (!is_valid_id(id))
-        return ActuatorError::InvalidID;
-
-    if (goal > 4096)
+    if (ids.size() != positions.size())
         return ActuatorError::InvalidParameter;
-    
-    if (controller_->setGoalPosition(id, goal) != 0)
-        return ActuatorError::CommunicationError;
+
+    if (!controller_) 
+        return ActuatorError::NotInitialized;
+
+    for (uint8_t id : ids) 
+    {
+        if (actuator_manager_->get_actuator_by_id(id) == nullptr)
+            return ActuatorError::InvalidID; 
+    }
+
+    for (size_t idx = 0; idx < ids.size(); idx++)
+    {
+        if (controller_->setGoalPosition(ids[idx], positions[idx]) != 0)
+            return ActuatorError::CommunicationError;
+
+        actuator_manager_->update_position(ids[idx], positions[idx]);
+    }
 
     return ActuatorError::OK;
-
 }
 
-ActuatorError NodeManager::get_current_position(uint8_t id, uint16_t& curr_pos)
+ActuatorError NodeManager::get_current_position(    
+    const std::vector<uint8_t>& ids, 
+    std::vector<uint16_t>& positions)
 {
     if (!controller_) 
         return ActuatorError::NotInitialized;
 
-    if (!is_valid_id(id))
-        return ActuatorError::InvalidID;
+    for (uint8_t id : ids) 
+    {
+        if (actuator_manager_->get_actuator_by_id(id) == nullptr)
+            return ActuatorError::InvalidID; 
+    } 
 
-    if (controller_->getCurrentPosition(id, curr_pos) < 0)
-        return ActuatorError::CommunicationError;
+    positions.resize(ids.size());
+    for (size_t idx = 0; idx < ids.size(); idx++)
+    {
+        if (controller_->getCurrentPosition(ids[idx], positions[idx]) < 0)
+            return ActuatorError::CommunicationError;
+
+        // precisa setar a nova posição do atuador
+        actuator_manager_->update_position(ids[idx], positions[idx]);
+    }
 
     return ActuatorError::OK;
-}
-
-bool NodeManager::is_valid_id(uint8_t id) const
-{
-    return std::find(
-        parameters_.actuator_ids.begin(),
-        parameters_.actuator_ids.end(),
-        id) != parameters_.actuator_ids.end();
 }
