@@ -10,8 +10,8 @@
 
 class ParameterManager {
     public:
-        explicit ParameterManager(rclcpp::Node::SharedPtr node);
-        virtual ~ParameterManager() = 0;
+        explicit ParameterManager(rclcpp::Node* node);
+        virtual ~ParameterManager() = default;
 
         std::string get_base_name() { return base_name_; }
         std::string get_usb_port() { return usb_port_; }
@@ -22,14 +22,14 @@ class ParameterManager {
     private:
         void declare_parameters();
         void load_parameters();
-        
+
         std::string base_name_;
         std::string usb_port_;
         int update_rate_;
         int baudrate_;
         std::vector<uint8_t> ids_;
 
-        rclcpp::Node::SharedPtr node_;
+        rclcpp::Node* node_;
 };
 
 #endif // PARAMETER_MANAGER_HPP

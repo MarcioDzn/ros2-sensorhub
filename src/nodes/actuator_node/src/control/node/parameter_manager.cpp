@@ -1,13 +1,13 @@
 #include "control/node/parameter_manager.hpp"
 
 ParameterManager::ParameterManager(
-    rclcpp::Node::SharedPtr node) : node_(node)
+    rclcpp::Node* node) : node_(node)
 {
     declare_parameters();
     load_parameters();
 }
 
-void ActuatorManager::declare_parameters()
+void ParameterManager::declare_parameters()
 {
     node_->declare_parameter("base_name", "dxl");
     node_->declare_parameter("usb_port", "/dev/ttyUSB0");
@@ -16,7 +16,7 @@ void ActuatorManager::declare_parameters()
     node_->declare_parameter("update_rate_ms", 15);
 }
 
-void ActuatorManager::load_parameters()
+void ParameterManager::load_parameters()
 {
     base_name_ = node->get_parameter("base_name").as_string();
     usb_port_ = node->get_parameter("usb_port").as_string();
