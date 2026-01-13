@@ -22,7 +22,7 @@ include_directories(
 
 add_library(actuator_node_lib SHARED
   src/actuator_node.cpp
-  src/actuator_manager.cpp
+  src/node_manager.cpp
 )
 
 ament_target_dependencies(actuator_node_lib

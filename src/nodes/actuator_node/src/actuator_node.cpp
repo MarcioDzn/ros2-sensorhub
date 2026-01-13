@@ -5,12 +5,13 @@ using namespace std::chrono_literals;
 ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options) 
     : Node("actuator_node", options)
 {   
-    manager_ = std::make_unique<ActuatorManager>();
-    manager_->init_node(this);
+    auto parameter_manager = std::make_shared<ParameterManager>(this);
+    auto actuator_manager = std::make_shared<ActuatorManager>(parameter_manager->get_ids());
 
-    auto& parameters = manager_->get_parameters();
+    node_manager_ = std::make_unique<NodeManager>(
+        actuator_manager, parameter_manager);
 
-    if (manager_->init_comm() != ActuatorError::OK)
+    if (node_manager_->init_serial() != ActuatorError::OK)
     {
         RCLCPP_FATAL(this->get_logger(), 
             "Falha na inicialização do hardware serial na porta %s.", parameters.usb_port.c_str());
@@ -20,7 +21,6 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .best_effort()
         .durability_volatile();
-
     actuator_subscriber_ = this->create_subscription<Command>(
         parameters.base_name + "/command", qos, 
         [this](const Command::SharedPtr msg) {
@@ -51,7 +51,7 @@ void ActuatorNode::set_torque_service_callback(
     const std::shared_ptr<SetTorque::Request> request,
     std::shared_ptr<SetTorque::Response> response)
 {
-    ActuatorError result = manager_->set_torque(
+    ActuatorError result = node_manager_->set_torque(
         static_cast<uint8_t>(request->id), request->status);
     
     response->success = false;
@@ -74,7 +74,7 @@ void ActuatorNode::goal_position_callback(const Command::SharedPtr msg)
     // envio sequêncial para evitar concorrencia
     for (size_t i = 0; i < ids.size(); i++)
     {
-        if (manager_->set_goal_position(
+        if (node_manager_->set_goal_position(
                 static_cast<uint8_t>(ids[i]), 
                 static_cast<uint16_t>(goals[i])) != ActuatorError::OK)
             RCLCPP_ERROR(this->get_logger(), 
@@ -86,7 +86,7 @@ void ActuatorNode::goal_position_callback(const Command::SharedPtr msg)
 void ActuatorNode::state_callback()
 {
     auto msg = State();
-    auto& parameters = manager_->get_parameters();
+    auto& parameters = node_manager_->get_parameters();
 
     msg.ids.reserve(parameters.actuator_ids.size());
     msg.positions.reserve(parameters.actuator_ids.size());
@@ -95,7 +95,7 @@ void ActuatorNode::state_callback()
     for (auto id : parameters.actuator_ids)
     {
         uint16_t curr_pos;
-        if (manager_->get_current_position(id, curr_pos) != ActuatorError::OK)
+        if (node_manager_->get_current_position(id, curr_pos) != ActuatorError::OK)
         {
             error_count++;
             continue;

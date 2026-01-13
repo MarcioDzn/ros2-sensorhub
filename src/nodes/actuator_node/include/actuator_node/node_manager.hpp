@@ -1,5 +1,5 @@
-#ifndef ACTUATOR_MANAGER_HPP
-#define ACTUATOR_MANAGER_HPP
+#ifndef NODE_MANAGER_HPP
+#define NODE_MANAGER_HPP
 
 #include <cstdint>
 #include <string>
@@ -9,6 +9,8 @@
 
 #include "actuator_driver/controller/actuator_controller.hpp"
 #include "actuator_driver/core/actuator_factory.hpp"
+#include "control/model/actuator_manager.hpp"
+#include "control/node/parameter_manager.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 struct ActuatorParams {
@@ -28,14 +30,14 @@ enum class ActuatorError {
     UnsupportedCommand
 };
 
-class ActuatorManager
+class NodeManager
 {
     public:
-        explicit ActuatorManager();
+        explicit NodeManager();
 
         void init_node(rclcpp::Node* node);
         std::shared_ptr<ActuatorController> get_controller() { return controller_; }
-        ActuatorError init_comm();
+        ActuatorError init_serial();
 
         ActuatorError set_torque(uint8_t id, uint8_t status);
         ActuatorError set_goal_position(uint8_t id, uint16_t goal);
@@ -48,6 +50,8 @@ class ActuatorManager
         void load_parameters(rclcpp::Node* node);
         bool is_valid_id(uint8_t id) const;
 
+        std::shared_ptr<ActuatorManager> actuator_manager_;
+        std::shared_ptr<ParameterManager> parameter_manager_;
         ActuatorParams parameters_;
         std::shared_ptr<ActuatorController> controller_;
 

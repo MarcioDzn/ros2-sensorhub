@@ -8,7 +8,7 @@
 #include <string>
 #include <optional>
 
-#include "actuator_manager.hpp"
+#include "node_manager.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "interfaces/srv/set_torque.hpp"
@@ -34,7 +34,7 @@ class ActuatorNode : public rclcpp::Node
             const std::shared_ptr<SetTorque::Request> request,
             std::shared_ptr<SetTorque::Response> response);
 
-        std::shared_ptr<ActuatorManager> manager_;
+        std::shared_ptr<NodeManager> node_manager_;
         
         rclcpp::Subscription<Command>::SharedPtr actuator_subscriber_;
         rclcpp::Publisher<State>::SharedPtr state_publisher_;
