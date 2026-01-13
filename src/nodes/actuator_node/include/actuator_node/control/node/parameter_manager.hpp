@@ -1,0 +1,35 @@
+#ifndef PARAMETER_MANAGER_HPP
+#define PARAMETER_MANAGER_HPP
+
+#include <string>
+#include <vector>
+#include <cstdint>
+#include <memory>
+
+#include "rclcpp/rclcpp.hpp"
+
+class ParameterManager {
+    public:
+        explicit ParameterManager(rclcpp::Node::SharedPtr node);
+        virtual ~ParameterManager() = 0;
+
+        std::string get_base_name() { return base_name_; }
+        std::string get_usb_port() { return usb_port_; }
+        int get_update_rate() { return update_rate_; }
+        int get_gaudrate() { return baudrate_; }
+        std::vector<uint8_t> get_ids() {return ids_; }
+
+    private:
+        void declare_parameters();
+        void load_parameters();
+        
+        std::string base_name_;
+        std::string usb_port_;
+        int update_rate_;
+        int baudrate_;
+        std::vector<uint8_t> ids_;
+
+        rclcpp::Node::SharedPtr node_;
+};
+
+#endif // PARAMETER_MANAGER_HPP
