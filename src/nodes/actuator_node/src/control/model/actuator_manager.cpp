@@ -18,28 +18,20 @@ void ActuatorManager::create_actuators(const std::vector<uint8_t>& ids)
         create_actuator(id);
 }
 
-int ActuatorManager::update_actuator(const Actuator& updated_actuator)
+int ActuatorManager::update_torque(uint8_t id, bool status)
 {
-    for (auto& actuator : actuators_)
-    {
-        if (actuator->get_id() == updated_actuator.get_id())
-        {
-            actuator->set_position(updated_actuator.get_position());
-            return 0;
-        }
-    }
-    return -1;
+    auto* actuator = get_actuator_by_id(id);
+    if (!actuator) return -1;
+    actuator->set_torque_status(status);
+    return 0;
 }
 
-int ActuatorManager::update_actuators(const std::vector<Actuator>& updated_actuators)
+int ActuatorManager::update_position(uint8_t id, uint16_t position)
 {
-    int success_count = 0;
-    for (const auto& new_actuator : updated_actuators)
-    {
-        if (update_actuator(new_actuator) == 0)
-            success_count++;
-    }
-    return (success_count == updated_actuators.size()) ? 0 : -1;
+    auto* actuator = get_actuator_by_id(id);
+    if (!actuator) return -1;
+    actuator->set_position(position);
+    return 0;
 }
 
 Actuator* ActuatorManager::get_actuator_by_id(uint8_t id)

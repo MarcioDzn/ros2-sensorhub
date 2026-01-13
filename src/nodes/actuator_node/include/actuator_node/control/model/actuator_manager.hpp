@@ -15,8 +15,8 @@ class ActuatorManager
         void create_actuator(uint8_t id);
         void create_actuators(const std::vector<uint8_t>& ids);
 
-        int update_actuator(const Actuator& updated_actuator);
-        int update_actuators(const std::vector<Actuator>& actuators);
+        int update_torque(uint8_t id, bool status);
+        int update_position(uint8_t id, uint16_t position);
         
         Actuator* get_actuator_by_id(uint8_t id);
 
