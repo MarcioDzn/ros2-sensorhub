@@ -23,6 +23,9 @@ include_directories(
 add_library(actuator_node_lib SHARED
   src/actuator_node.cpp
   src/node_manager.cpp
+  src/control/model/actuator_manager.cpp
+  src/control/node/parameter_manager.cpp
+  src/model/actuator.cpp
 )
 
 ament_target_dependencies(actuator_node_lib
