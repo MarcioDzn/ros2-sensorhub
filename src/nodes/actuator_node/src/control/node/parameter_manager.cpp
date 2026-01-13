@@ -18,11 +18,11 @@ void ParameterManager::declare_parameters()
 
 void ParameterManager::load_parameters()
 {
-    base_name_ = node->get_parameter("base_name").as_string();
-    usb_port_ = node->get_parameter("usb_port").as_string();
-    baudrate_ = static_cast<uint32_t>(node->get_parameter("baudrate").as_int());
-    update_rate_ = node->get_parameter("update_rate_ms").as_int();
-    std::vector<long> raw_ids = node->get_parameter("actuator_ids").as_integer_array();
+    base_name_ = node_->get_parameter("base_name").as_string();
+    usb_port_ = node_->get_parameter("usb_port").as_string();
+    baudrate_ = static_cast<uint32_t>(node_->get_parameter("baudrate").as_int());
+    update_rate_ = node_->get_parameter("update_rate_ms").as_int();
+    std::vector<long> raw_ids = node_->get_parameter("actuator_ids").as_integer_array();
     
     // converte de long pra uint8_t
     ids_.clear();
