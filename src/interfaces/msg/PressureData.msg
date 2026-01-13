@@ -1,2 +1,1 @@
-builtin_interfaces/Time stamp
-float64[] pressures
+int16[] pressures
