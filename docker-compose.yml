@@ -5,12 +5,12 @@ services:
     image: ghcr.io/sloretz/ros:humble-desktop
     container_name: ros2-sensorhub
     privileged: true
-    network_mode: host
+    network_mode: bridge # TODO: ver pq n funciona com 'host'
     environment:
       - ROS_DOMAIN_ID=42
       - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
       
-      #- FASTRTPS_DEFAULT_PROFILES_FILE=/ros2_ws/config/fastdds.xml
+      - FASTRTPS_DEFAULT_PROFILES_FILE=/ros2_ws/config/fastdds.xml
     volumes:
       # - /home/marcio/Documentos/Dev/UEFS/IC/CoppeliaSim_Edu_V4_10_0_rev0_Ubuntu22_04:/coppelia
       # Volumes para usar no pc
