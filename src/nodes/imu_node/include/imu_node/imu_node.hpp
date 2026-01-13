@@ -6,7 +6,10 @@
 
 #include "imu_manager.hpp"
 #include "rclcpp/rclcpp.hpp"
+
 #include "interfaces/msg/imu_data.hpp"
+#include "interfaces/msg/imu_state.hpp"
+
 #include "imu_driver/bno055imu.hpp"
 
 struct ImuConfig {
@@ -18,6 +21,7 @@ struct ImuConfig {
 };
 
 using IMUData = interfaces::msg::IMUData;
+using IMUState = interfaces::msg::IMUState;
 
 class IMUNode : public rclcpp::Node
 {
@@ -26,13 +30,9 @@ class IMUNode : public rclcpp::Node
         virtual ~IMUNode();
 
     private:
-        void timer_callback();
-        void load_parameters();
-        void set_parameters();
-        void parse_imus(std::vector<std::string> param_names);
+        void state_callback();
 		
-        std::vector<std::shared_ptr<BNO055IMU>> imus_;
-        std::map<int, rclcpp::Publisher<IMUData>::SharedPtr> publishers_;
+        rclcpp::Publisher<IMUState>::SharedPtr publisher_;
         std::shared_ptr<IMUManager> manager_;
         rclcpp::TimerBase::SharedPtr timer_;
 };
