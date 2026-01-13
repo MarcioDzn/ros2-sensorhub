@@ -22,13 +22,13 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
         .best_effort()
         .durability_volatile();
     actuator_subscriber_ = this->create_subscription<Command>(
-        parameters.base_name + "/command", qos, 
+        parameter_manager.get_base_name() + "/command", qos, 
         [this](const Command::SharedPtr msg) {
             this->goal_position_callback(msg);
         });
     
     set_torque_service_ = this->create_service<SetTorque>(
-        parameters.base_name + "/set_torque", 
+        parameter_manager.get_base_name() + "/set_torque", 
         [this](const std::shared_ptr<SetTorque::Request> req, 
                 std::shared_ptr<SetTorque::Response> res) {
             this->set_torque_service_callback(req, res);
@@ -36,10 +36,10 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
 
 
     state_publisher_ = this->create_publisher<State>(
-            parameters.base_name + "/state", qos);
+        parameter_manager.get_base_name() + "/state", qos);
 
     timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(parameters.update_rate_ms), 
+        std::chrono::milliseconds(parameter_manager.get_update_rate()), 
         [this]() {
             state_callback();
         });
