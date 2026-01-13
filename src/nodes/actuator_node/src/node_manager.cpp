@@ -20,6 +20,8 @@ ActuatorError NodeManager::init_serial() {
 
 ActuatorError NodeManager::set_torque(const std::vector<uint8_t>& ids, bool status) 
 {
+    std::lock_guard<std::mutex> lock(bus_mutex_);
+
     if (!controller_) return ActuatorError::NotInitialized;
 
     for (uint8_t id : ids) 
@@ -43,6 +45,8 @@ ActuatorError NodeManager::set_goal_position(
     const std::vector<uint8_t>& ids, 
     const std::vector<uint16_t>& positions)
 {
+    std::lock_guard<std::mutex> lock(bus_mutex_);
+
     if (ids.size() != positions.size())
         return ActuatorError::InvalidParameter;
 
@@ -70,6 +74,8 @@ ActuatorError NodeManager::get_current_position(
     const std::vector<uint8_t>& ids, 
     std::vector<uint16_t>& positions)
 {
+    std::lock_guard<std::mutex> lock(bus_mutex_);
+
     if (!controller_) 
         return ActuatorError::NotInitialized;
 

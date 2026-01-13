@@ -6,6 +6,7 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
+#include <mutex>
 
 #include "actuator_driver/controller/actuator_controller.hpp"
 #include "actuator_driver/core/actuator_factory.hpp"
@@ -53,6 +54,7 @@ class NodeManager
         std::shared_ptr<ParameterManager> parameter_manager_;
         std::shared_ptr<ActuatorController> controller_;
 
+        std::mutex bus_mutex_;
 };
 
 #endif // NODE_MANAGER_HPP
