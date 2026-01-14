@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "actuator_node.hpp"
+#include "node/actuator_node.hpp"
 
 #include "interfaces/msg/state.hpp"
 #include "interfaces/msg/command.hpp"

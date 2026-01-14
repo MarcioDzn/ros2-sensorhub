@@ -1,4 +1,4 @@
-#include "node_manager.hpp"
+#include "node/node_manager.hpp"
 
 NodeManager::NodeManager(
     std::shared_ptr<ActuatorManager> actuator_manager, 
