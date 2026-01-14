@@ -4,7 +4,8 @@
 #include <map>
 #include <memory>
 
-#include "imu_driver/bno055imu.hpp"
+#include "driver/bno055imu.hpp"
+
 #include "rclcpp/rclcpp.hpp"
 
 struct IMUParams {

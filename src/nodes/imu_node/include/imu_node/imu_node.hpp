@@ -10,8 +10,6 @@
 #include "interfaces/msg/imu_data.hpp"
 #include "interfaces/msg/imu_state.hpp"
 
-#include "imu_driver/bno055imu.hpp"
-
 struct ImuConfig {
     std::string name;
     int id;
