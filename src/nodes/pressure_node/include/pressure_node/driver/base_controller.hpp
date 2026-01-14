@@ -6,8 +6,8 @@
 #include <memory>
 #include <sstream>
 
-#include "pressure_driver/pressure_controller.hpp"
-#include "pressure_link.hpp"
+#include "driver/common/pressure_controller.hpp"
+#include "driver/pressure_link.hpp"
 
 #define MAX_BUFFER_COLLECT          6 * 16
 #define BUFFER_SIZE                 8 * 16 * 5

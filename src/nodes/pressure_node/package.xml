@@ -12,7 +12,6 @@
   <depend>interfaces</depend> 
   <depend>std_msgs</depend>
   <depend>common_serial</depend>
-  <depend>pressure_driver</depend>
 
   <test_depend>ament_lint_auto</test_depend>
 

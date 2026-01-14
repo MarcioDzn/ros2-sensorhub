@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-#include "pressure_driver/pressure_controller.hpp"
+#include "driver/common/pressure_controller.hpp"
 
 class PressureFactory
 {
