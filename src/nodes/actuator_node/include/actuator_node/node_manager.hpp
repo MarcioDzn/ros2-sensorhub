@@ -8,11 +8,12 @@
 #include <algorithm>
 #include <mutex>
 
-#include "actuator_driver/controller/actuator_controller.hpp"
-#include "actuator_driver/core/actuator_factory.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "driver/common/actuator_controller.hpp"
+#include "driver/actuator_factory.hpp"
 #include "control/model/actuator_manager.hpp"
 #include "control/node/parameter_manager.hpp"
-#include "rclcpp/rclcpp.hpp"
+
 
 struct ActuatorParams {
     std::string base_name;
