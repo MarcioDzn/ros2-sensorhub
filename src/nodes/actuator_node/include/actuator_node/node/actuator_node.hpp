@@ -2,19 +2,15 @@
 #define ACTUATOR_NODE_HPP
 
 #include <memory>
-#include <vector>
-#include <cmath>
-#include <unordered_map>
-#include <string>
-#include <optional>
 
-#include "node_manager.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "interfaces/srv/set_torque.hpp"
-
 #include "interfaces/msg/command.hpp"
 #include "interfaces/msg/state.hpp"
+
+class NodeManager;
+class ParameterManager;
 
 using SetTorque = interfaces::srv::SetTorque;
 using Command = interfaces::msg::Command;

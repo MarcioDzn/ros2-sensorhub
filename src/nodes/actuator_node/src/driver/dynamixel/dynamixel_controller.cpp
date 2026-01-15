@@ -1,5 +1,9 @@
 #include "driver/dynamixel/dynamixel_controller.hpp"
 
+#include "driver/dynamixel/dynamixel_link.hpp"
+#include "driver/dynamixel/dynamixel_protocol.hpp"
+#include "common_serial/serial_handler.hpp"
+
 #define TORQUE_ADDR         0x18
 #define GOAL_POS_ADDR       0x1E
 #define CURRENT_POS_ADDR    0x24

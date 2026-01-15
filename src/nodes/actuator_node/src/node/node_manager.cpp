@@ -5,6 +5,8 @@
 #include "control/model/actuator_manager.hpp"
 #include "control/node/parameter_manager.hpp"
 
+#include "rclcpp/rclcpp.hpp"
+
 NodeManager::NodeManager(
     std::shared_ptr<ActuatorManager> actuator_manager, 
     std::shared_ptr<ParameterManager> parameter_manager) 

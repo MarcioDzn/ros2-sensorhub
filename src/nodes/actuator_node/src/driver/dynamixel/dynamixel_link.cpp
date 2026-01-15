@@ -1,5 +1,9 @@
 #include "driver/dynamixel/dynamixel_link.hpp"
 
+#include "driver/dynamixel/dynamixel_protocol.hpp"
+#include "common_serial/serial_handler.hpp"
+#include <chrono>
+
 int DynamixelLink::write1Byte(uint8_t id, uint8_t address, uint8_t data)
 {
     uint8_t params[2] = {address, data};

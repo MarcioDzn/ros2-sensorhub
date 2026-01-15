@@ -5,15 +5,15 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <algorithm>
 #include <mutex>
 
-#include "rclcpp/rclcpp.hpp"
+namespace rclcpp {
+  class Node;
+}
 
 class ActuatorController;
 class ActuatorManager;
 class ParameterManager;
-class ActuatorFactory;
 
 struct ActuatorParams {
     std::string base_name;

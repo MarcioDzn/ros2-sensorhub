@@ -6,7 +6,9 @@
 #include <cstdint>
 #include <memory>
 
-#include "rclcpp/rclcpp.hpp"
+namespace rclcpp {
+class Node;
+}
 
 class ParameterManager {
     public:

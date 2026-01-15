@@ -5,11 +5,10 @@
 #include <cstdint>
 #include <vector>
 #include <memory>
-#include <chrono>
 #include <array>
 
-#include "driver/dynamixel/dynamixel_protocol.hpp"
-#include "common_serial/serial_handler.hpp"
+class DynamixelProtocol;
+class SerialHandler;
 
 #define WRITE_INSTR         0x03
 #define READ_INSTR          0x02

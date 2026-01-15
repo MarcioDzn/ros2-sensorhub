@@ -5,8 +5,8 @@
 #include <memory>
 
 #include "driver/common/actuator_controller.hpp"
-#include "driver/dynamixel/dynamixel_link.hpp"
-#include "driver/dynamixel/dynamixel_protocol.hpp"
+
+class DynamixelLink;
 
 class DynamixelController : public ActuatorController
 {

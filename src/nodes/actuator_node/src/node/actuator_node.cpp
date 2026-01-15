@@ -4,6 +4,8 @@
 #include "control/model/actuator_manager.hpp"
 #include "node/node_manager.hpp"
 
+#include <vector>
+
 using namespace std::chrono_literals;
 
 ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options) 

@@ -1,5 +1,7 @@
 #include "control/node/parameter_manager.hpp"
 
+#include "rclcpp/rclcpp.hpp"
+
 ParameterManager::ParameterManager(
     rclcpp::Node* node) : node_(node)
 {
