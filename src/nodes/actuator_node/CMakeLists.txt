@@ -20,15 +20,37 @@ include_directories(
   include/actuator_node
 )
 
-add_library(actuator_node_lib SHARED
-  src/node/actuator_node.cpp
-  src/node/node_manager.cpp
-  src/control/model/actuator_manager.cpp
-  src/control/node/parameter_manager.cpp
+add_library(actuator_driver SHARED
   src/driver/dynamixel/dynamixel_controller.cpp
   src/driver/dynamixel/dynamixel_link.cpp
   src/driver/dynamixel/dynamixel_protocol.cpp
   src/driver/actuator_factory.cpp
+)
+target_include_directories(actuator_driver PUBLIC include)
+
+ament_target_dependencies(actuator_driver
+  common_serial
+)
+
+add_library(actuator_control SHARED
+  src/control/model/actuator_manager.cpp
+  src/control/node/parameter_manager.cpp
+)
+target_include_directories(actuator_control PUBLIC include)
+
+ament_target_dependencies(actuator_control
+  rclcpp
+  models
+)
+
+add_library(actuator_node_lib SHARED
+  src/node/actuator_node.cpp
+  src/node/node_manager.cpp
+)
+
+target_link_libraries(actuator_node_lib
+  actuator_driver
+  actuator_control
 )
 
 ament_target_dependencies(actuator_node_lib
