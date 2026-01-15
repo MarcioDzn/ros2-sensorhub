@@ -1,5 +1,9 @@
 #include "node/actuator_node.hpp"
 
+#include "control/node/parameter_manager.hpp"
+#include "control/model/actuator_manager.hpp"
+#include "node/node_manager.hpp"
+
 using namespace std::chrono_literals;
 
 ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options) 

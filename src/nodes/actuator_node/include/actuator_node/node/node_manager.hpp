@@ -9,11 +9,11 @@
 #include <mutex>
 
 #include "rclcpp/rclcpp.hpp"
-#include "driver/common/actuator_controller.hpp"
-#include "driver/actuator_factory.hpp"
-#include "control/model/actuator_manager.hpp"
-#include "control/node/parameter_manager.hpp"
 
+class ActuatorController;
+class ActuatorManager;
+class ParameterManager;
+class ActuatorFactory;
 
 struct ActuatorParams {
     std::string base_name;

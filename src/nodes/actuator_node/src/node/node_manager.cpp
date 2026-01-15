@@ -1,5 +1,10 @@
 #include "node/node_manager.hpp"
 
+#include "driver/common/actuator_controller.hpp"
+#include "driver/actuator_factory.hpp"
+#include "control/model/actuator_manager.hpp"
+#include "control/node/parameter_manager.hpp"
+
 NodeManager::NodeManager(
     std::shared_ptr<ActuatorManager> actuator_manager, 
     std::shared_ptr<ParameterManager> parameter_manager) 
