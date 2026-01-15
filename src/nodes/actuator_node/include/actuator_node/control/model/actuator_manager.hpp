@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 
-#include "model/actuator.hpp"
+#include "models/actuator.hpp"
 
 class ActuatorManager
 {

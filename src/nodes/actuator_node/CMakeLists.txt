@@ -14,6 +14,7 @@ find_package(rclcpp REQUIRED)
 find_package(interfaces REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(common_serial REQUIRED)
+find_package(models REQUIRED)
 
 include_directories(
   include/actuator_node
@@ -24,7 +25,6 @@ add_library(actuator_node_lib SHARED
   src/node/node_manager.cpp
   src/control/model/actuator_manager.cpp
   src/control/node/parameter_manager.cpp
-  src/model/actuator.cpp
   src/driver/dynamixel/dynamixel_controller.cpp
   src/driver/dynamixel/dynamixel_link.cpp
   src/driver/dynamixel/dynamixel_protocol.cpp
@@ -35,6 +35,7 @@ ament_target_dependencies(actuator_node_lib
   rclcpp
   interfaces
   common_serial
+  models
 )
 
 add_executable(actuator_node src/main.cpp)
