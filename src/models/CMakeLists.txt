@@ -12,6 +12,7 @@ find_package(ament_cmake)
 
 add_library(models SHARED
     src/actuator.cpp
+    src/pressure.cpp
 )
 
 target_include_directories(models PUBLIC
