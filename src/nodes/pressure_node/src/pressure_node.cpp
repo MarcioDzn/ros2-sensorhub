@@ -12,10 +12,8 @@ using namespace std::chrono_literals;
 
 PressureNode::PressureNode() : Node("pressure_node")
 {
-    manager_ = std::make_unique<PressureManager>();
-    manager_->init_node(this);
-
-    auto& parameters = manager_->get_parameters();
+    parameter_manager_ = std::make_shared<ParameterManager>(this);
+    manager_ = std::make_unique<PressureManager>(parameter_manager_);
 
     if (manager_->init_comm() != PressureError::OK)
     {
@@ -27,25 +25,26 @@ PressureNode::PressureNode() : Node("pressure_node")
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .best_effort()
         .durability_volatile();
-    publisher_ = this->create_publisher<PressureState>(parameters.base_name + "/state", qos);
+    publisher_ = this->create_publisher<PressureState>(
+        parameter_manager_->get_base_name() + "/state", qos);
 
     
     // executa o callback a cada <update_rate_ms_> segundos
     timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(parameters.update_rate_ms), 
+        std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
         std::bind(&PressureNode::state_callback, this));
 }
 
 void PressureNode::state_callback()
 {
     auto msg = PressureState();
-    auto parameters = manager_->get_parameters();
 
-    msg.ids.reserve(parameters.ids.size());
-    msg.pressures.reserve(parameters.ids.size());
+    auto ids = parameter_manager_->get_ids();
+    msg.ids.reserve(ids.size());
+    msg.pressures.reserve(ids.size());
 
     uint8_t error_count = 0;
-    for (const auto& id : parameters.ids)
+    for (const auto& id : ids)
     {
         std::vector<uint16_t> data;
         
@@ -67,7 +66,7 @@ void PressureNode::state_callback()
 
     // se nenhuma palmilha enviou a posição
     // entao nao publica nada
-    if (error_count < parameters.ids.size()) {
+    if (error_count < ids.size()) {
         publisher_->publish(msg);
         RCLCPP_INFO(this->get_logger(), "PUBLICANDO: %d", msg.ids[1]);
     }   

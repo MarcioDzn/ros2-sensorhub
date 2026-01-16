@@ -9,6 +9,7 @@
 
 #include "driver/common/pressure_controller.hpp"
 #include "driver/pressure_factory.hpp"
+#include "control/node/parameter_manager.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -32,22 +33,19 @@ enum class PressureError {
 class PressureManager
 {
     public:
-        explicit PressureManager();
+        explicit PressureManager(
+            std::shared_ptr<ParameterManager> parameter_manager);
 
         void init_node(rclcpp::Node* node);
         std::map<uint8_t, std::shared_ptr<PressureController>> 
         get_controllers() { return controllers_; }
         PressureError init_comm();
         PressureError get_data(uint8_t id, std::vector<uint16_t>& data);
-
-        const PressureParams& get_parameters() const { return parameters_; }
         
     private:
-        void declare_parameters(rclcpp::Node* node);
-        void load_parameters(rclcpp::Node* node);
         bool is_valid_id(uint8_t id) const;
 
-        PressureParams parameters_;
+        std::shared_ptr<ParameterManager> parameter_manager_;
         std::map<uint8_t, std::shared_ptr<PressureController>> controllers_;
 
 };

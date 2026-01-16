@@ -37,6 +37,7 @@ class PressureNode : public rclcpp::Node
     private:
         void state_callback();
         std::shared_ptr<PressureManager> manager_;
+        std::shared_ptr<ParameterManager> parameter_manager_;
 
         std::map<uint8_t, PressureSensor> pressure_sensors_;
         rclcpp::Publisher<PressureState>::SharedPtr publisher_;
