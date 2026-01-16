@@ -20,7 +20,7 @@ struct DeviceInterface
     std::shared_ptr<SerialHandler> serial;
 };
 
-struct PressureSensor
+struct PressureSensorInfo
 {
     int id;
     std::string device; 
@@ -39,7 +39,6 @@ class PressureNode : public rclcpp::Node
         std::shared_ptr<PressureManager> manager_;
         std::shared_ptr<ParameterManager> parameter_manager_;
 
-        std::map<uint8_t, PressureSensor> pressure_sensors_;
         rclcpp::Publisher<PressureState>::SharedPtr publisher_;
         
         rclcpp::TimerBase::SharedPtr timer_;

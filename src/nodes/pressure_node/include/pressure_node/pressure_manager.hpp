@@ -10,6 +10,7 @@
 #include "driver/common/pressure_controller.hpp"
 #include "driver/pressure_factory.hpp"
 #include "control/node/parameter_manager.hpp"
+#include "models/pressure.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 
