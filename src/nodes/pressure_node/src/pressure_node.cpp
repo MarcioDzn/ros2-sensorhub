@@ -3,11 +3,6 @@
 
 #include "pressure_node.hpp"
 
-#define MAX_BUFFER_COLLECT          6 * 16
-#define BUFFER_SIZE                 8 * 16 * 5
-#define DEVICE                      "/dev/ttyACM0"
-#define DEFAULT_BAUDRATE                    115200
-
 using namespace std::chrono_literals;
 
 PressureNode::PressureNode() : Node("pressure_node")
