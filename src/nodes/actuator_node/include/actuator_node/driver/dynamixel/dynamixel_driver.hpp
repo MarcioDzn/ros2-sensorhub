@@ -1,15 +1,15 @@
 #ifndef DYNAMIXEL_DRIVER_HPP
 #define DYNAMIXEL_DRIVER_HPP
 
-#include <string>
-#include <cstdint>
+#include "driver/actuator_driver.hpp"
+
 #include <vector>
 #include <array>
 #include <memory>
 
 class SerialHandler;
 
-class DynamixelDriver
+class DynamixelDriver : public IActuatorDriver
 {
     public:
         typedef enum
@@ -21,7 +21,6 @@ class DynamixelDriver
             ERROR_POS               = 4,
             PARAMETER_POS           = 5,
 
-            PACKET_BASE_SIZE        = 2,
             MIN_PAYLOAD_SIZE        = 5,
             RXPACKET_MAX_LEN        = (250)
         } dynamixel_packet;
@@ -42,10 +41,10 @@ class DynamixelDriver
         explicit DynamixelDriver();
         virtual ~DynamixelDriver() = default;
 
-        int init(std::string device, int baudrate);
-        int set_torque(uint8_t id, uint8_t enable_torque);
-        int set_goal_position(uint8_t id, uint16_t goal_position);
-        int get_current_position(uint8_t id, uint16_t& current_position);
+        int init(std::string device, int baudrate) override;
+        int set_torque(uint8_t id, uint8_t enable_torque) override;
+        int set_goal_position(uint8_t id, uint16_t goal_position) override;
+        int get_current_position(uint8_t id, uint16_t& current_position) override;
     
     private:
         struct StatusPacket
