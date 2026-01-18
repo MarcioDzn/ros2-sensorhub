@@ -93,6 +93,46 @@ void ActuatorNode::set_torque_service_callback(
     response->success = true;
 }
 
+void ActuatorNode::state_callback()
+{
+    State msg;
+
+    const auto& ids = parameter_manager_->get_ids();
+    const auto& names = parameter_manager_->get_names();
+
+    std::vector<std::string> successful_names;
+    std::vector<int16_t> successful_positions;
+
+    {
+        std::lock_guard<std::mutex> lock(driver_mutex_);
+
+        for (size_t idx = 0; idx < ids.size(); idx++)
+        {
+            uint16_t temp_pos;
+            auto result = actuator_driver_->get_current_position(ids[idx], temp_pos);
+
+            if (result == 0) {
+                // adiciona apenas os nomes e posições válidos
+                successful_names.push_back(names[idx]);
+                successful_positions.push_back(static_cast<int16_t>(temp_pos));
+            } else {
+                RCLCPP_ERROR(this->get_logger(), "Falha na leitura do atuador %s. Erro: %d", 
+                    names[idx].c_str(), static_cast<int>(result));
+            }
+        }
+    }
+
+    // só publica se houver pelo menos um item válido
+    if (!successful_names.empty()) {
+        msg.names = successful_names;
+        msg.positions = successful_positions;
+        msg.stamp = this->get_clock()->now();
+        state_publisher_->publish(msg);
+    } else {
+        RCLCPP_WARN(this->get_logger(), "Nenhum atuador foi lido com sucesso. Publicação cancelada.");
+    }
+}
+
 void ActuatorNode::goal_position_callback(const Command::SharedPtr msg)
 {
     if (msg->names.empty() || msg->goals.empty()) return;
@@ -129,39 +169,6 @@ void ActuatorNode::goal_position_callback(const Command::SharedPtr msg)
             valid_names[idx].c_str(), static_cast<int>(result));
         }
     }
-}
-
-void ActuatorNode::state_callback()
-{
-    State msg;
-
-    const auto& ids = parameter_manager_->get_ids();
-    const auto& names = parameter_manager_->get_names();
-
-    std::vector<int16_t> positions(ids.size());
-
-    {
-        std::lock_guard<std::mutex> lock(driver_mutex_);
-
-        // TODO: verificar se id existe
-        for (size_t idx = 0; idx < ids.size(); idx++)
-        {
-            uint16_t temp_pos;
-            auto result = actuator_driver_->get_current_position(ids[idx], temp_pos);
-            positions[idx] = static_cast<int16_t>(temp_pos);
-
-            if (result != 0) {
-                RCLCPP_ERROR(this->get_logger(), "Falha na leitura do atuador %s. Erro: %d", 
-                names[idx].c_str(), static_cast<int>(result));
-            }
-        }
-    }
-
-    msg.names.assign(names.begin(), names.end());
-    msg.positions.assign(positions.begin(), positions.end());
-
-    msg.stamp = this->get_clock()->now();
-    state_publisher_->publish(msg); 
 }
 
 ActuatorNode::~ActuatorNode() = default;
