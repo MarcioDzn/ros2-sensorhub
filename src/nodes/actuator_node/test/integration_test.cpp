@@ -60,7 +60,7 @@ TEST_F(ActuatorNodeFixture, publishes_data_success) {
     bool received = false;
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
-        .best_effort()
+        .reliable()
         .durability_volatile();
     auto sub = node->create_subscription<interfaces::msg::State>(
         "dxl/state",
@@ -85,7 +85,7 @@ TEST_F(ActuatorNodeFixture, publishes_data_checksum_error) {
     bool received = false;
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
-        .best_effort()
+        .reliable()
         .durability_volatile();
     auto sub = node->create_subscription<interfaces::msg::State>(
         "dxl/state",
@@ -112,7 +112,7 @@ TEST_F(ActuatorNodeFixture, publishes_data_content) {
     uint16_t curr_pos;
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
-        .best_effort()
+        .reliable()
         .durability_volatile();
     auto sub = node->create_subscription<interfaces::msg::State>(
         "dxl/state",
@@ -146,7 +146,7 @@ TEST_F(ActuatorNodeFixture, subscribes_data_success) {
     ssize_t bytes_read = 0;
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
-        .best_effort()
+        .reliable()
         .durability_volatile();
     auto pub = node->create_publisher<interfaces::msg::Command>(
         "dxl/command",
