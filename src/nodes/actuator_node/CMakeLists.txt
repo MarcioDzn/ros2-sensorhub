@@ -8,8 +8,6 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-add_compile_options(-ftime-report)
-
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -45,7 +43,6 @@ ament_target_dependencies(actuator_control
 
 add_library(actuator_node_lib SHARED
   src/node/actuator_node.cpp
-  src/node/node_manager.cpp
 )
 
 target_link_libraries(actuator_node_lib

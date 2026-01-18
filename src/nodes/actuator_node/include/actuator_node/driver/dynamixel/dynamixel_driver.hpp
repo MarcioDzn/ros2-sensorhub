@@ -2,6 +2,7 @@
 #define DYNAMIXEL_DRIVER_HPP
 
 #include "driver/actuator_driver.hpp"
+#include "common_serial/serial_handler.hpp"
 
 #include <vector>
 #include <array>
@@ -12,6 +13,7 @@ class SerialHandler;
 class DynamixelDriver : public IActuatorDriver
 {
     public:
+        // TODO: mudar pra enum class
         typedef enum
         {
             PREAMBLE_POS            = 0,
