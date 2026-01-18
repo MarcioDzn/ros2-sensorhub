@@ -182,7 +182,7 @@ int DynamixelDriver::read_status(uint8_t id, StatusPacket& out)
 
 	if (error != 0) return -1; 
 
-    // adiciona os parãmetros
+    // adiciona os parâmetros
 	for (uint8_t i = 0; i < length-2; i++)
 	{
 		out.params[i] = rxbuffer[PARAMETER_POS+i];
