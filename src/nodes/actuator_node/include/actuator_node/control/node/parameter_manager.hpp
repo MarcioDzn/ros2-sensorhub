@@ -33,6 +33,8 @@ class ParameterManager {
         std::vector<uint8_t> ids_;
         std::vector<std::string> names_;
 
+        // TODO: criar map que mepeia nomes -> ids
+
         rclcpp::Node* node_;
 };
 

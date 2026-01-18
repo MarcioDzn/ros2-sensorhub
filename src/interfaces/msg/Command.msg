@@ -1,2 +1,2 @@
-int8[] ids
+string[] names
 int16[] goals 

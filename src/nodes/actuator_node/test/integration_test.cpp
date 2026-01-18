@@ -153,7 +153,7 @@ TEST_F(ActuatorNodeFixture, subscribes_data_success) {
         qos);
 
     auto msg = interfaces::msg::Command();
-    msg.ids = {1};
+    msg.names = {"joint_1"};
     msg.goals = {3000};
     pub->publish(msg);
     

@@ -78,19 +78,38 @@ void ActuatorNode::set_torque_service_callback(
 
 void ActuatorNode::goal_position_callback(const Command::SharedPtr msg)
 {
-    if (msg->ids.empty() || msg->goals.empty()) return;
+    if (msg->names.empty() || msg->goals.empty()) return;
 
+    std::vector<uint8_t> ids;
+    std::vector<std::string> valid_names;
     // TODO: verificar se id existe
-    size_t n = std::min(msg->ids.size(), msg->goals.size()); // menor tamanho
+    // busca o id correspondente ao nome
+    for (auto& name : msg->names)
+    {
+        auto it = std::find(
+            parameter_manager_->get_names().begin(), 
+            parameter_manager_->get_names().end(), 
+            name);
+
+        if (it != parameter_manager_->get_names().end())
+        {
+            size_t index = std::distance(parameter_manager_->get_names().begin(), it);
+            ids.push_back(parameter_manager_->get_ids()[index]);
+            valid_names.push_back(name);
+        }
+            
+    }
+
+    size_t n = std::min(ids.size(), msg->goals.size()); // menor tamanho
 
     std::lock_guard<std::mutex> lock(driver_mutex_);
     
     for (size_t idx = 0; idx < n; idx++)
     {
-        auto result = actuator_driver_->set_goal_position(msg->ids[idx], msg->goals[idx]);
+        auto result = actuator_driver_->set_goal_position(ids[idx], msg->goals[idx]);
         if (result != 0) {
-            RCLCPP_ERROR(this->get_logger(), "Falha no envio de Goal Position para o atuador %d. Erro: %d", 
-            static_cast<int>(msg->ids[idx]), static_cast<int>(result));
+            RCLCPP_ERROR(this->get_logger(), "Falha no envio de Goal Position para o atuador %s. Erro: %d", 
+            valid_names[idx].c_str(), static_cast<int>(result));
         }
     }
 }
