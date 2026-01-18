@@ -23,9 +23,7 @@ include_directories(
 )
 
 add_library(actuator_driver SHARED
-  src/driver/dynamixel/dynamixel_controller.cpp
-  src/driver/dynamixel/dynamixel_link.cpp
-  src/driver/dynamixel/dynamixel_protocol.cpp
+  src/driver/dynamixel/dynamixel_driver.cpp
   src/driver/actuator_factory.cpp
 )
 target_include_directories(actuator_driver PUBLIC include)
