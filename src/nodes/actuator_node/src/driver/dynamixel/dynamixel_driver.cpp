@@ -75,7 +75,6 @@ std::vector<uint8_t> DynamixelDriver::get_packet(
     packet[INSTRUCTION_POS]         = instr;
 
     // adição de parâmetros no pacote
-    uint8_t payload_length = MIN_PAYLOAD_SIZE;
 	for (int i = 0; i<params.size(); i++)
 		packet[PARAMETER_POS+i]     = params[i];
     packet[LENGTH_POS]              = params.size() + 2;
