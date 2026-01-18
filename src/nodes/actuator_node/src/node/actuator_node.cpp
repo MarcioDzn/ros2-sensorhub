@@ -1,7 +1,6 @@
 #include "node/actuator_node.hpp"
 
 #include "control/node/parameter_manager.hpp"
-#include "control/model/actuator_manager.hpp"
 
 #include "driver/actuator_factory.hpp"
 
@@ -24,6 +23,9 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
             parameter_manager_->get_usb_port().c_str());
         throw std::runtime_error("Falha ao inicializar ActuatorNode");
     }
+
+    // TODO: verificar se os ids fornecidos pelo yaml
+    // são de atuadores realmente conectados
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .reliable()
@@ -91,7 +93,7 @@ void ActuatorNode::goal_position_callback(const Command::SharedPtr msg)
     std::vector<std::string> valid_names;
 
     // busca o id correspondente ao nome
-    for (auto& name : msg->names)
+    for (const auto& name : msg->names)
     {
         auto id = parameter_manager_->get_id_by_name(name);
         if (id != -1)
@@ -99,6 +101,12 @@ void ActuatorNode::goal_position_callback(const Command::SharedPtr msg)
             ids.push_back(static_cast<uint8_t>(id));
             valid_names.push_back(name);
         }
+    }
+
+    if (valid_names.empty())
+    {
+        RCLCPP_WARN(this->get_logger(), "Nenhum atuador válido nos nomes recebidos.");
+        return;
     }
 
     size_t n = std::min(ids.size(), msg->goals.size()); // menor tamanho
@@ -119,8 +127,9 @@ void ActuatorNode::state_callback()
 {
     State msg;
 
-    std::vector<uint8_t> ids = parameter_manager_->get_ids();
-    std::vector<std::string> names = parameter_manager_->get_names();
+    const auto& ids = parameter_manager_->get_ids();
+    const auto& names = parameter_manager_->get_names();
+
     std::vector<int16_t> positions(ids.size());
 
     {
