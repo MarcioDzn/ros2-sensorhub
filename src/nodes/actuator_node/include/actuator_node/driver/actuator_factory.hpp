@@ -4,12 +4,12 @@
 #include <memory>
 #include <string>
 
-#include "driver/common/actuator_controller.hpp"
+#include "driver/actuator_driver.hpp"
 
 class ActuatorFactory
 {
     public:
-        static std::unique_ptr<ActuatorController> 
+        static std::unique_ptr<IActuatorDriver> 
         createDynamixel();
 };
 
