@@ -100,7 +100,8 @@ void ActuatorNode::state_callback()
     State msg;
 
     std::vector<uint8_t> ids = parameter_manager_->get_ids();
-    std::vector<uint16_t> positions(ids.size());
+    std::vector<std::string> names = parameter_manager_->get_names();
+    std::vector<int16_t> positions(ids.size());
 
     {
         std::lock_guard<std::mutex> lock(driver_mutex_);
@@ -108,17 +109,18 @@ void ActuatorNode::state_callback()
         // TODO: verificar se id existe
         for (size_t idx = 0; idx < ids.size(); idx++)
         {
-            auto result = actuator_driver_->get_current_position(ids[idx], positions[idx]);
+            uint16_t temp_pos;
+            auto result = actuator_driver_->get_current_position(ids[idx], temp_pos);
+            positions[idx] = static_cast<int16_t>(temp_pos);
+
             if (result != 0) {
-                RCLCPP_ERROR(this->get_logger(), "Falha na leitura do atuador %d. Erro: %d", 
-                static_cast<int>(ids[idx]), static_cast<int>(result));
+                RCLCPP_ERROR(this->get_logger(), "Falha na leitura do atuador %s. Erro: %d", 
+                names[idx].c_str(), static_cast<int>(result));
             }
         }
-
     }
 
-
-    msg.ids.assign(ids.begin(), ids.end());
+    msg.names.assign(names.begin(), names.end());
     msg.positions.assign(positions.begin(), positions.end());
 
     msg.stamp = this->get_clock()->now();

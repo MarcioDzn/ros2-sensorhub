@@ -34,6 +34,7 @@ class ActuatorNodeFixture : public ::testing::Test {
         options.append_parameter_override("usb_port", slave_name);
         options.append_parameter_override("baudrate", 2000000);
         options.append_parameter_override("actuator_ids", std::vector<int64_t>{1});
+        options.append_parameter_override("names", std::vector<std::string>{"joint_1"});
 
         node = std::make_shared<ActuatorNode>(options);
     }
@@ -107,7 +108,7 @@ TEST_F(ActuatorNodeFixture, publishes_data_checksum_error) {
 
 TEST_F(ActuatorNodeFixture, publishes_data_content) {
     bool received = false;
-    uint8_t id;
+    std::string name;
     uint16_t curr_pos;
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
@@ -116,9 +117,9 @@ TEST_F(ActuatorNodeFixture, publishes_data_content) {
     auto sub = node->create_subscription<interfaces::msg::State>(
         "dxl/state",
         qos,
-        [&received, &id, &curr_pos](const interfaces::msg::State::SharedPtr msg) {
+        [&received, &name, &curr_pos](const interfaces::msg::State::SharedPtr msg) {
             received = true;
-            id = msg->ids[0];
+            name = msg->names[0];
             curr_pos = msg->positions[0];
         }
     );
@@ -131,7 +132,7 @@ TEST_F(ActuatorNodeFixture, publishes_data_content) {
     bool success = waitFor([&received]() { return received; }, std::chrono::milliseconds(100));
 
     ASSERT_TRUE(received);
-    EXPECT_EQ(id, 1);
+    EXPECT_EQ(name, "joint_1");
     EXPECT_EQ(curr_pos, 512);
 
     rclcpp::shutdown();

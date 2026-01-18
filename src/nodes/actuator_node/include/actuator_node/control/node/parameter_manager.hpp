@@ -19,7 +19,8 @@ class ParameterManager {
         std::string get_usb_port() { return usb_port_; }
         int get_update_rate() { return update_rate_; }
         int get_baudrate() { return baudrate_; }
-        std::vector<uint8_t> get_ids() {return ids_; }
+        std::vector<uint8_t> get_ids() { return ids_; }
+        std::vector<std::string> get_names() { return names_; }
 
     private:
         void declare_parameters();
@@ -30,6 +31,7 @@ class ParameterManager {
         int update_rate_;
         int baudrate_;
         std::vector<uint8_t> ids_;
+        std::vector<std::string> names_;
 
         rclcpp::Node* node_;
 };
