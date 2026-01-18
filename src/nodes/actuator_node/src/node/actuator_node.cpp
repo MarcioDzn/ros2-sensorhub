@@ -14,6 +14,7 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
     parameter_manager_ = std::make_shared<ParameterManager>(this);
     actuator_driver_ = ActuatorFactory::createDynamixel();
 
+    // inicializa porta serial inserida nos parâmetros do yaml
     if (actuator_driver_->init(
         parameter_manager_->get_usb_port(), 
         parameter_manager_->get_baudrate()) != 0)
@@ -27,10 +28,13 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
     // TODO: verificar se os ids fornecidos pelo yaml
     // são de atuadores realmente conectados
 
+    // envio de posições dos atuadores DEVEM chegar (?)
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .reliable()
         .durability_volatile();
 
+    // recebe dados de comando contínuo
+    // ex: posição alvo
     actuator_subscriber_ = this->create_subscription<Command>(
         parameter_manager_->get_base_name() + "/command", qos, 
         [this](const Command::SharedPtr msg) {
@@ -38,6 +42,8 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
             this->goal_position_callback(msg);
         });
     
+    // recebe dados de comando pontual
+    // ex: habilitar/desabilitar torque
     set_torque_service_ = this->create_service<SetTorque>(
         parameter_manager_->get_base_name() + "/set_torque", 
         [this](const std::shared_ptr<SetTorque::Request> req, 
@@ -45,6 +51,8 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
             this->set_torque_service_callback(req, res);
         });
 
+    // envia dados de estado
+    // ex: posição atual
     state_publisher_ = this->create_publisher<State>(
         parameter_manager_->get_base_name() + "/state", qos);
 
