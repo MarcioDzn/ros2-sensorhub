@@ -4,6 +4,8 @@
 #include "control/model/actuator_manager.hpp"
 #include "node/node_manager.hpp"
 
+#include "driver/actuator_factory.hpp"
+
 #include <vector>
 
 using namespace std::chrono_literals;
@@ -12,22 +14,22 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
     : Node("actuator_node", options)
 {   
     parameter_manager_ = std::make_shared<ParameterManager>(this);
-    auto actuator_manager = std::make_shared<ActuatorManager>(parameter_manager_->get_ids());
+    actuator_driver_ = ActuatorFactory::createDynamixel();
 
-    node_manager_ = std::make_unique<NodeManager>(
-        actuator_manager, parameter_manager_);
-
-    if (node_manager_->init_serial() != ActuatorError::OK)
+    if (actuator_driver_->init(
+        parameter_manager_->get_usb_port(), 
+        parameter_manager_->get_baudrate()) != ActuatorError::OK)
     {
         RCLCPP_FATAL(this->get_logger(), 
             "Falha na inicialização do hardware serial na porta %s.", 
             parameter_manager_->get_usb_port().c_str());
-        throw std::runtime_error("");
+        throw std::runtime_error("Falha ao inicializar ActuatorNode");
     }
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
-        .best_effort()
+        .reliable()
         .durability_volatile();
+
     actuator_subscriber_ = this->create_subscription<Command>(
         parameter_manager_->get_base_name() + "/command", qos, 
         [this](const Command::SharedPtr msg) {
@@ -58,8 +60,12 @@ void ActuatorNode::set_torque_service_callback(
     const std::shared_ptr<SetTorque::Request> request,
     std::shared_ptr<SetTorque::Response> response)
 {
+    std::lock_guard<std::mutex> lock(driver_mutex_);
+
     response->success = false;
-    auto result = node_manager_->set_torque({request->id}, request->status);
+    // TODO: verificar se id existe
+    auto result = actuator_driver_->set_torque(request->id, request->status ? 1 : 0);
+
     if (result != ActuatorError::OK) {
         RCLCPP_WARN(this->get_logger(), 
             "Falha na configuração do torque. Erro: %d", 
@@ -75,28 +81,43 @@ void ActuatorNode::goal_position_callback(const Command::SharedPtr msg)
 {
     if (msg->ids.empty() || msg->goals.empty()) return;
 
-    std::vector<uint8_t> ids(msg->ids.begin(), msg->ids.end());
-    std::vector<uint16_t> goals(msg->goals.begin(), msg->goals.end());
+    // TODO: verificar se id existe
+    size_t n = std::min(msg->ids.size(), msg->goals.size()); // menor tamanho
 
-    auto result = node_manager_->set_goal_position(ids, goals);
-    if (result != ActuatorError::OK) {
-        RCLCPP_WARN(this->get_logger(), "Falha no envio de Goal Positions. Erro: %d", static_cast<int>(result));
-        return; 
+    std::lock_guard<std::mutex> lock(driver_mutex_);
+    
+    for (size_t idx = 0; idx < n; idx++)
+    {
+        auto result = actuator_driver_->set_goal_position(msg->ids[idx], msg->goals[idx]);
+        if (result != ActuatorError::OK) {
+            RCLCPP_ERROR(this->get_logger(), "Falha no envio de Goal Position para o atuador %d. Erro: %d", 
+            static_cast<int>(msg->ids[idx]), static_cast<int>(result));
+        }
     }
 }
 
 void ActuatorNode::state_callback()
 {
-    auto msg = State();
-    std::vector<uint16_t> positions;
-    std::vector<uint8_t> ids = parameter_manager_->get_ids();
+    State msg;
 
-    auto result = node_manager_->get_current_position(ids, positions);
-    
-    if (result != ActuatorError::OK) {
-        RCLCPP_WARN(this->get_logger(), "Falha na leitura. Erro: %d", static_cast<int>(result));
-        return; 
+    std::vector<uint8_t> ids = parameter_manager_->get_ids();
+    std::vector<uint16_t> positions(ids.size());
+
+    {
+        std::lock_guard<std::mutex> lock(driver_mutex_);
+
+        // TODO: verificar se id existe
+        for (size_t idx = 0; idx < ids.size(); idx++)
+        {
+            auto result = actuator_driver_->get_current_position(ids[idx], positions[idx]);
+            if (result != ActuatorError::OK) {
+                RCLCPP_ERROR(this->get_logger(), "Falha na leitura do atuador %d. Erro: %d", 
+                static_cast<int>(ids[idx]), static_cast<int>(result));
+            }
+        }
+
     }
+
 
     msg.ids.assign(ids.begin(), ids.end());
     msg.positions.assign(positions.begin(), positions.end());
