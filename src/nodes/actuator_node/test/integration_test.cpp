@@ -194,7 +194,7 @@ TEST_F(ActuatorNodeFixture, service_command_success_set_torque_enable_success) {
     ASSERT_TRUE(client->wait_for_service(std::chrono::seconds(1)));
 
     auto request = std::make_shared<interfaces::srv::SetTorque::Request>();
-    request->id = 1;
+    request->name = "joint_1";
     request->status = true;
     auto result_future = client->async_send_request(request);
     

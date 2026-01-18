@@ -5,6 +5,7 @@
 #include <vector>
 #include <cstdint>
 #include <memory>
+#include <unordered_map>
 
 namespace rclcpp {
 class Node;
@@ -21,6 +22,11 @@ class ParameterManager {
         int get_baudrate() { return baudrate_; }
         std::vector<uint8_t> get_ids() { return ids_; }
         std::vector<std::string> get_names() { return names_; }
+        int get_id_by_name(std::string name) { 
+            auto it = name_map_.find(name);
+            if (it == name_map_.end()) return -1;
+            return it->second;
+        }
 
     private:
         void declare_parameters();
@@ -34,6 +40,7 @@ class ParameterManager {
         std::vector<std::string> names_;
 
         // TODO: criar map que mepeia nomes -> ids
+        std::unordered_map<std::string, uint8_t> name_map_;
 
         rclcpp::Node* node_;
 };

@@ -61,9 +61,16 @@ void ActuatorNode::set_torque_service_callback(
 {
     std::lock_guard<std::mutex> lock(driver_mutex_);
 
-    response->success = false;
-    // TODO: verificar se id existe
-    auto result = actuator_driver_->set_torque(request->id, request->status ? 1 : 0);
+    auto id = parameter_manager_->get_id_by_name(request->name);
+
+    if (id == -1){
+        RCLCPP_WARN(this->get_logger(), "Atuador %s não encontrado", 
+            request->name.c_str());
+        response->success = false;
+        return;
+    }
+
+    auto result = actuator_driver_->set_torque(static_cast<uint8_t>(id), request->status ? 1 : 0);
 
     if (result != 0) {
         RCLCPP_WARN(this->get_logger(), 
@@ -82,22 +89,16 @@ void ActuatorNode::goal_position_callback(const Command::SharedPtr msg)
 
     std::vector<uint8_t> ids;
     std::vector<std::string> valid_names;
-    // TODO: verificar se id existe
+
     // busca o id correspondente ao nome
     for (auto& name : msg->names)
     {
-        auto it = std::find(
-            parameter_manager_->get_names().begin(), 
-            parameter_manager_->get_names().end(), 
-            name);
-
-        if (it != parameter_manager_->get_names().end())
+        auto id = parameter_manager_->get_id_by_name(name);
+        if (id != -1)
         {
-            size_t index = std::distance(parameter_manager_->get_names().begin(), it);
-            ids.push_back(parameter_manager_->get_ids()[index]);
+            ids.push_back(static_cast<uint8_t>(id));
             valid_names.push_back(name);
         }
-            
     }
 
     size_t n = std::min(ids.size(), msg->goals.size()); // menor tamanho

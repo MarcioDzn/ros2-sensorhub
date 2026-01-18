@@ -1,4 +1,4 @@
-int8 id
+string name
 bool status
 ---
 bool success
