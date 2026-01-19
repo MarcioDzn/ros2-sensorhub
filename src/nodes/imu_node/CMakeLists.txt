@@ -31,7 +31,7 @@ include_directories(
 add_executable(imu_node 
   src/imu_node.cpp 
   src/imu_manager.cpp
-  src/driver/common/bno055.cpp
+  src/driver/common/imu.cpp
   src/driver/bno055imu.cpp
 )
 
