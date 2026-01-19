@@ -33,8 +33,8 @@ void IMUNode::state_callback()
 
     for (const auto& [id, imu] : imus)
     {
-        std::vector<double> imu_data;
-        imu->get_data(imu_data);
+        std::vector<float> imu_data;
+        imu->get_euler_data(imu_data);
 
         IMUData data;
         data.roll = imu_data[0];

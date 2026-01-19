@@ -10,8 +10,10 @@ class BNO055IMU {
     public:
         BNO055IMU(int32_t bno_id, int sensor_id, uint8_t address);
         void setup();
-        void get_data(std::vector<float>& out_data);
-        void calibrate();
+        void get_euler_data(std::vector<float>& out_data);
+        void get_quaternions_euler_data(std::vector<float>& out_data);
+        void calibrate_euler();
+        void calibrate_quaternions_euler();
         static void setup_wiringpi();
       
     private:
