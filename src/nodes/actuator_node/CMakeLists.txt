@@ -8,8 +8,6 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-add_compile_options(-ftime-report)
-
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -23,9 +21,7 @@ include_directories(
 )
 
 add_library(actuator_driver SHARED
-  src/driver/dynamixel/dynamixel_controller.cpp
-  src/driver/dynamixel/dynamixel_link.cpp
-  src/driver/dynamixel/dynamixel_protocol.cpp
+  src/driver/dynamixel/dynamixel_driver.cpp
   src/driver/actuator_factory.cpp
 )
 target_include_directories(actuator_driver PUBLIC include)
@@ -47,7 +43,6 @@ ament_target_dependencies(actuator_control
 
 add_library(actuator_node_lib SHARED
   src/node/actuator_node.cpp
-  src/node/node_manager.cpp
 )
 
 target_link_libraries(actuator_node_lib

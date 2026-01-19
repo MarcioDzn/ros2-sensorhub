@@ -1,8 +1,8 @@
 #include "node/actuator_node.hpp"
 
 #include "control/node/parameter_manager.hpp"
-#include "control/model/actuator_manager.hpp"
-#include "node/node_manager.hpp"
+
+#include "driver/actuator_factory.hpp"
 
 #include <vector>
 
@@ -12,22 +12,29 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
     : Node("actuator_node", options)
 {   
     parameter_manager_ = std::make_shared<ParameterManager>(this);
-    auto actuator_manager = std::make_shared<ActuatorManager>(parameter_manager_->get_ids());
+    actuator_driver_ = ActuatorFactory::createDynamixel();
 
-    node_manager_ = std::make_unique<NodeManager>(
-        actuator_manager, parameter_manager_);
-
-    if (node_manager_->init_serial() != ActuatorError::OK)
+    // inicializa porta serial inserida nos parâmetros do yaml
+    if (actuator_driver_->init(
+        parameter_manager_->get_usb_port(), 
+        parameter_manager_->get_baudrate()) != 0)
     {
         RCLCPP_FATAL(this->get_logger(), 
             "Falha na inicialização do hardware serial na porta %s.", 
             parameter_manager_->get_usb_port().c_str());
-        throw std::runtime_error("");
+        throw std::runtime_error("Falha ao inicializar ActuatorNode");
     }
 
+    // TODO: verificar se os ids fornecidos pelo yaml
+    // são de atuadores realmente conectados
+
+    // envio de posições dos atuadores DEVEM chegar (?)
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
-        .best_effort()
+        .reliable()
         .durability_volatile();
+
+    // recebe dados de comando contínuo
+    // ex: posição alvo
     actuator_subscriber_ = this->create_subscription<Command>(
         parameter_manager_->get_base_name() + "/command", qos, 
         [this](const Command::SharedPtr msg) {
@@ -35,6 +42,8 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
             this->goal_position_callback(msg);
         });
     
+    // recebe dados de comando pontual
+    // ex: habilitar/desabilitar torque
     set_torque_service_ = this->create_service<SetTorque>(
         parameter_manager_->get_base_name() + "/set_torque", 
         [this](const std::shared_ptr<SetTorque::Request> req, 
@@ -42,6 +51,8 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
             this->set_torque_service_callback(req, res);
         });
 
+    // envia dados de estado
+    // ex: posição atual
     state_publisher_ = this->create_publisher<State>(
         parameter_manager_->get_base_name() + "/state", qos);
 
@@ -58,9 +69,20 @@ void ActuatorNode::set_torque_service_callback(
     const std::shared_ptr<SetTorque::Request> request,
     std::shared_ptr<SetTorque::Response> response)
 {
-    response->success = false;
-    auto result = node_manager_->set_torque({request->id}, request->status);
-    if (result != ActuatorError::OK) {
+    std::lock_guard<std::mutex> lock(driver_mutex_);
+
+    auto id = parameter_manager_->get_id_by_name(request->name);
+
+    if (id == -1){
+        RCLCPP_WARN(this->get_logger(), "Atuador %s não encontrado", 
+            request->name.c_str());
+        response->success = false;
+        return;
+    }
+
+    auto result = actuator_driver_->set_torque(static_cast<uint8_t>(id), request->status ? 1 : 0);
+
+    if (result != 0) {
         RCLCPP_WARN(this->get_logger(), 
             "Falha na configuração do torque. Erro: %d", 
             static_cast<int>(result));
@@ -71,38 +93,82 @@ void ActuatorNode::set_torque_service_callback(
     response->success = true;
 }
 
-void ActuatorNode::goal_position_callback(const Command::SharedPtr msg)
+void ActuatorNode::state_callback()
 {
-    if (msg->ids.empty() || msg->goals.empty()) return;
+    State msg;
 
-    std::vector<uint8_t> ids(msg->ids.begin(), msg->ids.end());
-    std::vector<uint16_t> goals(msg->goals.begin(), msg->goals.end());
+    const auto& ids = parameter_manager_->get_ids();
+    const auto& names = parameter_manager_->get_names();
 
-    auto result = node_manager_->set_goal_position(ids, goals);
-    if (result != ActuatorError::OK) {
-        RCLCPP_WARN(this->get_logger(), "Falha no envio de Goal Positions. Erro: %d", static_cast<int>(result));
-        return; 
+    std::vector<std::string> successful_names;
+    std::vector<int16_t> successful_positions;
+
+    {
+        std::lock_guard<std::mutex> lock(driver_mutex_);
+
+        for (size_t idx = 0; idx < ids.size(); idx++)
+        {
+            uint16_t temp_pos;
+            auto result = actuator_driver_->get_current_position(ids[idx], temp_pos);
+
+            if (result == 0) {
+                // adiciona apenas os nomes e posições válidos
+                successful_names.push_back(names[idx]);
+                successful_positions.push_back(static_cast<int16_t>(temp_pos));
+            } else {
+                RCLCPP_ERROR(this->get_logger(), "Falha na leitura do atuador %s. Erro: %d", 
+                    names[idx].c_str(), static_cast<int>(result));
+            }
+        }
+    }
+
+    // só publica se houver pelo menos um item válido
+    if (!successful_names.empty()) {
+        msg.names = successful_names;
+        msg.positions = successful_positions;
+        msg.stamp = this->get_clock()->now();
+        state_publisher_->publish(msg);
+    } else {
+        RCLCPP_WARN(this->get_logger(), "Nenhum atuador foi lido com sucesso. Publicação cancelada.");
     }
 }
 
-void ActuatorNode::state_callback()
+void ActuatorNode::goal_position_callback(const Command::SharedPtr msg)
 {
-    auto msg = State();
-    std::vector<uint16_t> positions;
-    std::vector<uint8_t> ids = parameter_manager_->get_ids();
+    if (msg->names.empty() || msg->goals.empty()) return;
 
-    auto result = node_manager_->get_current_position(ids, positions);
-    
-    if (result != ActuatorError::OK) {
-        RCLCPP_WARN(this->get_logger(), "Falha na leitura. Erro: %d", static_cast<int>(result));
-        return; 
+    std::vector<uint8_t> ids;
+    std::vector<std::string> valid_names;
+
+    // busca o id correspondente ao nome
+    for (const auto& name : msg->names)
+    {
+        auto id = parameter_manager_->get_id_by_name(name);
+        if (id != -1)
+        {
+            ids.push_back(static_cast<uint8_t>(id));
+            valid_names.push_back(name);
+        }
     }
 
-    msg.ids.assign(ids.begin(), ids.end());
-    msg.positions.assign(positions.begin(), positions.end());
+    if (valid_names.empty())
+    {
+        RCLCPP_WARN(this->get_logger(), "Nenhum atuador válido nos nomes recebidos.");
+        return;
+    }
 
-    msg.stamp = this->get_clock()->now();
-    state_publisher_->publish(msg); 
+    size_t n = std::min(ids.size(), msg->goals.size()); // menor tamanho
+
+    std::lock_guard<std::mutex> lock(driver_mutex_);
+    
+    for (size_t idx = 0; idx < n; idx++)
+    {
+        auto result = actuator_driver_->set_goal_position(ids[idx], msg->goals[idx]);
+        if (result != 0) {
+            RCLCPP_ERROR(this->get_logger(), "Falha no envio de Goal Position para o atuador %s. Erro: %d", 
+            valid_names[idx].c_str(), static_cast<int>(result));
+        }
+    }
 }
 
 ActuatorNode::~ActuatorNode() = default;

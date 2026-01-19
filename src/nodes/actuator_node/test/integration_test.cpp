@@ -34,6 +34,7 @@ class ActuatorNodeFixture : public ::testing::Test {
         options.append_parameter_override("usb_port", slave_name);
         options.append_parameter_override("baudrate", 2000000);
         options.append_parameter_override("actuator_ids", std::vector<int64_t>{1});
+        options.append_parameter_override("names", std::vector<std::string>{"joint_1"});
 
         node = std::make_shared<ActuatorNode>(options);
     }
@@ -59,7 +60,7 @@ TEST_F(ActuatorNodeFixture, publishes_data_success) {
     bool received = false;
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
-        .best_effort()
+        .reliable()
         .durability_volatile();
     auto sub = node->create_subscription<interfaces::msg::State>(
         "dxl/state",
@@ -84,7 +85,7 @@ TEST_F(ActuatorNodeFixture, publishes_data_checksum_error) {
     bool received = false;
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
-        .best_effort()
+        .reliable()
         .durability_volatile();
     auto sub = node->create_subscription<interfaces::msg::State>(
         "dxl/state",
@@ -107,18 +108,18 @@ TEST_F(ActuatorNodeFixture, publishes_data_checksum_error) {
 
 TEST_F(ActuatorNodeFixture, publishes_data_content) {
     bool received = false;
-    uint8_t id;
+    std::string name;
     uint16_t curr_pos;
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
-        .best_effort()
+        .reliable()
         .durability_volatile();
     auto sub = node->create_subscription<interfaces::msg::State>(
         "dxl/state",
         qos,
-        [&received, &id, &curr_pos](const interfaces::msg::State::SharedPtr msg) {
+        [&received, &name, &curr_pos](const interfaces::msg::State::SharedPtr msg) {
             received = true;
-            id = msg->ids[0];
+            name = msg->names[0];
             curr_pos = msg->positions[0];
         }
     );
@@ -131,7 +132,7 @@ TEST_F(ActuatorNodeFixture, publishes_data_content) {
     bool success = waitFor([&received]() { return received; }, std::chrono::milliseconds(100));
 
     ASSERT_TRUE(received);
-    EXPECT_EQ(id, 1);
+    EXPECT_EQ(name, "joint_1");
     EXPECT_EQ(curr_pos, 512);
 
     rclcpp::shutdown();
@@ -145,14 +146,14 @@ TEST_F(ActuatorNodeFixture, subscribes_data_success) {
     ssize_t bytes_read = 0;
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
-        .best_effort()
+        .reliable()
         .durability_volatile();
     auto pub = node->create_publisher<interfaces::msg::Command>(
         "dxl/command",
         qos);
 
     auto msg = interfaces::msg::Command();
-    msg.ids = {1};
+    msg.names = {"joint_1"};
     msg.goals = {3000};
     pub->publish(msg);
     
@@ -193,7 +194,7 @@ TEST_F(ActuatorNodeFixture, service_command_success_set_torque_enable_success) {
     ASSERT_TRUE(client->wait_for_service(std::chrono::seconds(1)));
 
     auto request = std::make_shared<interfaces::srv::SetTorque::Request>();
-    request->id = 1;
+    request->name = "joint_1";
     request->status = true;
     auto result_future = client->async_send_request(request);
     

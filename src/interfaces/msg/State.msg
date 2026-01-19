@@ -1,3 +1,3 @@
 builtin_interfaces/Time stamp
-int8[] ids
+string[] names
 int16[] positions
