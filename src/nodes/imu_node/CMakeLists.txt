@@ -27,13 +27,29 @@ include_directories(
   include/imu_node
 )
 
-# IMU NODE
-add_executable(imu_node 
-  src/imu_node.cpp 
-  src/imu_manager.cpp
+add_library(imu_driver SHARED
   src/driver/common/imu.cpp
   src/driver/bno055imu.cpp
 )
+
+target_include_directories(imu_driver PUBLIC include)
+
+add_library(imu_node_lib SHARED
+  src/imu_node.cpp 
+  src/imu_manager.cpp
+)
+
+target_link_libraries(imu_node_lib
+  imu_driver
+)
+
+ament_target_dependencies(imu_node_lib
+  rclcpp
+  interfaces
+)
+
+add_executable(imu_node src/main.cpp)
+target_link_libraries(imu_node imu_node_lib)
 
 target_include_directories(imu_node
   PUBLIC
@@ -51,18 +67,30 @@ else()
     ${CMAKE_CURRENT_SOURCE_DIR}/../../wiringpi/wiringPi/wiringPi_stub.c)
 endif()
 
-ament_target_dependencies(imu_node
-  rclcpp
-  interfaces
-)
-  
 install(TARGETS
   imu_node
+  imu_node_lib
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(DIRECTORY include/
-  DESTINATION include/
-)
+if(BUILD_TESTING)
+  find_package(ament_cmake_gmock REQUIRED)
+
+  ament_add_gmock(test_node
+    test/integration_test.cpp
+  )
+  target_include_directories(test_node PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+  )
+
+  ament_target_dependencies(test_node
+    rclcpp
+    interfaces
+  )
+
+  target_link_libraries(test_node
+    imu_node_lib
+  )
+endif()
 
 ament_package()

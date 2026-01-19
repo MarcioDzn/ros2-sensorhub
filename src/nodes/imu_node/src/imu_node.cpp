@@ -2,7 +2,7 @@
 
 using namespace std::chrono_literals;
 
-IMUNode::IMUNode() : Node("imu_node")
+IMUNode::IMUNode(const rclcpp::NodeOptions & options) : Node("imu_node", options)
 {
     manager_ = std::make_unique<IMUManager>();
 
