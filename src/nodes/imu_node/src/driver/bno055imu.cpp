@@ -23,7 +23,7 @@
  * @param address Endereço I²C do sensor BNO055.
  */
 BNO055IMU::BNO055IMU(int32_t imu_id, int sensor_id, uint8_t address) : 
-    bno_(BNO055(imu_id, address)), sensor_id_(sensor_id) {
+    bno_(IMU(imu_id, address)), sensor_id_(sensor_id) {
     setup_states();
 } 
 
@@ -41,7 +41,7 @@ void BNO055IMU::setup() {
     digitalWrite(SEL_B, selB_state_);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    if(!bno_.begin())
+    if(!bno_.init_bno055())
     {
         std::string msg = "[ERRO] BNO" + std::to_string(sensor_id_) + ": não inicializado";
         throw std::runtime_error(msg);
@@ -56,14 +56,14 @@ void BNO055IMU::setup() {
  * 
  * @param[out] out_data Vetor com 3 elementos: {yaw, pitch, roll}.
  */
-void BNO055IMU::get_data(std::vector<double>& out_data) {
+void BNO055IMU::get_data(std::vector<float>& out_data) {
     digitalWrite(SEL_A, selA_state_);
     digitalWrite(SEL_B, selB_state_);
     
     delay(1);
 
     out_data.resize(3);
-    bno_.readEuler(out_data.data());
+    bno_.read_euler(out_data.data());
     delay(1);
     
     // calibrando
@@ -84,7 +84,7 @@ void BNO055IMU::calibrate() {
     
     delay(1);
 
-    bno_.readEuler(calibration_ref_);
+    bno_.read_euler(calibration_ref_);
     delay(1);
 }
 
