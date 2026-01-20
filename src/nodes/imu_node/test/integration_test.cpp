@@ -60,6 +60,9 @@ class IMUFixture : public ::testing::Test {
 
         mux_registers.clear();
 
+        mux_registers[0][0][40][IMU::BNO055_EULER_R_LSB_ADDR] = 0x40;
+        mux_registers[0][0][40][IMU::BNO055_EULER_R_MSB_ADDR] = 0x01; 
+
         mux_registers[0][0][40][IMU::BNO055_CHIP_ID_ADDR] = BNO055_ID; 
         mux_registers[0][0][41][IMU::BNO055_CHIP_ID_ADDR] = BNO055_ID;
         mux_registers[0][1][40][IMU::BNO055_CHIP_ID_ADDR] = BNO055_ID;
@@ -161,7 +164,7 @@ TEST_F(IMUFixture, read_euler_success)
     ASSERT_FALSE(received_msg->imus.empty());
     
     // 320 / 16.0 = 20.0
-    EXPECT_NEAR(received_msg->imus[0].roll, 20.0f, 0.05);
+    EXPECT_NEAR(received_msg->imus[0].roll, 0, 0.05);
     EXPECT_NEAR(received_msg->imus[0].pitch, 20.0f, 0.05);
     EXPECT_NEAR(received_msg->imus[0].yaw, 20.0f, 0.05);
 }
@@ -201,7 +204,7 @@ TEST_F(IMUFixture, read_multisensor_euler_success)
     ASSERT_FALSE(received_msg->imus.empty());
     
     // 320 / 16.0 = 20.0
-    EXPECT_NEAR(received_msg->imus[0].roll, 20.0f, 0.05);
+    EXPECT_NEAR(received_msg->imus[0].roll, 0, 0.05);
     EXPECT_NEAR(received_msg->imus[1].roll, 20.0f, 0.05);
 }
 
@@ -240,6 +243,39 @@ TEST_F(IMUFixture, read_conflict_mux_euler_success)
     ASSERT_FALSE(received_msg->imus.empty());
     
     // 320 / 16.0 = 20.0
-    EXPECT_NEAR(received_msg->imus[0].roll, 20.0f, 0.05);
+    EXPECT_NEAR(received_msg->imus[0].roll, 0, 0.05);
     EXPECT_NEAR(received_msg->imus[2].roll, 20.0f, 0.05);
+}
+
+TEST_F(IMUFixture, calibration_logic)
+{
+    // simula dados de Euler no mapa (Roll = 20 graus)
+    // 5.0 * 16 = 80 (0x50 em hexadecimal)
+    mux_registers[0][0][40][IMU::BNO055_EULER_R_LSB_ADDR] = 0x50;
+    mux_registers[0][0][40][IMU::BNO055_EULER_R_MSB_ADDR] = 0x00; 
+
+
+    using IMUState = interfaces::msg::IMUState;
+    IMUState::SharedPtr received_msg = nullptr;
+
+    auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
+        .best_effort()
+        .durability_volatile();
+    auto sub = sub_node->create_subscription<IMUState>(
+        "imu/state", qos, [&](IMUState::SharedPtr msg) {
+            received_msg = msg;
+        });
+
+    auto start_time = std::chrono::steady_clock::now();
+    while (!received_msg && (std::chrono::steady_clock::now() - start_time < 2s)) {
+        rclcpp::spin_some(node);
+        rclcpp::spin_some(sub_node);
+        std::this_thread::sleep_for(10ms);
+    }
+
+    ASSERT_NE(received_msg, nullptr) << "Timeout: O nó não publicou nada!";
+    ASSERT_FALSE(received_msg->imus.empty());
+    
+    // 320 / 16.0 = 20.0
+    EXPECT_NEAR(received_msg->imus[0].roll, -15, 0.05);
 }
