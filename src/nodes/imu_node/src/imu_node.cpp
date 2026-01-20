@@ -49,11 +49,3 @@ void IMUNode::state_callback()
 }
 
 IMUNode::~IMUNode() = default;
-
-int main(int argc, char * argv[])
-{
-    rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<IMUNode>());
-    rclcpp::shutdown();
-    return 0;
-}
