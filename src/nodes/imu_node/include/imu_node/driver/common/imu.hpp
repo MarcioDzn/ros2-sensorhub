@@ -53,8 +53,9 @@ class IMU
             VECTOR_EULER        = BNO055_EULER_H_LSB_ADDR
         } bno055_vector_type;
 
-        IMU(int32_t id = -1, uint8_t address = BNO055_ADDRESS_A);
-        int setup_wiringpi();
+        IMU(int32_t id = -1, uint8_t address = BNO055_ADDRESS_A, int shared_fd = -1);
+        void set_fd(int fd) { dev_ = fd; }
+        uint8_t get_address() { return address_; }
         int init_bno055();
         void read_quaternions(float quaternion[4]);
         void read_quaternions_euler(float euler[3]);

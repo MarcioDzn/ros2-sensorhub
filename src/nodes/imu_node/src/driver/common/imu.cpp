@@ -10,19 +10,9 @@
 #include <wiringPi.h>
 #include <wiringPiI2C.h>
 
-IMU::IMU(int32_t id, uint8_t address)
-: id_(id), address_(address) {}
+IMU::IMU(int32_t id, uint8_t address, int shared_fd)
+:  dev_(shared_fd), id_(id), address_(address) {}
 
-int IMU::setup_wiringpi()
-{
-    if (wiringPiSetup() == -1) return -1;
-
-    dev_ = wiringPiI2CSetup(address_);
-    if (dev_ < 0) {
-        return -1;
-    }
-    return 0;
-}
 
 int IMU::init_bno055()
 {

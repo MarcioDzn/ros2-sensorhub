@@ -78,9 +78,6 @@ int IMUManager::setup_imus()
     if (imus_.empty())
         return -1;
 
-    BNO055IMU::setup_wiringpi();
-    std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 1ms
-
     for (const auto& [_, imu] : imus_) imu->setup();
     std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 1ms
 
