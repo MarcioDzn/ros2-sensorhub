@@ -13,24 +13,23 @@
 #define SEL_A 2
 #define SEL_B 0
 
-std::map<uint8_t, int> I2CManager::fds_ = {};
-
 int I2CManager::get_fd(uint8_t address) {
-    if (fds_.find(address) == fds_.end()) {
+static std::map<uint8_t, int> fds_internal;
+
+    if (fds_internal.find(address) == fds_internal.end()) {
         
-        // se for o primeiro acesso ao hardware, inicia o GPIO
-        if (fds_.empty()) {
+        if (fds_internal.empty()) {
             wiringPiSetup();
         }
 
         int new_fd = wiringPiI2CSetup(address);
         if (new_fd >= 0) {
-            fds_[address] = new_fd;
+            fds_internal[address] = new_fd;
         } else {
             return -1; 
         }
     }
-    return fds_[address];
+    return fds_internal[address];
 }
 
 BNO055IMU::BNO055IMU(int32_t imu_id, int sensor_id, uint8_t address) : 
