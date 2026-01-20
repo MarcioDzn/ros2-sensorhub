@@ -18,7 +18,7 @@ IMUNode::IMUNode(const rclcpp::NodeOptions & options) : Node("imu_node", options
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .best_effort()
         .durability_volatile();
-    auto publisher_ = this->create_publisher<IMUState>(
+    publisher_ = this->create_publisher<IMUState>(
         parameters.base_name + "/state", qos);
     
     timer_ = this->create_wall_timer(
