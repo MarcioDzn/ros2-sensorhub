@@ -80,10 +80,15 @@ TEST_F(IMUFixture, read_euler_success)
 {
     // simula dados de Euler no mapa (Roll, Pitch e Yaw = 20 graus)
     // 20.0 * 16 = 320 -> 0x0140
+    // roll
     bno_registers[40][IMU::BNO055_EULER_R_LSB_ADDR] = 0x40;
     bno_registers[40][IMU::BNO055_EULER_R_MSB_ADDR] = 0x01; 
+
+    // pitch
     bno_registers[40][IMU::BNO055_EULER_P_LSB_ADDR] = 0x40; 
     bno_registers[40][IMU::BNO055_EULER_P_MSB_ADDR] = 0x01; 
+
+    // yaw
     bno_registers[40][IMU::BNO055_EULER_H_LSB_ADDR] = 0x40; 
     bno_registers[40][IMU::BNO055_EULER_H_MSB_ADDR] = 0x01; 
 
@@ -112,4 +117,44 @@ TEST_F(IMUFixture, read_euler_success)
     EXPECT_NEAR(received_msg->imus[0].roll, 20.0f, 0.05);
     EXPECT_NEAR(received_msg->imus[0].pitch, 20.0f, 0.05);
     EXPECT_NEAR(received_msg->imus[0].yaw, 20.0f, 0.05);
+}
+
+TEST_F(IMUFixture, read_multisensor_euler_success)
+{
+    // simula dados de Euler no mapa (Roll = 20 graus)
+    // 20.0 * 16 = 320 -> 0x0140
+    // sensor de id = 1 (roll)
+    bno_registers[40][IMU::BNO055_EULER_R_LSB_ADDR] = 0x40;
+    bno_registers[40][IMU::BNO055_EULER_R_MSB_ADDR] = 0x01; 
+
+    // sensor de id = 2 (roll)
+    bno_registers[41][IMU::BNO055_EULER_R_LSB_ADDR] = 0x40;
+    bno_registers[41][IMU::BNO055_EULER_R_MSB_ADDR] = 0x01; 
+
+
+    using IMUState = interfaces::msg::IMUState;
+    IMUState::SharedPtr received_msg = nullptr;
+
+    auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
+        .best_effort()
+        .durability_volatile();
+    auto sub = sub_node->create_subscription<IMUState>(
+        "imu/state", qos, [&](IMUState::SharedPtr msg) {
+            received_msg = msg;
+        });
+
+    auto start_time = std::chrono::steady_clock::now();
+    while (!received_msg && (std::chrono::steady_clock::now() - start_time < 2s)) {
+        rclcpp::spin_some(node);
+        rclcpp::spin_some(sub_node);
+        std::this_thread::sleep_for(10ms);
+    }
+
+    ASSERT_NE(received_msg, nullptr) << "Timeout: O nó não publicou nada!";
+    ASSERT_FALSE(received_msg->imus.empty());
+    
+    // 320 / 16.0 = 20.0
+    EXPECT_NEAR(received_msg->imus[0].roll, 20.0f, 0.05);
+    EXPECT_NEAR(received_msg->imus[1].roll, 20.0f, 0.05);
+
 }
