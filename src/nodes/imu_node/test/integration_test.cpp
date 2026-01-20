@@ -82,6 +82,47 @@ class IMUFixture : public ::testing::Test {
     }
 };
 
+
+TEST(IMUInitTest, init_success)
+{
+if (!rclcpp::ok()) rclcpp::init(0, nullptr);
+    
+    // limpa e prepara o mock com o ID correto
+    mux_registers.clear();
+    mux_registers[0][0][40][IMU::BNO055_CHIP_ID_ADDR] = BNO055_ID;
+
+    rclcpp::NodeOptions options;
+    options.append_parameter_override("ids", std::vector<int64_t>{1});
+    options.append_parameter_override("multiplexer", std::vector<int64_t>{0});
+    options.append_parameter_override("addresses", std::vector<int64_t>{40});
+
+    ASSERT_NO_THROW({
+        auto test_node = std::make_shared<IMUNode>(options);
+    });
+    
+    rclcpp::shutdown();
+}
+
+TEST(IMUInitTest, init_fail_wrong_id)
+{
+    if (!rclcpp::ok()) rclcpp::init(0, nullptr);
+    
+    mux_registers.clear();
+    // coloca um ID qualquer (0xFF) em vez do BNO055_ID (0xA0)
+    mux_registers[0][0][40][IMU::BNO055_CHIP_ID_ADDR] = 0xFF;
+
+    rclcpp::NodeOptions options;
+    options.append_parameter_override("ids", std::vector<int64_t>{1});
+    options.append_parameter_override("multiplexer", std::vector<int64_t>{0});
+    options.append_parameter_override("addresses", std::vector<int64_t>{40});
+
+    ASSERT_THROW({
+        auto test_node = std::make_shared<IMUNode>(options);
+    }, std::runtime_error);
+    
+    rclcpp::shutdown();
+}
+
 TEST_F(IMUFixture, read_euler_success)
 {
     // simula dados de Euler no mapa (Roll, Pitch e Yaw = 20 graus)
