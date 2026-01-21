@@ -5,6 +5,8 @@ services:
     build:
       context: ..
       dockerfile: dev/Dockerfile
+    network_mode: host
+    ipc: host
     volumes: 
       - ..:/app/ros2_ws
       - /tmp:/tmp
