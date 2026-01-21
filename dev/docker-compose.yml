@@ -14,15 +14,31 @@ services:
     environment:
       - ROS_DOMAIN_ID=42
       - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
-      - FASTRTPS_DEFAULT_PROFILES_FILE=/app/ros2_ws/dev/fastdds.xml
+      - FASTRTPS_DEFAULT_PROFILES_FILE=/app/ros2_ws/dev/fastdds_sensorhub.xml
+    
+    # apenas na raspberry
     #devices:
       #- /dev/gpiomem:/dev/gpiomem
     tty: true
     stdin_open: true
     command: >
-      bash -i -c "
-        echo '=== [2/2] Ambiente pronto ===' &&
-        echo 'Execute: ros2 run <pacote> <node>' &&
-        echo 'ou compile com: colcon build --symlink-install --executor sequential' &&
-        bash
-      "
+      bash -c "
+        source /opt/ros/humble/setup.bash &&
+        bash"
+
+  pc_remoto:
+      build: 
+        context: ..
+        dockerfile: dev/Dockerfile
+      network_mode: host
+      ipc: host
+      volumes: 
+        - ..:/app/ros2_ws
+      environment:
+        - ROS_DOMAIN_ID=42
+        - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+        - FASTRTPS_DEFAULT_PROFILES_FILE=/app/ros2_ws/dev/fastdds_remoto.xml
+      command: >
+        bash -c "
+          source /opt/ros/humble/setup.bash &&
+          bash"
