@@ -10,19 +10,9 @@
 #include <wiringPi.h>
 #include <wiringPiI2C.h>
 
-IMU::IMU(int32_t id, uint8_t address)
-: id_(id), address_(address) {}
+IMU::IMU(int32_t id, uint8_t address, int shared_fd)
+:  dev_(shared_fd), id_(id), address_(address) {}
 
-int IMU::setup_wiringpi()
-{
-    if (wiringPiSetup() == -1) return -1;
-
-    dev_ = wiringPiI2CSetup(address_);
-    if (dev_ < 0) {
-        return -1;
-    }
-    return 0;
-}
 
 int IMU::init_bno055()
 {
@@ -37,8 +27,13 @@ int IMU::init_bno055()
         return -1;
 
     // espera até o id do chip ser válido (reset termina)
+    int retry = 0;
     while (wiringPiI2CReadReg8(dev_, BNO055_CHIP_ID_ADDR) != BNO055_ID)
+    {
         usleep(10 * 1000); // 10ms
+        if (++retry > 50) return -1; // Sai após 500ms se o sensor não responder
+    }
+
     usleep(50 * 1000); // 50ms
 
     // power mode normal

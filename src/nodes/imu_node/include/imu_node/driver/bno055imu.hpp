@@ -3,8 +3,17 @@
 
 #include <vector>
 #include <cstdint>
+#include <map>
 
 #include "driver/common/imu.hpp"
+
+class I2CManager {
+private:
+    static std::map<uint8_t, int> fds_;
+
+public:
+    static int get_fd(uint8_t address);
+};
 
 class BNO055IMU {
     public:
@@ -14,7 +23,6 @@ class BNO055IMU {
         void get_quaternions_euler_data(std::vector<float>& out_data);
         void calibrate_euler();
         void calibrate_quaternions_euler();
-        static void setup_wiringpi();
       
     private:
         IMU bno_;

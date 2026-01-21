@@ -24,7 +24,7 @@ using IMUState = interfaces::msg::IMUState;
 class IMUNode : public rclcpp::Node
 {
     public:
-        explicit IMUNode();
+        explicit IMUNode(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
         virtual ~IMUNode();
 
     private:

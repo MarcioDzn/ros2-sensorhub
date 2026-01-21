@@ -2,7 +2,7 @@
 
 using namespace std::chrono_literals;
 
-IMUNode::IMUNode() : Node("imu_node")
+IMUNode::IMUNode(const rclcpp::NodeOptions & options) : Node("imu_node", options)
 {
     manager_ = std::make_unique<IMUManager>();
 
@@ -18,7 +18,7 @@ IMUNode::IMUNode() : Node("imu_node")
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .best_effort()
         .durability_volatile();
-    auto publisher_ = this->create_publisher<IMUState>(
+    publisher_ = this->create_publisher<IMUState>(
         parameters.base_name + "/state", qos);
     
     timer_ = this->create_wall_timer(
@@ -49,11 +49,3 @@ void IMUNode::state_callback()
 }
 
 IMUNode::~IMUNode() = default;
-
-int main(int argc, char * argv[])
-{
-    rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<IMUNode>());
-    rclcpp::shutdown();
-    return 0;
-}

@@ -5,12 +5,32 @@
 #include <stdexcept>      
 #include <iostream>       
 #include <thread>         
-#include <chrono>         
-#include <wiringPi.h>
+#include <chrono>     
 
+#include <wiringPi.h>
+#include <wiringPiI2C.h>
 
 #define SEL_A 2
 #define SEL_B 0
+
+int I2CManager::get_fd(uint8_t address) {
+static std::map<uint8_t, int> fds_internal;
+
+    if (fds_internal.find(address) == fds_internal.end()) {
+        
+        if (fds_internal.empty()) {
+            wiringPiSetup();
+        }
+
+        int new_fd = wiringPiI2CSetup(address);
+        if (new_fd >= 0) {
+            fds_internal[address] = new_fd;
+        } else {
+            return -1; 
+        }
+    }
+    return fds_internal[address];
+}
 
 BNO055IMU::BNO055IMU(int32_t imu_id, int sensor_id, uint8_t address) : 
     bno_(IMU(imu_id, address)), sensor_id_(sensor_id) {
@@ -18,11 +38,19 @@ BNO055IMU::BNO055IMU(int32_t imu_id, int sensor_id, uint8_t address) :
 } 
 
 void BNO055IMU::setup() {
+    // pega o fd único do singleton
+    int shared_fd = I2CManager::get_fd(bno_.get_address());
+
+    // injeta o fd no driver
+    bno_.set_fd(shared_fd);
+
+    pinMode(SEL_A, OUTPUT);
+    pinMode(SEL_B, OUTPUT);
     digitalWrite(SEL_A, selA_state_);
     digitalWrite(SEL_B, selB_state_);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    if(!bno_.init_bno055())
+    if(bno_.init_bno055() != 0)
     {
         std::string msg = "[ERRO] BNO" + std::to_string(sensor_id_) + ": não inicializado";
         throw std::runtime_error(msg);
@@ -80,18 +108,6 @@ void BNO055IMU::calibrate_quaternions_euler() {
 
     bno_.read_quaternions_euler(calibration_ref_);
     delay(1);
-}
-
-void BNO055IMU::setup_wiringpi() {
-    if (wiringPiSetup() < 0) { exit(1); }
-        
-	pinMode(SEL_A, OUTPUT);
-	pinMode(SEL_B, OUTPUT);
-	
-    digitalWrite(SEL_A, LOW);
-	digitalWrite(SEL_B, LOW);
-
-	delay(1);
 }
 
 void BNO055IMU::setup_states() {
