@@ -31,7 +31,10 @@ class IMUNode : public rclcpp::Node
         void state_callback();
 		
         rclcpp::Publisher<IMUState>::SharedPtr publisher_;
+
+        std::shared_ptr<ParameterManager> parameter_manager_;
         std::shared_ptr<IMUManager> manager_;
+
         rclcpp::TimerBase::SharedPtr timer_;
 };
 
