@@ -34,6 +34,16 @@ add_library(imu_driver SHARED
 
 target_include_directories(imu_driver PUBLIC include)
 
+
+add_library(imu_control SHARED
+  src/control/node/parameter_manager.cpp
+)
+target_include_directories(imu_control PUBLIC include)
+
+ament_target_dependencies(imu_control
+  rclcpp
+)
+
 add_library(imu_node_lib SHARED
   src/imu_node.cpp 
   src/imu_manager.cpp
@@ -41,6 +51,7 @@ add_library(imu_node_lib SHARED
 
 target_link_libraries(imu_node_lib
   imu_driver
+  imu_control
 )
 
 ament_target_dependencies(imu_node_lib
