@@ -9,14 +9,6 @@
 #include "rclcpp/rclcpp.hpp"
 #include "control/node/parameter_manager.hpp"
 
-struct IMUParams {
-    std::string base_name;
-    int update_rate_ms;
-    std::vector<int64_t> multiplexer;
-    std::vector<uint8_t> addresses;
-    std::vector<int> ids;
-};
-
 class IMUManager
 {
     public:
@@ -26,8 +18,6 @@ class IMUManager
 
         const std::map<int, std::shared_ptr<BNO055IMU>>&
         get_imus() const { return imus_; }
-
-        const IMUParams& get_parameters() const { return parameters_; }
         
     private:
         int create_imus();
@@ -36,8 +26,6 @@ class IMUManager
         std::shared_ptr<ParameterManager> parameter_manager_;
         
         std::map<int, std::shared_ptr<BNO055IMU>> imus_;
-        IMUParams parameters_;
-
 };
 
 #endif // IMU_MANAGER_HPP
