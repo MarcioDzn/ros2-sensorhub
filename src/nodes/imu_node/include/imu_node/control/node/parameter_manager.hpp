@@ -1,0 +1,39 @@
+#ifndef PARAMETER_MANAGER_HPP
+#define PARAMETER_MANAGER_HPP
+
+#include <string>
+#include <vector>
+#include <cstdint>
+#include <memory>
+#include <unordered_map>
+
+namespace rclcpp {
+class Node;
+}
+
+class ParameterManager {
+    public:
+        explicit ParameterManager(rclcpp::Node* node);
+        virtual ~ParameterManager() = default;
+
+        std::string get_base_name() { return base_name_; }
+        int get_update_rate() { return update_rate_; }
+        std::vector<uint8_t> get_ids() { return ids_; }
+        std::vector<uint8_t> get_multiplexer() { return multiplexer_; }
+        std::vector<uint8_t> get_addresses() { return addresses_; }
+
+
+    private:
+        void declare_parameters();
+        void load_parameters();
+
+        std::string base_name_;
+        int update_rate_;
+        std::vector<uint8_t> ids_;
+        std::vector<uint8_t> multiplexer_;
+        std::vector<uint8_t> addresses_;
+
+        rclcpp::Node* node_;
+};
+
+#endif // PARAMETER_MANAGER_HPP
