@@ -4,7 +4,8 @@ using namespace std::chrono_literals;
 
 IMUNode::IMUNode(const rclcpp::NodeOptions & options) : Node("imu_node", options)
 {
-    manager_ = std::make_unique<IMUManager>();
+    parameter_manager_ = std::make_shared<ParameterManager>(this);
+    manager_ = std::make_unique<IMUManager>(parameter_manager_);
 
     if (manager_->init(this) < 0)
     {
@@ -12,17 +13,15 @@ IMUNode::IMUNode(const rclcpp::NodeOptions & options) : Node("imu_node", options
             "Falha na inicialização do hardware");
         throw std::runtime_error("");
     }
-    
-    const auto& parameters = manager_->get_parameters();
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .best_effort()
         .durability_volatile();
     publisher_ = this->create_publisher<IMUState>(
-        parameters.base_name + "/state", qos);
+        parameter_manager_->get_base_name() + "/state", qos);
     
     timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(parameters.update_rate_ms), 
+        std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
         std::bind(&IMUNode::state_callback, this));
 }
 
