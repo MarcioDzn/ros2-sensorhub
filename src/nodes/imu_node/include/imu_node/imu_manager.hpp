@@ -29,8 +29,6 @@ class IMUManager
         const IMUParams& get_parameters() const { return parameters_; }
         
     private:
-        void declare_parameters(rclcpp::Node* node);
-        void load_parameters(rclcpp::Node* node);
         int create_imus();
         int setup_imus();
 
