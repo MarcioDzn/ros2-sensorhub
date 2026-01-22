@@ -7,6 +7,7 @@
 #include "driver/bno055imu.hpp"
 
 #include "rclcpp/rclcpp.hpp"
+#include "control/node/parameter_manager.hpp"
 
 struct IMUParams {
     std::string base_name;
@@ -19,7 +20,7 @@ struct IMUParams {
 class IMUManager
 {
     public:
-        IMUManager();
+        IMUManager(const std::shared_ptr<ParameterManager>& parameter_manager);
 
         int init(rclcpp::Node* node);
 
@@ -32,6 +33,8 @@ class IMUManager
         int create_imus();
         int setup_imus();
 
+        std::shared_ptr<ParameterManager> parameter_manager_;
+        
         std::map<int, std::shared_ptr<BNO055IMU>> imus_;
         IMUParams parameters_;
 
