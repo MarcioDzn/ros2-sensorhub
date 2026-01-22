@@ -17,6 +17,8 @@ int IMUManager::init(rclcpp::Node* node)
 
 int IMUManager::create_imus()
 {
+    imus_.clear();
+    
     size_t max_size = parameter_manager_->get_ids().size();
     for (size_t i = 0; i < max_size; i++)
     {
