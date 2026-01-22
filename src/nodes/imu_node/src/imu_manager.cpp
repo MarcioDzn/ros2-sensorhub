@@ -2,9 +2,12 @@
 
 #include <thread>
 
-IMUManager::IMUManager() {}
+IMUManager::IMUManager(
+    const std::shared_ptr<ParameterManager>& parameter_manager) 
+:  parameter_manager_(parameter_manager) {}
 
 int IMUManager::init(rclcpp::Node* node)
+
 {
     if (create_imus() != 0) return -1;
     if (setup_imus() != 0) return -1;
@@ -14,20 +17,20 @@ int IMUManager::init(rclcpp::Node* node)
 
 int IMUManager::create_imus()
 {
-    size_t max_size = parameters_.ids.size();
+    size_t max_size = parameter_manager_->get_ids().size();
     for (size_t i = 0; i < max_size; i++)
     {
         auto imu = std::make_shared<BNO055IMU>(
-            parameters_.multiplexer[i], 
-            parameters_.ids[i], 
-            parameters_.addresses[i]);
+            parameter_manager_->get_multiplexer()[i], 
+            parameter_manager_->get_ids()[i], 
+            parameter_manager_->get_addresses()[i]);
         
-        if (imus_.find(parameters_.ids[i]) != imus_.end())
+        if (imus_.find(parameter_manager_->get_ids()[i]) != imus_.end())
         {
             RCLCPP_WARN(rclcpp::get_logger("IMUManager"), 
-            "Id %d duplicado. Sobrescrevendo!", parameters_.ids[i]);
+            "Id %d duplicado. Sobrescrevendo!", parameter_manager_->get_ids()[i]);
         }
-        imus_[parameters_.ids[i]] = imu;
+        imus_[parameter_manager_->get_ids()[i]] = imu;
     }
     return 0;
 }
