@@ -21,6 +21,7 @@ add_library(pressure_driver SHARED
   src/driver/base_controller.cpp
   src/driver/pressure_link.cpp
   src/driver/pressure_factory.cpp
+  src/driver/pressure_driver.cpp
 )
 
 target_include_directories(pressure_driver PUBLIC include)
