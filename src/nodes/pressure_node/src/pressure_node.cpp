@@ -5,7 +5,8 @@
 
 using namespace std::chrono_literals;
 
-PressureNode::PressureNode() : Node("pressure_node")
+PressureNode::PressureNode(const rclcpp::NodeOptions& options) 
+    : Node("pressure_node", options)
 {
     parameter_manager_ = std::make_shared<ParameterManager>(this);
     manager_ = std::make_unique<PressureManager>(parameter_manager_);
@@ -68,12 +69,3 @@ void PressureNode::state_callback()
 }
 
 PressureNode::~PressureNode() = default;
-
-int main(int argc, char * argv[])
-{
-    rclcpp::init(argc, argv);
-        
-    rclcpp::spin(std::make_shared<PressureNode>());
-    rclcpp::shutdown();
-    return 0;
-}

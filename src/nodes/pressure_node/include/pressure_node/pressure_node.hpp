@@ -29,7 +29,7 @@ struct PressureSensorInfo
 class PressureNode : public rclcpp::Node
 {
     public:
-        explicit PressureNode();
+        explicit PressureNode(const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
         virtual ~PressureNode();
 
         bool init_serial(const char* device, int baudrate);
