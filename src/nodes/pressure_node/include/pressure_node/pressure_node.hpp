@@ -5,12 +5,12 @@
 #include <map>
 #include <vector>
 
-#include "common_serial/serial_handler.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/msg/pressure_state.hpp"
 #include "interfaces/msg/pressure_data.hpp"
-#include "common_serial/serial_handler.hpp"
-#include "pressure_manager.hpp"
+
+#include "control/node/parameter_manager.hpp"
+#include "driver/pressure_driver.hpp"
 
 using PressureState = interfaces::msg::PressureState;
 using PressureData = interfaces::msg::PressureData;
@@ -36,7 +36,8 @@ class PressureNode : public rclcpp::Node
         
     private:
         void state_callback();
-        std::shared_ptr<PressureManager> manager_;
+
+        std::vector<std::shared_ptr<IPressureDriver>> pressure_drivers_;
         std::shared_ptr<ParameterManager> parameter_manager_;
 
         rclcpp::Publisher<PressureState>::SharedPtr publisher_;

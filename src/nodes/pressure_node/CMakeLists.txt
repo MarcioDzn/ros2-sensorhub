@@ -18,9 +18,8 @@ include_directories(
 )
 
 add_library(pressure_driver SHARED
-  src/driver/base_controller.cpp
-  src/driver/pressure_link.cpp
   src/driver/pressure_factory.cpp
+  src/driver/insole/insole_driver.cpp
 )
 
 target_include_directories(pressure_driver PUBLIC include)
@@ -41,7 +40,6 @@ ament_target_dependencies(pressure_control
 
 add_library(pressure_node_lib SHARED
   src/pressure_node.cpp
-  src/pressure_manager.cpp
 )
 
 target_link_libraries(pressure_node_lib
