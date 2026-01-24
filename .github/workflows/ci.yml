@@ -61,13 +61,14 @@ jobs:
           export CXX="ccache g++"
           export CCACHE_DIR=$HOME/.ccache
           
-          source /opt/ros/humble/setup.bash
+          . /opt/ros/humble/setup.bash
           
           # Build otimizado (Release é mais rápido)
           colcon build \
             --symlink-install \
             --packages-up-to pressure_node \
             --cmake-args -DCMAKE_BUILD_TYPE=Release
+        shell: bash
 
       - name: Test
         run: |
