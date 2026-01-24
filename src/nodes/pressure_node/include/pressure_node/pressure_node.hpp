@@ -5,11 +5,9 @@
 #include <map>
 #include <vector>
 
-#include "common_serial/serial_handler.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/msg/pressure_state.hpp"
 #include "interfaces/msg/pressure_data.hpp"
-#include "common_serial/serial_handler.hpp"
 
 #include "control/node/parameter_manager.hpp"
 #include "driver/pressure_driver.hpp"

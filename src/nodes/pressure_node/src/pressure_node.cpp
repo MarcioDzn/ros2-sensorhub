@@ -14,9 +14,9 @@ PressureNode::PressureNode(const rclcpp::NodeOptions& options)
 
     for (size_t idx = 0; idx < parameter_manager_->get_ids().size(); idx++)
     {
-        pressure_drivers_[parameter_manager_->get_ids()[idx]] = PressureFactory::create_pressure();
+        pressure_drivers_[idx] = PressureFactory::create_pressure();
 
-        if (pressure_drivers_[parameter_manager_->get_ids()[idx]]->init(
+        if (pressure_drivers_[idx]->init(
             parameter_manager_->get_usb_ports()[idx], 
             parameter_manager_->get_baudrate()) < 0) {
                 RCLCPP_FATAL(this->get_logger(), 
@@ -71,7 +71,7 @@ void PressureNode::state_callback()
     // entao nao publica nada
     if (error_count < ids.size()) {
         publisher_->publish(msg);
-        RCLCPP_INFO(this->get_logger(), "PUBLICANDO: %d", msg.ids[1]);
+        RCLCPP_INFO(this->get_logger(), "Publicado com %zu IDs", msg.ids.size());
     }   
 }
 

@@ -19,7 +19,7 @@ int InsoleDriver::get_data(std::vector<uint16_t>& data)
 {
     char buffer[BUFFER_SIZE];
 
-    if (read_c_string(buffer, BUFFER_SIZE)) {
+    if (!read_c_string(buffer, BUFFER_SIZE)) {
         return -1; 
     }
 
