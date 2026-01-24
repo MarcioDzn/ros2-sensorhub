@@ -4,12 +4,12 @@
 #include <memory>
 #include <string>
 
-#include "driver/common/pressure_controller.hpp"
+#include "driver/pressure_driver.hpp"
 
 class PressureFactory
 {
     public:
-        static std::unique_ptr<PressureController> 
+        static std::unique_ptr<PressureDriver> 
         createPressure();
 };
 

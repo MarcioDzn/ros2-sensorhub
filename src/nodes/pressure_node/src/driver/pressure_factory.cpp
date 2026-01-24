@@ -1,9 +1,8 @@
 #include "driver/pressure_factory.hpp"
-#include "driver/base_controller.hpp"
 
-std::unique_ptr<PressureController> 
+std::unique_ptr<PressureDriver> 
 PressureFactory::createPressure()
 {
-    auto controller = std::make_unique<BaseController>();
+    auto controller = std::make_unique<PressureDriver>();
     return controller;
 }
