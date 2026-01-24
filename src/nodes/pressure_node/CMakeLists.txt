@@ -18,8 +18,6 @@ include_directories(
 )
 
 add_library(pressure_driver SHARED
-  src/driver/base_controller.cpp
-  src/driver/pressure_link.cpp
   src/driver/pressure_factory.cpp
   src/driver/insole/insole_driver.cpp
 )
