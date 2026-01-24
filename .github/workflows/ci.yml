@@ -8,29 +8,48 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-22.04
+    
+    container:
+      image: ros:humble-ros-base 
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup ROS 2
-        uses: ros-tooling/setup-ros@v0.7
+      - name: ccache storage
+        uses: actions/cache@v3
         with:
-          required-ros-distributions: humble
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-
 
-      - name: Install dependencies
+      - name: rosdep cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.ros/rosdep
+          key: ${{ runner.os }}-rosdep-${{ hashFiles('**/package.xml') }}
+
+      - name: Install system dependencies
         run: |
-          sudo apt update
+          apt update && apt install -y ccache
           rosdep update
           rosdep install --from-paths src --ignore-src -r -y
-
+      
       - name: Build
         run: |
+          export PATH="/usr/lib/ccache:$PATH"
+          export CCACHE_DIR=$HOME/.ccache
           source /opt/ros/humble/setup.bash
-          colcon build --symlink-install
+          # Build apenas do necessário ou paralelo
+          colcon build \
+            --symlink-install \
+            --cmake-args -DCMAKE_BUILD_TYPE=Release \
+            --mixin ccache
 
       - name: Test
         run: |
-          source /opt/ros/humble/setup.bash
-          colcon test --event-handlers console_direct+
+          source install/setup.bash
+          # Foca no pressure_node ou pacotes da branch
+          colcon test --packages-up-to pressure_node --event-handlers console_direct+
           colcon test-result --verbose
