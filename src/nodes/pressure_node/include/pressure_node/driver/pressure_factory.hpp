@@ -9,8 +9,8 @@
 class PressureFactory
 {
     public:
-        static std::unique_ptr<PressureDriver> 
-        createPressure();
+        static std::unique_ptr<IPressureDriver> 
+        create_pressure();
 };
 
 #endif // PRESSURE_FACTORY_HPP

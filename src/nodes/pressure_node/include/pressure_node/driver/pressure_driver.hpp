@@ -8,23 +8,13 @@
 #include <vector>
 #include <memory>
 
-#define MAX_BUFFER_COLLECT          6 * 16
-#define BUFFER_SIZE                 8 * 16 * 5
-
-class PressureDriver
+class IPressureDriver
 {
     public:
-        explicit PressureDriver();
-        virtual ~PressureDriver() = default;
+        virtual ~IPressureDriver() = default;
 
-        int init(std::string device, int baudrate);
-        int getData(std::vector<uint16_t>& data);
-
-    private:
-        std::vector<uint16_t> parseNumbersFromString(const std::string& input);
-        bool readCString(char* buffer, size_t max_size);
-
-        std::unique_ptr<SerialHandler> transport_;
+        virtual int init(std::string device, int baudrate) = 0;
+        virtual int get_data(std::vector<uint16_t>& data) = 0;
 };
 
 #endif // PRESSURE_DRIVER_HPP

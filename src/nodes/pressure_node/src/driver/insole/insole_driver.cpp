@@ -1,10 +1,10 @@
-#include "driver/pressure_driver.hpp"
+#include "driver/insole/insole_driver.hpp"
 
 #include <sstream>
 
-PressureDriver::PressureDriver() {}
+InsoleDriver::InsoleDriver() {}
 
-int PressureDriver::init(std::string device, int baudrate)
+int InsoleDriver::init(std::string device, int baudrate)
 {
     transport_ = std::make_unique<SerialHandler>();
     if (transport_->init(device.c_str()) < 0)
@@ -15,15 +15,15 @@ int PressureDriver::init(std::string device, int baudrate)
     return 0;
 }
 
-int PressureDriver::getData(std::vector<uint16_t>& data)
+int InsoleDriver::get_data(std::vector<uint16_t>& data)
 {
     char buffer[BUFFER_SIZE];
 
-    if (readCString(buffer, BUFFER_SIZE)) {
+    if (read_c_string(buffer, BUFFER_SIZE)) {
         return -1; 
     }
 
-    data = parseNumbersFromString(std::string(buffer));
+    data = parse_numbers_from_string(std::string(buffer));
 
     if (data.empty()) {
         return -2;
@@ -31,7 +31,7 @@ int PressureDriver::getData(std::vector<uint16_t>& data)
     return 0; 
 }
 
-std::vector<uint16_t> PressureDriver::parseNumbersFromString(
+std::vector<uint16_t> InsoleDriver::parse_numbers_from_string(
     const std::string& input)
 {
     std::vector<uint16_t> values;
@@ -48,7 +48,7 @@ std::vector<uint16_t> PressureDriver::parseNumbersFromString(
     return values;
 }
 
-bool PressureDriver::readCString(char* buffer, size_t max_size)
+bool InsoleDriver::read_c_string(char* buffer, size_t max_size)
 {
     size_t i = 0;
     char c;

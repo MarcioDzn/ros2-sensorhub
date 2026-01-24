@@ -11,6 +11,7 @@
 #include "interfaces/msg/pressure_data.hpp"
 #include "common_serial/serial_handler.hpp"
 #include "pressure_manager.hpp"
+#include "driver/pressure_factory.hpp"
 
 using PressureState = interfaces::msg::PressureState;
 using PressureData = interfaces::msg::PressureData;
@@ -36,6 +37,8 @@ class PressureNode : public rclcpp::Node
         
     private:
         void state_callback();
+
+        std::shared_ptr<IPressureDriver> pressure_driver_;
         std::shared_ptr<PressureManager> manager_;
         std::shared_ptr<ParameterManager> parameter_manager_;
 
