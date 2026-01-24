@@ -14,7 +14,7 @@ void ParameterManager::declare_parameters()
     node_->declare_parameter("base_name", "pressure");
     node_->declare_parameter("usb_ports", std::vector<std::string>{"/dev/ACM0", "/dev/ACM1"});
     node_->declare_parameter("baudrate", 115200);
-    node_->declare_parameter("actuator_ids", std::vector<int64_t>{1, 2});
+    node_->declare_parameter("ids", std::vector<int64_t>{1, 2});
     node_->declare_parameter("update_rate_ms", 15);
 }
 
@@ -24,7 +24,7 @@ void ParameterManager::load_parameters()
     baudrate_ = static_cast<uint32_t>(node_->get_parameter("baudrate").as_int());
     update_rate_ = node_->get_parameter("update_rate_ms").as_int();
     usb_ports_ = node_->get_parameter("usb_ports").as_string_array();
-    std::vector<long> raw_ids = node_->get_parameter("actuator_ids").as_integer_array();
+    std::vector<long> raw_ids = node_->get_parameter("ids").as_integer_array();
     
     // converte de long pra uint8_t
     ids_.clear();
