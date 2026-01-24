@@ -148,8 +148,60 @@ TEST_F(PressureNodeFixture, publishes_data_content_success) {
     EXPECT_EQ(received_pressure_data.pressures[0], 123);
 }
 
-/*
-TEST_F(PressureNodeFixture, publishes_junk_data) {
+TEST_F(PressureNodeFixture, publishes_data__multisensor_content_success) {
+    bool received = false;
+    std::vector<int8_t> received_ids;
+    std::vector<interfaces::msg::PressureData> received_pressures_data;
+
+    auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
+        .best_effort()
+        .durability_volatile();
+
+    auto sub = node->create_subscription<interfaces::msg::PressureState>(
+        "pressure/state",
+        qos,
+        [&received, &received_ids, &received_pressures_data](const interfaces::msg::PressureState::SharedPtr msg) {
+            received = true;
+            received_ids = msg->ids;
+            received_pressures_data = msg->pressures;
+        }
+    );
+
+    rclcpp::executors::SingleThreadedExecutor executor;
+    executor.add_node(node);
+
+    std::string dummy_response =
+        "123  1234 1234 1234 1234 1234 1234 1234 "
+        "1234 1234 1234 1234 1234 1234 1234 1234";
+    dummy_response.push_back('\0');
+
+    // mesmos valores pra as duas solas
+    write(master_fds[0], dummy_response.c_str(), dummy_response.size());
+    write(master_fds[1], dummy_response.c_str(), dummy_response.size());
+
+    auto timeout = std::chrono::milliseconds(500);
+    auto start = std::chrono::steady_clock::now();
+
+    while (!received && (std::chrono::steady_clock::now() - start < timeout)) {
+        executor.spin_some();
+        std::this_thread::sleep_for(10ms);
+    }
+
+    ASSERT_TRUE(received);
+    ASSERT_EQ(received_ids.size(), 2);
+    EXPECT_EQ(received_ids[0], 1);
+    EXPECT_EQ(received_ids[1], 2);
+
+    // sola 1
+    ASSERT_FALSE(received_pressures_data[0].pressures.empty());
+    EXPECT_EQ(received_pressures_data[0].pressures[0], 123);
+
+    // sola 2
+    ASSERT_FALSE(received_pressures_data[1].pressures.empty());
+    EXPECT_EQ(received_pressures_data[1].pressures[0], 123);
+}
+
+TEST_F(PressureNodeFixture, DISABLED_publishes_junk_data) {
     bool received = false;
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
@@ -172,7 +224,7 @@ TEST_F(PressureNodeFixture, publishes_junk_data) {
         "1234 1234 1234 1234 1234 1234 1234 1234";
     dummy_response.push_back('\0');
 
-    write(master_fd, dummy_response.c_str(), dummy_response.size());
+    write(master_fds[0], dummy_response.c_str(), dummy_response.size());
 
     auto timeout = std::chrono::milliseconds(500);
     auto start = std::chrono::steady_clock::now();
@@ -184,4 +236,3 @@ TEST_F(PressureNodeFixture, publishes_junk_data) {
 
     ASSERT_FALSE(received) << "No publicou dados que deveriam estar corrompidos";
 }
-*/
