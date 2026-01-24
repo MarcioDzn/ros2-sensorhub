@@ -14,9 +14,9 @@ using namespace std::chrono_literals;
 
 class PressureNodeFixture : public ::testing::Test {
     protected:
-        int master_fd;
-        int slave_fd;
-        char slave_name[100];
+        int master_fds[2];
+        int slave_fds[2];
+        char slave_names[2][100];
         std::shared_ptr<PressureNode> node;
 
     void SetUp() override {
@@ -24,24 +24,34 @@ class PressureNodeFixture : public ::testing::Test {
             rclcpp::init(0, nullptr);
         }
 
-        ASSERT_EQ(0, openpty(&master_fd, &slave_fd, slave_name, nullptr, nullptr));
+        // sola 1
+        ASSERT_EQ(0, openpty(&master_fds[0], &slave_fds[0], slave_names[0], nullptr, nullptr));
+        close(slave_fds[0]);
 
-        close(slave_fd);
+        // sola 2
+        ASSERT_EQ(0, openpty(&master_fds[1], &slave_fds[1], slave_names[1], nullptr, nullptr));
+        close(slave_fds[1]);
 
         rclcpp::NodeOptions options;
         options.append_parameter_override("base_name", "pressure");
         options.append_parameter_override("update_rate_ms", 15);
-        options.append_parameter_override("usb_ports", std::vector<std::string>{slave_name});
+        options.append_parameter_override("usb_ports", std::vector<std::string>{slave_names[0], slave_names[1]});
         options.append_parameter_override("baudrate", 115200);
-        options.append_parameter_override("ids", std::vector<int64_t>{1});
+        options.append_parameter_override("ids", std::vector<int64_t>{1, 2});
 
         node = std::make_shared<PressureNode>(options);
     }
 
     void TearDown() {
         node.reset();
-        close(master_fd);
-        close(slave_fd);
+
+        // sola 1
+        close(master_fds[0]);
+        close(slave_fds[0]);
+
+        // sola 2
+        close(master_fds[1]);
+        close(slave_fds[1]);
     }
 
     bool waitFor(std::function<bool()> condition, std::chrono::milliseconds timeout = 100ms) {
@@ -81,7 +91,7 @@ TEST_F(PressureNodeFixture, publishes_data_success) {
 
     dummy_response.push_back('\0');
 
-    write(master_fd, dummy_response.c_str(), dummy_response.size());
+    write(master_fds[0], dummy_response.c_str(), dummy_response.size());
 
     auto timeout = std::chrono::milliseconds(500);
     auto start = std::chrono::steady_clock::now();
@@ -121,7 +131,7 @@ TEST_F(PressureNodeFixture, publishes_data_content_success) {
         "1234 1234 1234 1234 1234 1234 1234 1234";
     dummy_response.push_back('\0');
 
-    write(master_fd, dummy_response.c_str(), dummy_response.size());
+    write(master_fds[0], dummy_response.c_str(), dummy_response.size());
 
     auto timeout = std::chrono::milliseconds(500);
     auto start = std::chrono::steady_clock::now();
