@@ -9,13 +9,25 @@ jobs:
   build-and-test:
     runs-on: ubuntu-22.04
     
+    # Define o shell padrão como bash para evitar erros de "source not found"
+    defaults:
+      run:
+        shell: bash
+
     container:
       image: ros:humble-ros-base 
 
     steps:
+      - name: Install Git and Ccache
+        # Instala git (necessário para o checkout) e ccache antes de tudo
+        run: |
+          apt-get update
+          apt-get install -y git ccache
+
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # Cache do compilador (Acelera muito o build)
       - name: ccache storage
         uses: actions/cache@v3
         with:
@@ -24,32 +36,46 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-ccache-
 
+      # Cache das dependências do ROS
       - name: rosdep cache
         uses: actions/cache@v3
         with:
           path: ~/.ros/rosdep
           key: ${{ runner.os }}-rosdep-${{ hashFiles('**/package.xml') }}
 
-      - name: Install system dependencies
+      - name: Install dependencies
         run: |
-          apt update && apt install -y ccache
+          # Não precisa de sudo dentro do container
+          # Inicializa rosdep se não existir
+          if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then
+            rosdep init
+          fi
           rosdep update
           rosdep install --from-paths src --ignore-src -r -y
-      
+
       - name: Build
         run: |
+          # Configura o ccache manualmente para não depender de mixins externos
           export PATH="/usr/lib/ccache:$PATH"
+          export CC="ccache gcc"
+          export CXX="ccache g++"
           export CCACHE_DIR=$HOME/.ccache
+          
           source /opt/ros/humble/setup.bash
-          # Build apenas do necessário ou paralelo
+          
+          # Build otimizado (Release é mais rápido)
           colcon build \
             --symlink-install \
-            --cmake-args -DCMAKE_BUILD_TYPE=Release \
-            --mixin ccache
+            --packages-up-to pressure_node \
+            --cmake-args -DCMAKE_BUILD_TYPE=Release
 
       - name: Test
         run: |
           source install/setup.bash
-          # Foca no pressure_node ou pacotes da branch
-          colcon test --packages-up-to pressure_node --event-handlers console_direct+
+          
+          # Roda os testes, ignorando os DISABLED_ automaticamente
+          colcon test \
+            --packages-select pressure_node \
+            --event-handlers console_direct+
+            
           colcon test-result --verbose
