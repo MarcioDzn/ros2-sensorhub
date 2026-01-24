@@ -5,16 +5,17 @@ PressureManager::PressureManager(
     : parameter_manager_(parameter_manager) {}
 
 PressureError PressureManager::init_comm() {
-    for (const auto& id : parameter_manager_->get_ids())
+    for (size_t idx = 0; idx < parameter_manager_->get_ids().size(); idx++)
     {
-        controllers_[id] = PressureFactory::createPressure();
+        controllers_[parameter_manager_->get_ids()[idx]] = PressureFactory::createPressure();
 
-        if (controllers_[id]->init(
-            parameter_manager_->get_usb_ports()[id], 
+        if (controllers_[parameter_manager_->get_ids()[idx]]->init(
+            parameter_manager_->get_usb_ports()[idx], 
             parameter_manager_->get_baudrate()) < 0) {
                 return PressureError::NotInitialized; 
         }
     }
+    
     return PressureError::OK;
 }
 

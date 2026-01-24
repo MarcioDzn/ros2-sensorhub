@@ -39,30 +39,44 @@ ament_target_dependencies(pressure_control
   rclcpp
 )
 
-add_executable(pressure_node 
-  src/pressure_node.cpp 
+add_library(pressure_node_lib SHARED
+  src/pressure_node.cpp
   src/pressure_manager.cpp
 )
 
-target_link_libraries(pressure_node
+target_link_libraries(pressure_node_lib
   pressure_driver
   pressure_control
 )
 
-ament_target_dependencies(pressure_node
+ament_target_dependencies(pressure_node_lib
   rclcpp
   interfaces
   common_serial
   models
 )
 
+add_executable(pressure_node src/main.cpp)
+target_link_libraries(pressure_node pressure_node_lib)
+
 install(TARGETS
   pressure_node
+  pressure_node_lib
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(DIRECTORY include/
-  DESTINATION include/
-)
+if(BUILD_TESTING)
+  find_package(ament_cmake_gmock REQUIRED)
+
+  ament_add_gmock(test_node
+    test/integration_test.cpp
+  )
+  target_include_directories(test_node PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+  )
+  target_link_libraries(test_node
+    pressure_node_lib
+  )
+endif()
 
 ament_package()
