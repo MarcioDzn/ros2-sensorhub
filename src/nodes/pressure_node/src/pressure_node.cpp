@@ -2,6 +2,7 @@
 #include <sstream>
 
 #include "pressure_node.hpp"
+#include "driver/pressure_factory.hpp"
 
 using namespace std::chrono_literals;
 
@@ -9,13 +10,20 @@ PressureNode::PressureNode(const rclcpp::NodeOptions& options)
     : Node("pressure_node", options)
 {
     parameter_manager_ = std::make_shared<ParameterManager>(this);
-    manager_ = std::make_unique<PressureManager>(parameter_manager_);
+    pressure_drivers_.resize(parameter_manager_->get_ids().size());
 
-    if (manager_->init_comm() != PressureError::OK)
+    for (size_t idx = 0; idx < parameter_manager_->get_ids().size(); idx++)
     {
-        RCLCPP_FATAL(this->get_logger(), 
-            "Falha na inicialização do hardware serial em uma da(s) porta(s)");
-        throw std::runtime_error("");
+        pressure_drivers_[parameter_manager_->get_ids()[idx]] = PressureFactory::create_pressure();
+
+        if (pressure_drivers_[parameter_manager_->get_ids()[idx]]->init(
+            parameter_manager_->get_usb_ports()[idx], 
+            parameter_manager_->get_baudrate()) < 0) {
+                RCLCPP_FATAL(this->get_logger(), 
+                    "Falha na inicialização do hardware serial na porta %s.", 
+                    parameter_manager_->get_usb_ports()[idx].c_str());
+                throw std::runtime_error("Falha ao inicializar PressureNode"); 
+        }
     }
     
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
@@ -24,7 +32,6 @@ PressureNode::PressureNode(const rclcpp::NodeOptions& options)
     publisher_ = this->create_publisher<PressureState>(
         parameter_manager_->get_base_name() + "/state", qos);
 
-    
     // executa o callback a cada <update_rate_ms_> segundos
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
@@ -40,11 +47,11 @@ void PressureNode::state_callback()
     msg.pressures.reserve(ids.size());
 
     uint8_t error_count = 0;
-    for (const auto& id : ids)
+    for (size_t idx = 0; idx < parameter_manager_->get_ids().size(); idx++)
     {
         std::vector<uint16_t> data;
         
-        if (manager_->get_data(id, data) != PressureError::OK)
+        if (pressure_drivers_[idx]->get_data(data) != 0)
         {
             error_count++;
             continue;
@@ -56,7 +63,7 @@ void PressureNode::state_callback()
             pd.pressures.push_back(static_cast<int16_t>(val));
 
         msg.pressures.push_back(pd);
-        msg.ids.push_back(static_cast<int8_t>(id));
+        msg.ids.push_back(static_cast<int8_t>(parameter_manager_->get_ids()[idx]));
         msg.stamp = this->get_clock()->now();
     }
 
