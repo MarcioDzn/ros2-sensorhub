@@ -43,7 +43,7 @@ void IMUNode::state_callback()
         msg.imus.push_back(data);
     }
 
-    msg.stamp = this->get_clock()->now();
+    msg.header.stamp = this->get_clock()->now();
     publisher_->publish(msg);
 }
 
