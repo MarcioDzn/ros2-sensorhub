@@ -43,11 +43,16 @@ void PressureNode::state_callback()
     auto msg = PressureState();
 
     auto ids = parameter_manager_->get_ids();
-    msg.ids.reserve(ids.size());
-    msg.pressures.reserve(ids.size());
+    auto names = parameter_manager_->get_names();
+
+    // evita segfault
+    size_t min_size = std::min(ids.size(), names.size());
+
+    msg.names.reserve(min_size);
+    msg.pressures.reserve(min_size);
 
     uint8_t error_count = 0;
-    for (size_t idx = 0; idx < parameter_manager_->get_ids().size(); idx++)
+    for (size_t idx = 0; idx < min_size; idx++)
     {
         std::vector<uint16_t> data;
         
@@ -63,15 +68,15 @@ void PressureNode::state_callback()
             pd.pressures.push_back(static_cast<int16_t>(val));
 
         msg.pressures.push_back(pd);
-        msg.ids.push_back(static_cast<int8_t>(parameter_manager_->get_ids()[idx]));
+        msg.names.push_back(parameter_manager_->get_names()[idx]);
         msg.stamp = this->get_clock()->now();
     }
 
     // se nenhuma palmilha enviou a posição
     // entao nao publica nada
-    if (error_count < ids.size()) {
+    if (error_count < min_size) {
         publisher_->publish(msg);
-        RCLCPP_INFO(this->get_logger(), "Publicado com %zu IDs", msg.ids.size());
+        RCLCPP_INFO(this->get_logger(), "Publicado com %zu IDs", msg.names.size());
     }   
 }
 
