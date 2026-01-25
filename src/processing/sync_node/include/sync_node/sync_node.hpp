@@ -10,15 +10,20 @@
 #include "message_filters/synchronizer.h"
 #include "message_filters/sync_policies/approximate_time.h"
 
-#include "interfaces/msg/imu_data.hpp"
-#include "interfaces/msg/pressure_data.hpp"
+#include "interfaces/msg/imu_state.hpp"
+#include "interfaces/msg/pressure_state.hpp"
+#include "interfaces/msg/state.hpp"
+
 #include "interfaces/msg/synced_sensor_data.hpp"
 
 
-using IMUData = interfaces::msg::IMUData;
-using PressureData = interfaces::msg::PressureData;
+using IMUState = interfaces::msg::IMUState;
+using PressureState = interfaces::msg::PressureState;
+using ActuatorState = interfaces::msg::State; // actuator
+
 using SyncedSensorData = interfaces::msg::SyncedSensorData;
-using SyncPolicy = message_filters::sync_policies::ApproximateTime<IMUData, PressureData>;
+
+using SyncPolicy = message_filters::sync_policies::ApproximateTime<IMUState, PressureState, ActuatorState>;
 
 class SyncNode : public rclcpp::Node
 {
@@ -28,12 +33,16 @@ class SyncNode : public rclcpp::Node
 		
 	private:
 	
-		void synced_callback(const IMUData::ConstSharedPtr& imu_msg, 
-                             const PressureData::ConstSharedPtr& pressure_msg);
-		message_filters::Subscriber<IMUData> imu_sub_;
-		message_filters::Subscriber<PressureData> pressure_sub_;
+		void synced_callback(
+			const IMUData::ConstSharedPtr& imu_msg, 
+			const PressureData::ConstSharedPtr& pressure_msg
+			const PressureData::ConstSharedPtr& actuator_msg);
+
+		message_filters::Subscriber<IMUState> imu_sub_;
+		message_filters::Subscriber<PressureState> pressure_sub_;
+		message_filters::Subscriber<ActuatorState> actuator_sub_;
+
 		rclcpp::Publisher<SyncedSensorData>::SharedPtr publisher_;
-		
 		std::shared_ptr<message_filters::Synchronizer<SyncPolicy>> sync_;
 		
 };
