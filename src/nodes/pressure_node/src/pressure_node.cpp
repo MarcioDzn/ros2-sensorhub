@@ -77,7 +77,7 @@ void PressureNode::state_callback()
 
         msg.pressures.push_back(pd);
         msg.names.push_back(parameter_manager_->get_names()[idx]);
-        msg.stamp = this->get_clock()->now();
+        msg.header.stamp = this->get_clock()->now();
     }
 
     // se nenhuma palmilha enviou a posição

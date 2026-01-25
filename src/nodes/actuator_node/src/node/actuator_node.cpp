@@ -126,7 +126,7 @@ void ActuatorNode::state_callback()
     if (!successful_names.empty()) {
         msg.names = successful_names;
         msg.positions = successful_positions;
-        msg.stamp = this->get_clock()->now();
+        msg.header.stamp = this->get_clock()->now();
         state_publisher_->publish(msg);
     } else {
         RCLCPP_WARN(this->get_logger(), "Nenhum atuador foi lido com sucesso. Publicação cancelada.");
