@@ -64,8 +64,16 @@ void PressureNode::state_callback()
         
         PressureData pd;
         pd.pressures.reserve(data.size());
+
+        size_t sensor_id = 0;
         for (auto val : data)
-            pd.pressures.push_back(static_cast<int16_t>(val));
+        {
+            PressureUnitSensor unit_sensor;
+            unit_sensor.id = sensor_id++;
+            unit_sensor.pressure = static_cast<int16_t>(val);
+
+            pd.pressures.push_back(unit_sensor);
+        }
 
         msg.pressures.push_back(pd);
         msg.names.push_back(parameter_manager_->get_names()[idx]);

@@ -146,7 +146,7 @@ TEST_F(PressureNodeFixture, publishes_data_content_success) {
     EXPECT_EQ(received_name, "right_insole");
 
     ASSERT_FALSE(received_pressure_data.pressures.empty());
-    EXPECT_EQ(received_pressure_data.pressures[0], 123);
+    EXPECT_EQ(received_pressure_data.pressures[0].pressure, 123);
 }
 
 TEST_F(PressureNodeFixture, publishes_data__multisensor_content_success) {
@@ -195,11 +195,11 @@ TEST_F(PressureNodeFixture, publishes_data__multisensor_content_success) {
 
     // sola 1
     ASSERT_FALSE(received_pressures_data[0].pressures.empty());
-    EXPECT_EQ(received_pressures_data[0].pressures[0], 123);
+    EXPECT_EQ(received_pressures_data[0].pressures[0].pressure, 123);
 
     // sola 2
     ASSERT_FALSE(received_pressures_data[1].pressures.empty());
-    EXPECT_EQ(received_pressures_data[1].pressures[0], 123);
+    EXPECT_EQ(received_pressures_data[1].pressures[0].pressure, 123);
 }
 
 TEST_F(PressureNodeFixture, DISABLED_publishes_junk_data) {

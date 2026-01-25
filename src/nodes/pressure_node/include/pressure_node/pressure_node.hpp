@@ -8,12 +8,14 @@
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/msg/pressure_state.hpp"
 #include "interfaces/msg/pressure_data.hpp"
+#include "interfaces/msg/pressure_unit_sensor.hpp"
 
 #include "control/node/parameter_manager.hpp"
 #include "driver/pressure_driver.hpp"
 
 using PressureState = interfaces::msg::PressureState;
 using PressureData = interfaces::msg::PressureData;
+using PressureUnitSensor = interfaces::msg::PressureUnitSensor;
 
 struct DeviceInterface
 {
