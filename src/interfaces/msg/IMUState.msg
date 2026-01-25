@@ -1,2 +1,2 @@
-builtin_interfaces/Time stamp
+std_msgs/Header header
 IMUData[] imus
