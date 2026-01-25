@@ -9,16 +9,19 @@ SyncNode::SyncNode() : Node("sync_node")
         
 	publisher_ = this->create_publisher<SyncedSensorData>("synced_data", qos);
 	
-	imu_sub_.subscribe(this, "sensor_1/imu", qos.get_rmw_qos_profile());
-	pressure_sub_.subscribe(this, "pressure", qos.get_rmw_qos_profile());
+	imu_sub_.subscribe(this, "imu/state", qos.get_rmw_qos_profile());
+	pressure_sub_.subscribe(this, "pressure/state", qos.get_rmw_qos_profile());
+	actuator_sub_.subscribe(this, "dxl/state", qos.get_rmw_qos_profile());
 
     uint32_t queue_size = 50;
     sync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy>>(
-        SyncPolicy(queue_size), imu_sub_, pressure_sub_);
+        SyncPolicy(queue_size), imu_sub_, pressure_sub_, actuator_sub_);
+
     sync_->registerCallback(
         std::bind(&SyncNode::synced_callback, this,
-                  std::placeholders::_1,
-                  std::placeholders::_2));
+            std::placeholders::_1,
+            std::placeholders::_2,
+            std::placeholders::_3));
 }
 
 void SyncNode::synced_callback(const IMUData::ConstSharedPtr& imu_msg, 
