@@ -5,3 +5,4 @@ pressure_node:
     usb_ports: ["/dev/ACM0", "/dev/ACM1"] # cada sensor tem uma porta
     baudrate: 115200
     ids: [1, 2]
+    names: ["right_insole", "left_insole"]

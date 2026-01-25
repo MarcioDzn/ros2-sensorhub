@@ -36,6 +36,7 @@ class PressureNodeFixture : public ::testing::Test {
         options.append_parameter_override("base_name", "pressure");
         options.append_parameter_override("update_rate_ms", 15);
         options.append_parameter_override("usb_ports", std::vector<std::string>{slave_names[0], slave_names[1]});
+        options.append_parameter_override("names", std::vector<std::string>{"right_insole", "left_insole"});
         options.append_parameter_override("baudrate", 115200);
         options.append_parameter_override("ids", std::vector<int64_t>{1, 2});
 
@@ -106,7 +107,7 @@ TEST_F(PressureNodeFixture, publishes_data_success) {
 
 TEST_F(PressureNodeFixture, publishes_data_content_success) {
     bool received = false;
-    int8_t received_id = 0;
+    std::string received_name;
     interfaces::msg::PressureData received_pressure_data;
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
@@ -116,9 +117,9 @@ TEST_F(PressureNodeFixture, publishes_data_content_success) {
     auto sub = node->create_subscription<interfaces::msg::PressureState>(
         "pressure/state",
         qos,
-        [&received, &received_id, &received_pressure_data](const interfaces::msg::PressureState::SharedPtr msg) {
+        [&received, &received_name, &received_pressure_data](const interfaces::msg::PressureState::SharedPtr msg) {
             received = true;
-            received_id = msg->ids[0];
+            received_name = msg->names[0];
             received_pressure_data = msg->pressures[0];
         }
     );
@@ -142,7 +143,7 @@ TEST_F(PressureNodeFixture, publishes_data_content_success) {
     }
 
     ASSERT_TRUE(received);
-    EXPECT_EQ(received_id, 1);
+    EXPECT_EQ(received_name, "right_insole");
 
     ASSERT_FALSE(received_pressure_data.pressures.empty());
     EXPECT_EQ(received_pressure_data.pressures[0], 123);
@@ -150,7 +151,7 @@ TEST_F(PressureNodeFixture, publishes_data_content_success) {
 
 TEST_F(PressureNodeFixture, publishes_data__multisensor_content_success) {
     bool received = false;
-    std::vector<int8_t> received_ids;
+    std::vector<std::string> received_names;
     std::vector<interfaces::msg::PressureData> received_pressures_data;
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
@@ -160,9 +161,9 @@ TEST_F(PressureNodeFixture, publishes_data__multisensor_content_success) {
     auto sub = node->create_subscription<interfaces::msg::PressureState>(
         "pressure/state",
         qos,
-        [&received, &received_ids, &received_pressures_data](const interfaces::msg::PressureState::SharedPtr msg) {
+        [&received, &received_names, &received_pressures_data](const interfaces::msg::PressureState::SharedPtr msg) {
             received = true;
-            received_ids = msg->ids;
+            received_names = msg->names;
             received_pressures_data = msg->pressures;
         }
     );
@@ -188,9 +189,9 @@ TEST_F(PressureNodeFixture, publishes_data__multisensor_content_success) {
     }
 
     ASSERT_TRUE(received);
-    ASSERT_EQ(received_ids.size(), 2);
-    EXPECT_EQ(received_ids[0], 1);
-    EXPECT_EQ(received_ids[1], 2);
+    ASSERT_EQ(received_names.size(), 2);
+    EXPECT_EQ(received_names[0], "right_insole");
+    EXPECT_EQ(received_names[1], "left_insole");
 
     // sola 1
     ASSERT_FALSE(received_pressures_data[0].pressures.empty());
