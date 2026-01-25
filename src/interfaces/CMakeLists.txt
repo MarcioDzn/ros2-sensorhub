@@ -14,6 +14,7 @@ find_package(sensor_msgs REQUIRED)
 set(msg_files
   "msg/IMUData.msg"
   "msg/IMUState.msg"
+  "msg/PressureUnitSensor.msg"
   "msg/PressureData.msg"
   "msg/PressureState.msg"
   "msg/Command.msg"
