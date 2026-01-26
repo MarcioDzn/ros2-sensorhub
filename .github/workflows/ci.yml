@@ -8,62 +8,60 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-22.04
-    
-    # Define o shell padrão como bash para evitar erros de "source not found"
-    defaults:
-      run:
-        shell: bash
-
     container:
       image: ros:humble-ros-base 
 
     steps:
-      - name: Install Git and Ccache
-        # Instala git (necessário para o checkout) e ccache antes de tudo
+      # 1. Instalar o básico para o Git e permissões
+      - name: Install System Dependencies
         run: |
           apt-get update
-          apt-get install -y git ccache
+          apt-get install -y git tar curl ccache
+          # Corrige problema de "dubious ownership" do git em containers
+          git config --global --add safe.directory '*'
+        shell: bash
 
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # Cache do compilador (Acelera muito o build)
+      # 2. Cache do ccache (mantido igual)
       - name: ccache storage
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.ccache
           key: ${{ runner.os }}-ccache-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-ccache-
 
-      # Cache das dependências do ROS
+      # 3. Cache do rosdep (MUDANÇA AQUI)
+      # Removido o hashFiles da chave principal para evitar o erro de diretório
       - name: rosdep cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.ros/rosdep
-          key: ${{ runner.os }}-rosdep-${{ hashFiles('**/package.xml') }}
+          key: ${{ runner.os }}-rosdep-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-rosdep-
 
       - name: Install dependencies
         run: |
-          # Não precisa de sudo dentro do container
-          # Inicializa rosdep se não existir
+          # Garante que o diretório de trabalho é tratado como seguro pelo root
+          git config --global --add safe.directory $GITHUB_WORKSPACE
+          
           if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then
             rosdep init
           fi
           rosdep update
-          rosdep install --from-paths src --ignore-src -r -y
+          # Tenta instalar as dependências
+          rosdep install --from-paths . --ignore-src -r -y
+        shell: bash
 
       - name: Build
         run: |
-          # Configura o ccache manualmente para não depender de mixins externos
           export PATH="/usr/lib/ccache:$PATH"
-          export CC="ccache gcc"
-          export CXX="ccache g++"
           export CCACHE_DIR=$HOME/.ccache
-          
           . /opt/ros/humble/setup.bash
           
-          # Build otimizado (Release é mais rápido)
           colcon build \
             --symlink-install \
             --packages-up-to pressure_node \
@@ -72,11 +70,12 @@ jobs:
 
       - name: Test
         run: |
-          source install/setup.bash
+          . /opt/ros/humble/setup.bash
+          [ -f install/setup.bash ] && . install/setup.bash
           
-          # Roda os testes, ignorando os DISABLED_ automaticamente
           colcon test \
             --packages-select pressure_node \
             --event-handlers console_direct+
             
           colcon test-result --verbose
+        shell: bash
