@@ -24,19 +24,16 @@ SyncNode::SyncNode() : Node("sync_node")
             std::placeholders::_3));
 }
 
-void SyncNode::synced_callback(const IMUData::ConstSharedPtr& imu_msg, 
-                             const PressureData::ConstSharedPtr& pressure_msg)
+void SyncNode::synced_callback(
+    const IMUState::ConstSharedPtr& imu_msg, 
+    const PressureState::ConstSharedPtr& pressure_msg,
+    const ActuatorState::ConstSharedPtr& actuator_msg)
 {
     auto synced_msg = std::make_unique<SyncedSensorData>();
 
-    synced_msg->imu_data.stamp = imu_msg->stamp;
-
-    synced_msg->imu_data.roll = imu_msg->roll; 
-    synced_msg->imu_data.pitch = imu_msg->pitch;
-    synced_msg->imu_data.yaw = imu_msg->yaw;
-    
-    synced_msg->pressure_data.stamp = pressure_msg->stamp;
-    synced_msg->pressure_data.pressures = pressure_msg->pressures;
+    synced_msg->imu_data = *imu_msg;
+    synced_msg->pressure_data = *pressure_msg;
+    synced_msg->actuator_data = *actuator_msg;
     
     publisher_->publish(std::move(synced_msg));
 
