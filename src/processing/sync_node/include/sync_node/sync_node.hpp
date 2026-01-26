@@ -34,9 +34,9 @@ class SyncNode : public rclcpp::Node
 	private:
 	
 		void synced_callback(
-			const IMUData::ConstSharedPtr& imu_msg, 
-			const PressureData::ConstSharedPtr& pressure_msg
-			const PressureData::ConstSharedPtr& actuator_msg);
+			const IMUState::ConstSharedPtr& imu_msg, 
+			const PressureState::ConstSharedPtr& pressure_msg,
+			const ActuatorState::ConstSharedPtr& actuator_msg);
 
 		message_filters::Subscriber<IMUState> imu_sub_;
 		message_filters::Subscriber<PressureState> pressure_sub_;
