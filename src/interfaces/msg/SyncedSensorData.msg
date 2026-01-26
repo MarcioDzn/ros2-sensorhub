@@ -1,2 +1,3 @@
-IMUData imu_data
-PressureData pressure_data
+IMUState imu_data
+PressureState pressure_data
+State actuator_data
