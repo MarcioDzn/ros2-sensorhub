@@ -12,36 +12,47 @@ jobs:
       image: ros:humble-ros-base 
 
     steps:
-      # ESSENCIAL: Instalar git/tar/curl antes de qualquer coisa para o checkout funcionar
+      # 1. Instalar o básico para o Git e permissões
       - name: Install System Dependencies
         run: |
           apt-get update
           apt-get install -y git tar curl ccache
+          # Corrige problema de "dubious ownership" do git em containers
+          git config --global --add safe.directory '*'
         shell: bash
 
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # 2. Cache do ccache (mantido igual)
       - name: ccache storage
-        uses: actions/cache@v4 # Atualizei para v4 (mais rápido)
+        uses: actions/cache@v4
         with:
           path: ~/.ccache
           key: ${{ runner.os }}-ccache-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-ccache-
 
+      # 3. Cache do rosdep (MUDANÇA AQUI)
+      # Removido o hashFiles da chave principal para evitar o erro de diretório
       - name: rosdep cache
         uses: actions/cache@v4
         with:
           path: ~/.ros/rosdep
-          key: ${{ runner.os }}-rosdep-${{ hashFiles('**/package.xml') }}
+          key: ${{ runner.os }}-rosdep-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-rosdep-
 
       - name: Install dependencies
         run: |
+          # Garante que o diretório de trabalho é tratado como seguro pelo root
+          git config --global --add safe.directory $GITHUB_WORKSPACE
+          
           if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then
             rosdep init
           fi
           rosdep update
+          # Tenta instalar as dependências
           rosdep install --from-paths . --ignore-src -r -y
         shell: bash
 
@@ -49,8 +60,6 @@ jobs:
         run: |
           export PATH="/usr/lib/ccache:$PATH"
           export CCACHE_DIR=$HOME/.ccache
-          
-          # Carrega o ambiente do ROS
           . /opt/ros/humble/setup.bash
           
           colcon build \
@@ -61,9 +70,8 @@ jobs:
 
       - name: Test
         run: |
-          # Você precisa do source do ROS E do seu workspace para testar
           . /opt/ros/humble/setup.bash
-          . install/setup.bash
+          [ -f install/setup.bash ] && . install/setup.bash
           
           colcon test \
             --packages-select pressure_node \
