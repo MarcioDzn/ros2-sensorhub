@@ -12,8 +12,8 @@ find_package(builtin_interfaces REQUIRED)
 find_package(sensor_msgs REQUIRED)
 
 set(msg_files
-  "msg/IMUData.msg"
-  "msg/IMUState.msg"
+  "msg/imu/IMUData.msg"
+  "msg/imu/IMUState.msg"
   "msg/PressureUnitSensor.msg"
   "msg/PressureData.msg"
   "msg/PressureState.msg"
