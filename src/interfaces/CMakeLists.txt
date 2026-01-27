@@ -14,9 +14,9 @@ find_package(sensor_msgs REQUIRED)
 set(msg_files
   "msg/imu/IMUData.msg"
   "msg/imu/IMUState.msg"
-  "msg/PressureUnitSensor.msg"
-  "msg/PressureData.msg"
-  "msg/PressureState.msg"
+  "msg/pressure/PressureUnitSensor.msg"
+  "msg/pressure/PressureData.msg"
+  "msg/pressure/PressureState.msg"
   "msg/actuator/Command.msg"
   "msg/actuator/ActuatorState.msg"
   "msg/SyncedSensorData.msg"
