@@ -1,3 +1,3 @@
 IMUState imu_data
 PressureState pressure_data
-State actuator_data
+ActuatorState actuator_data
