@@ -10,14 +10,14 @@
 
 #include "interfaces/srv/set_torque.hpp"
 #include "interfaces/msg/command.hpp"
-#include "interfaces/msg/state.hpp"
+#include "interfaces/msg/actuator_state.hpp"
 
 class NodeManager;
 class ParameterManager;
 
 using SetTorque = interfaces::srv::SetTorque;
 using Command = interfaces::msg::Command;
-using State = interfaces::msg::State;
+using State = interfaces::msg::ActuatorState;
 
 class ActuatorNode : public rclcpp::Node
 {

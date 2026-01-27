@@ -8,7 +8,7 @@
 
 #include "node/actuator_node.hpp"
 
-#include "interfaces/msg/state.hpp"
+#include "interfaces/msg/actuator_state.hpp"
 #include "interfaces/msg/command.hpp"
 #include "interfaces/srv/set_torque.hpp"
 
@@ -62,10 +62,10 @@ TEST_F(ActuatorNodeFixture, publishes_data_success) {
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .reliable()
         .durability_volatile();
-    auto sub = node->create_subscription<interfaces::msg::State>(
+    auto sub = node->create_subscription<interfaces::msg::ActuatorState>(
         "dxl/state",
         qos,
-        [&received](const interfaces::msg::State::SharedPtr msg) {
+        [&received](const interfaces::msg::ActuatorState::SharedPtr msg) {
             received = true;
         }
     );
@@ -87,10 +87,10 @@ TEST_F(ActuatorNodeFixture, publishes_data_checksum_error) {
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .reliable()
         .durability_volatile();
-    auto sub = node->create_subscription<interfaces::msg::State>(
+    auto sub = node->create_subscription<interfaces::msg::ActuatorState>(
         "dxl/state",
         qos,
-        [&received](const interfaces::msg::State::SharedPtr msg) {
+        [&received](const interfaces::msg::ActuatorState::SharedPtr msg) {
             received = true;
         }
     );
@@ -114,10 +114,10 @@ TEST_F(ActuatorNodeFixture, publishes_data_content) {
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .reliable()
         .durability_volatile();
-    auto sub = node->create_subscription<interfaces::msg::State>(
+    auto sub = node->create_subscription<interfaces::msg::ActuatorState>(
         "dxl/state",
         qos,
-        [&received, &name, &curr_pos](const interfaces::msg::State::SharedPtr msg) {
+        [&received, &name, &curr_pos](const interfaces::msg::ActuatorState::SharedPtr msg) {
             received = true;
             name = msg->names[0];
             curr_pos = msg->positions[0];

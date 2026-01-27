@@ -12,14 +12,14 @@
 
 #include "interfaces/msg/imu_state.hpp"
 #include "interfaces/msg/pressure_state.hpp"
-#include "interfaces/msg/state.hpp"
+#include "interfaces/msg/actuator_state.hpp"
 
 #include "interfaces/msg/synced_sensor_data.hpp"
 
 
 using IMUState = interfaces::msg::IMUState;
 using PressureState = interfaces::msg::PressureState;
-using ActuatorState = interfaces::msg::State; // actuator
+using ActuatorState = interfaces::msg::ActuatorState; // actuator
 
 using SyncedSensorData = interfaces::msg::SyncedSensorData;
 
