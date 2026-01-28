@@ -2,6 +2,7 @@ version: "3.9"
 
 services:
   sensorhub:
+    privileged: true
     build:
       context: ..
       dockerfile: dev/Dockerfile
@@ -17,8 +18,9 @@ services:
       - FASTRTPS_DEFAULT_PROFILES_FILE=/app/ros2_ws/dev/fastdds_sensorhub.xml
     
     # apenas na raspberry
-    #devices:
-      #- /dev/gpiomem:/dev/gpiomem
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+      - /dev/gpiomem:/dev/gpiomem
     tty: true
     stdin_open: true
     command: >
