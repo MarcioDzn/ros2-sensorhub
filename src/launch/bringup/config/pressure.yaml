@@ -2,7 +2,7 @@ pressure_node:
   ros__parameters:
     base_name: "pressure"
     update_rate_ms: 15
-    usb_ports: ["/dev/ACM0", "/dev/ACM1"] # cada sensor tem uma porta
+    usb_ports: ["/dev/ttyACM0"] # cada sensor tem uma porta
     baudrate: 115200
-    ids: [1, 2]
-    names: ["right_insole", "left_insole"]
+    ids: [1]
+    names: ["right_insole"]
