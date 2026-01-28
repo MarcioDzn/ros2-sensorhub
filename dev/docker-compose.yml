@@ -19,7 +19,7 @@ services:
     
     # apenas na raspberry
     devices:
-      - /dev/ACM0:/dev/ttyACM0
+      - /dev/ttyACM0:/dev/ttyACM0
       - /dev/ttyUSB0:/dev/ttyUSB0
       - /dev/gpiomem:/dev/gpiomem
     tty: true

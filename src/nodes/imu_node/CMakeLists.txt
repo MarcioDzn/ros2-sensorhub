@@ -32,6 +32,10 @@ add_library(imu_driver SHARED
   src/driver/bno055imu.cpp
 )
 
+if (RASPBERRY_PI)
+  target_link_libraries(imu_driver PRIVATE wiringPi)
+endif()
+
 target_include_directories(imu_driver PUBLIC include)
 
 
@@ -60,7 +64,7 @@ ament_target_dependencies(imu_node_lib
 )
 
 add_executable(imu_node src/main.cpp)
-target_link_libraries(imu_node imu_node_lib)
+target_link_libraries(imu_node PRIVATE imu_node_lib)
 
 target_include_directories(imu_node
   PUBLIC
