@@ -31,7 +31,7 @@ class DynamixelDriver : public IActuatorDriver
         {
             TORQUE_ADDR             = 0x18,
             GOAL_POS_ADDR           = 0x1E,
-            CURRENT_POS_ADDR        = 0x25
+            CURRENT_POS_ADDR        = 0x24
         } dynamixel_protocol_addresses;
 
         typedef enum

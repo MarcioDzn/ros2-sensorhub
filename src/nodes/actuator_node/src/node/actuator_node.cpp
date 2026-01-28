@@ -110,7 +110,6 @@ void ActuatorNode::state_callback()
         {
             uint16_t temp_pos;
             auto result = actuator_driver_->get_current_position(ids[idx], temp_pos);
-
             if (result == 0) {
                 // adiciona apenas os nomes e posições válidos
                 successful_names.push_back(names[idx]);
