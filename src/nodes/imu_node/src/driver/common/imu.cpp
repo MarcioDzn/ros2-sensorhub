@@ -70,14 +70,17 @@ void IMU::read_quaternions(float quaternion[4])
     int zl = (int) wiringPiI2CReadReg8(dev_, BNO055_QUATERNION_DATA_Z_LSB_ADDR);
     int zm = (int) wiringPiI2CReadReg8(dev_, BNO055_QUATERNION_DATA_Z_MSB_ADDR);
 
-    // imu manda de 0 a 65535 (unsigned int)
-    // mas os valores (sem normalização) devem
-    // ir de -32768 a 32768, por isso subtrai
-    // a divisão é pra normalizar (-1 a 1)
-    quaternion[0] = ((float)(wl | (wm << 8)) - 32768.0f) / 32768.0f;
-    quaternion[1] = ((float)(xl | (xm << 8)) - 32768.0f) / 32768.0f;
-    quaternion[2] = ((float)(yl | (ym << 8)) - 32768.0f) / 32768.0f;
-    quaternion[3] = ((float)(zl | (zm << 8)) - 32768.0f) / 32768.0f;
+    quaternion[0] = (float)((int16_t)(wl | (wm << 8))) / 16384.0f;
+    quaternion[1] = (float)((int16_t)(xl | (xm << 8))) / 16384.0f;
+    quaternion[2] = (float)((int16_t)(yl | (ym << 8))) / 16384.0f;
+    quaternion[3] = (float)((int16_t)(zl | (zm << 8))) / 16384.0f;
+
+    // normalização
+    float n = sqrt(quaternion[0]*quaternion[0] + quaternion[1]*quaternion[1] + 
+                   quaternion[2]*quaternion[2] + quaternion[3]*quaternion[3]);
+    if (n > 0) {
+        quaternion[0] /= n; quaternion[1] /= n; quaternion[2] /= n; quaternion[3] /= n;
+    }
 }
 
 // https://madecalculators.com/quaternion-to-euler-calculator/?utm_source=chatgpt.com
