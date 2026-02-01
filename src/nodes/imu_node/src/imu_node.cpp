@@ -32,13 +32,28 @@ void IMUNode::state_callback()
 
     for (const auto& [id, imu] : imus)
     {
-        std::vector<float> imu_data;
-        imu->get_euler_data(imu_data);
+        std::vector<float> imu_euler_data;
+        std::vector<float> imu_quaternions_data;
+        
+        imu->get_euler_data(imu_euler_data);
+        imu->get_quaternions_data(imu_quaternions_data);
 
         IMUData data;
-        data.roll = imu_data[0];
-        data.pitch = imu_data[1];
-        data.yaw = imu_data[2];
+        data.id = id;
+
+        // euler angles
+        data.roll = imu_euler_data[0];
+        data.pitch = imu_euler_data[1];
+        data.yaw = imu_euler_data[2];
+
+        // quaternions
+        sensor_msgs::msg::Imu standard_imu_msg;
+        standard_imu_msg.orientation.w = imu_quaternions_data[0];
+        standard_imu_msg.orientation.x = imu_quaternions_data[1];
+        standard_imu_msg.orientation.y = imu_quaternions_data[2];
+        standard_imu_msg.orientation.z = imu_quaternions_data[3];
+        
+        data.imu_data.push_back(standard_imu_msg);
         
         msg.imus.push_back(data);
     }

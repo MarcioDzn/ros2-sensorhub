@@ -9,6 +9,7 @@
 
 #include "interfaces/msg/imu_data.hpp"
 #include "interfaces/msg/imu_state.hpp"
+#include "sensor_msgs/msg/imu.hpp"
 
 struct ImuConfig {
     std::string name;

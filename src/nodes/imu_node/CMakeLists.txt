@@ -22,6 +22,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(interfaces REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
 include_directories(
   include/imu_node
@@ -61,6 +62,7 @@ target_link_libraries(imu_node_lib
 ament_target_dependencies(imu_node_lib
   rclcpp
   interfaces
+  sensor_msgs
 )
 
 add_executable(imu_node src/main.cpp)

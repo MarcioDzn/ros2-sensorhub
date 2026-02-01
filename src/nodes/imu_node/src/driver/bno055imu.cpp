@@ -73,21 +73,21 @@ void BNO055IMU::get_euler_data(std::vector<float>& out_data) {
     out_data[2] = out_data[2] - calibration_ref_[2]; // roll
 }
 
-// TODO: Refatorar duplicação de código
-void BNO055IMU::get_quaternions_euler_data(std::vector<float>& out_data) {
+void BNO055IMU::get_quaternions_data(std::vector<float>& out_data) {
     digitalWrite(SEL_A, selA_state_);
     digitalWrite(SEL_B, selB_state_);
     
     delay(1);
 
-    out_data.resize(3);
-    bno_.read_quaternions_euler(out_data.data());
+    out_data.resize(4);
+    bno_.read_quaternions(out_data.data());
     delay(1);
     
     // calibrando
-    out_data[0] = out_data[0] - calibration_ref_[0]; // yaw
-    out_data[1] = out_data[1] - calibration_ref_[1]; // pitch
-    out_data[2] = out_data[2] - calibration_ref_[2]; // roll
+    out_data[0] = out_data[0] - calibration_ref_quaternions_[0]; // w
+    out_data[1] = out_data[1] - calibration_ref_quaternions_[1]; // x
+    out_data[2] = out_data[2] - calibration_ref_quaternions_[2]; // y
+    out_data[3] = out_data[3] - calibration_ref_quaternions_[3]; // z
 }
 
 void BNO055IMU::calibrate_euler() {
@@ -100,13 +100,13 @@ void BNO055IMU::calibrate_euler() {
     delay(1);
 }
 
-void BNO055IMU::calibrate_quaternions_euler() {
+void BNO055IMU::calibrate_quaternions() {
     digitalWrite(SEL_A, selA_state_);
     digitalWrite(SEL_B, selB_state_);
     
     delay(1);
 
-    bno_.read_quaternions_euler(calibration_ref_);
+    bno_.read_quaternions(calibration_ref_quaternions_);
     delay(1);
 }
 
