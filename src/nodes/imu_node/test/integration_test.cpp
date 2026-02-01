@@ -169,6 +169,53 @@ TEST_F(IMUFixture, read_euler_success)
     EXPECT_NEAR(received_msg->imus[0].yaw, 20.0f, 0.05);
 }
 
+TEST_F(IMUFixture, read_quaternions_success)
+{
+    // LSB 0x40 e MSB 0x40 -> 16448 decimal
+    uint8_t mock_val = 0x40;
+    
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_W_LSB_ADDR] = mock_val;
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_W_MSB_ADDR] = mock_val;
+
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_X_LSB_ADDR] = mock_val;
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_X_MSB_ADDR] = mock_val;
+
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_Y_LSB_ADDR] = mock_val;
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_Y_MSB_ADDR] = mock_val;
+
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_Z_LSB_ADDR] = mock_val;
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_Z_MSB_ADDR] = mock_val;
+
+    using IMUState = interfaces::msg::IMUState;
+    IMUState::SharedPtr received_msg = nullptr;
+
+    auto qos = rclcpp::QoS(rclcpp::KeepLast(10)).best_effort();
+    auto sub = sub_node->create_subscription<IMUState>(
+        "imu/state", qos, [&](IMUState::SharedPtr msg) {
+            received_msg = msg;
+        });
+
+    auto start_time = std::chrono::steady_clock::now();
+    while (!received_msg && (std::chrono::steady_clock::now() - start_time < 2s)) {
+        rclcpp::spin_some(node);
+        rclcpp::spin_some(sub_node);
+        std::this_thread::sleep_for(10ms);
+    }
+
+    ASSERT_NE(received_msg, nullptr);
+    ASSERT_FALSE(received_msg->imus.empty());
+
+    const auto & q = received_msg->imus[0].imu_data[0].orientation;
+
+    // valor esperado (16448 - 32768) / 32768 = -0.49804...
+    double expected_val = -0.498046875;
+
+    EXPECT_NEAR(q.w, expected_val, 0.001);
+    EXPECT_NEAR(q.x, expected_val, 0.001);
+    EXPECT_NEAR(q.y, expected_val, 0.001);
+    EXPECT_NEAR(q.z, expected_val, 0.001);
+}
+
 TEST_F(IMUFixture, read_multisensor_euler_success)
 {
     // simula dados de Euler no mapa (Roll = 20 graus)
