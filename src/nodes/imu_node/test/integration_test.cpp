@@ -205,20 +205,20 @@ TEST_F(IMUFixture, read_quaternions_success)
     ASSERT_NE(received_msg, nullptr);
     ASSERT_FALSE(received_msg->imus.empty());
 
-    const auto & q = received_msg->imus[0].imu_data[0].orientation;
+    const auto & q = received_msg->imus[0];
     
     // com 4 eixos de valores iguais (16448), 
     // a normalização faz: 16448 / sqrt(16448² + 16448² + 16448² + 16448²) = 0.5
     double val = 16448.0 / 16384.0;
     double expected_val = val / std::sqrt(val*val + val*val + val*val + val*val);
 
-    EXPECT_NEAR(q.w, expected_val, 0.0001);
-    EXPECT_NEAR(q.x, expected_val, 0.0001);
-    EXPECT_NEAR(q.y, expected_val, 0.0001);
-    EXPECT_NEAR(q.z, expected_val, 0.0001);
+    EXPECT_NEAR(q.q_w, expected_val, 0.0001);
+    EXPECT_NEAR(q.q_x, expected_val, 0.0001);
+    EXPECT_NEAR(q.q_y, expected_val, 0.0001);
+    EXPECT_NEAR(q.q_z, expected_val, 0.0001);
 
     // Validação extra: a norma final deve ser sempre 1.0
-    double norm = std::sqrt(q.w*q.w + q.x*q.x + q.y*q.y + q.z*q.z);
+    double norm = std::sqrt(q.q_w*q.q_w + q.q_x*q.q_x + q.q_y*q.q_y + q.q_z*q.q_z);
     EXPECT_NEAR(norm, 1.0, 0.0001);
 }
 

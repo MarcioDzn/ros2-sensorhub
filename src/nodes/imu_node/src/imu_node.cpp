@@ -47,13 +47,10 @@ void IMUNode::state_callback()
         data.yaw = imu_euler_data[2];
 
         // quaternions
-        sensor_msgs::msg::Imu standard_imu_msg;
-        standard_imu_msg.orientation.w = imu_quaternions_data[0];
-        standard_imu_msg.orientation.x = imu_quaternions_data[1];
-        standard_imu_msg.orientation.y = imu_quaternions_data[2];
-        standard_imu_msg.orientation.z = imu_quaternions_data[3];
-        
-        data.imu_data.push_back(standard_imu_msg);
+        data.q_w = imu_quaternions_data[0];
+        data.q_x = imu_quaternions_data[1];
+        data.q_y = imu_quaternions_data[2];
+        data.q_z = imu_quaternions_data[3];
         
         msg.imus.push_back(data);
     }
