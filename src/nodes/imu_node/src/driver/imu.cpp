@@ -1,4 +1,4 @@
-#include "driver/common/imu.hpp"
+#include "driver/imu.hpp"
 
 #include <unistd.h>
 #include <fcntl.h>

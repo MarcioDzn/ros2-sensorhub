@@ -29,7 +29,7 @@ include_directories(
 )
 
 add_library(imu_driver SHARED
-  src/driver/common/imu.cpp
+  src/driver/imu.cpp
   src/driver/bno055imu.cpp
 )
 

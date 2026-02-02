@@ -9,7 +9,7 @@
 #include <map>
 
 #include "imu_node.hpp"
-#include "driver/common/imu.hpp"
+#include "driver/imu.hpp"
 
 #include "interfaces/msg/imu_state.hpp"
 

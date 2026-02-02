@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <map>
 
-#include "driver/common/imu.hpp"
+#include "driver/imu.hpp"
 
 class I2CManager {
 private:
