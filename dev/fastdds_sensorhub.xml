@@ -6,7 +6,6 @@
         <transport_id>udp_transport</transport_id>
         <type>UDPv4</type>
       </transport_descriptor>
-
       <transport_descriptor>
         <transport_id>shm_transport</transport_id>
         <type>SHM</type>
@@ -33,8 +32,7 @@
             <locator>
               <udpv4>
                 <address>127.0.0.1</address>
-                <port>7830</port>
-              </udpv4>
+                </udpv4>
             </locator>
           </initialPeersList>
 
@@ -42,13 +40,11 @@
             <locator>
               <udpv4>
                 <address>10.8.0.2</address>
-                <port>7830</port>
-              </udpv4>
+                </udpv4>
             </locator>
             <locator>
               <udpv4>
                 <address>127.0.0.1</address>
-                <port>7830</port>
               </udpv4>
             </locator>
           </metatrafficUnicastLocatorList>
