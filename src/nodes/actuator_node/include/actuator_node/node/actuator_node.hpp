@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <mutex>
+#include <fstream>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -42,6 +43,8 @@ class ActuatorNode : public rclcpp::Node
         rclcpp::Service<SetTorque>::SharedPtr set_torque_service_;
         
         rclcpp::TimerBase::SharedPtr timer_;
+
+        std::ofstream timing_log_;
 };
 
 #endif // ACTUATOR_NODE_HPP

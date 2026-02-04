@@ -11,19 +11,22 @@ using namespace std::chrono_literals;
 ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options) 
     : Node("actuator_node", options)
 {   
+    // log
+    timing_log_.open("tempos_atuadores.txt", std::ios::out | std::ios::trunc);
+
     parameter_manager_ = std::make_shared<ParameterManager>(this);
     actuator_driver_ = ActuatorFactory::createDynamixel();
 
     // inicializa porta serial inserida nos parâmetros do yaml
-    if (actuator_driver_->init(
-        parameter_manager_->get_usb_port(), 
-        parameter_manager_->get_baudrate()) != 0)
-    {
-        RCLCPP_FATAL(this->get_logger(), 
-            "Falha na inicialização do hardware serial na porta %s.", 
-            parameter_manager_->get_usb_port().c_str());
-        throw std::runtime_error("Falha ao inicializar ActuatorNode");
-    }
+    // if (actuator_driver_->init(
+    //     parameter_manager_->get_usb_port(), 
+    //     parameter_manager_->get_baudrate()) != 0)
+    // {
+    //     RCLCPP_FATAL(this->get_logger(), 
+    //         "Falha na inicialização do hardware serial na porta %s.", 
+    //         parameter_manager_->get_usb_port().c_str());
+    //     throw std::runtime_error("Falha ao inicializar ActuatorNode");
+    // }
 
     // TODO: verificar se os ids fornecidos pelo yaml
     // são de atuadores realmente conectados
@@ -100,6 +103,8 @@ void ActuatorNode::state_callback()
     const auto& ids = parameter_manager_->get_ids();
     const auto& names = parameter_manager_->get_names();
 
+    static std::map<std::string, int> loop_count_map; // contador por motor
+
     std::vector<std::string> successful_names;
     std::vector<int16_t> successful_positions;
 
@@ -109,7 +114,23 @@ void ActuatorNode::state_callback()
         for (size_t idx = 0; idx < ids.size(); idx++)
         {
             uint16_t temp_pos;
-            auto result = actuator_driver_->get_current_position(ids[idx], temp_pos);
+
+            auto start = std::chrono::high_resolution_clock::now(); // inicia contagem de tempo
+            // auto result = actuator_driver_->get_current_position(ids[idx], temp_pos);
+            auto result = 0;
+            auto end = std::chrono::high_resolution_clock::now(); // finaliza contagem de tempo
+
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+            // registra no log se ainda não atingiu 5 loops para este motor
+            if (timing_log_.is_open() && loop_count_map[names[idx]] < 5) {
+                loop_count_map[names[idx]]++; // incrementa contador do motor
+                timing_log_ << names[idx] 
+                            << " loop" << loop_count_map[names[idx]] 
+                            << " result=" << result 
+                            << " tempo_us=" << duration.count() << "\n";
+            }
+
             if (result == 0) {
                 // adiciona apenas os nomes e posições válidos
                 successful_names.push_back(names[idx]);
@@ -170,4 +191,8 @@ void ActuatorNode::goal_position_callback(const Command::SharedPtr msg)
     }
 }
 
-ActuatorNode::~ActuatorNode() = default;
+ActuatorNode::~ActuatorNode() {
+    if (timing_log_.is_open()) {
+        timing_log_.close();
+    }
+};
