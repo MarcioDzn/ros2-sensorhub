@@ -14,7 +14,6 @@ find_package(rclcpp REQUIRED)
 find_package(interfaces REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(common_serial REQUIRED)
-find_package(models REQUIRED)
 
 include_directories(
   include/actuator_node
@@ -31,14 +30,12 @@ ament_target_dependencies(actuator_driver
 )
 
 add_library(actuator_control SHARED
-  src/control/model/actuator_manager.cpp
   src/control/node/parameter_manager.cpp
 )
 target_include_directories(actuator_control PUBLIC include)
 
 ament_target_dependencies(actuator_control
   rclcpp
-  models
 )
 
 add_library(actuator_node_lib SHARED
@@ -54,7 +51,6 @@ ament_target_dependencies(actuator_node_lib
   rclcpp
   interfaces
   common_serial
-  models
 )
 
 add_executable(actuator_node src/main.cpp)
