@@ -11,7 +11,6 @@ find_package(rclcpp REQUIRED)
 find_package(interfaces REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(common_serial REQUIRED)
-find_package(models)
 
 include_directories(
   include/pressure_node
@@ -51,7 +50,6 @@ ament_target_dependencies(pressure_node_lib
   rclcpp
   interfaces
   common_serial
-  models
 )
 
 add_executable(pressure_node src/main.cpp)
