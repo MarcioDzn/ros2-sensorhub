@@ -1,15 +1,20 @@
 joint_1 loop1 result=0 tempo_us=0
 joint_2 loop1 result=0 tempo_us=0
 joint_3 loop1 result=0 tempo_us=0
+LOOP_TOTAL loop1 tempo_us=155
 joint_1 loop2 result=0 tempo_us=0
 joint_2 loop2 result=0 tempo_us=0
 joint_3 loop2 result=0 tempo_us=0
+LOOP_TOTAL loop2 tempo_us=34
 joint_1 loop3 result=0 tempo_us=0
 joint_2 loop3 result=0 tempo_us=0
 joint_3 loop3 result=0 tempo_us=0
+LOOP_TOTAL loop3 tempo_us=96
 joint_1 loop4 result=0 tempo_us=0
 joint_2 loop4 result=0 tempo_us=0
 joint_3 loop4 result=0 tempo_us=0
+LOOP_TOTAL loop4 tempo_us=101
 joint_1 loop5 result=0 tempo_us=0
 joint_2 loop5 result=0 tempo_us=0
 joint_3 loop5 result=0 tempo_us=0
+LOOP_TOTAL loop5 tempo_us=129

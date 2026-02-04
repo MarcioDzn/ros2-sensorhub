@@ -108,6 +108,9 @@ void ActuatorNode::state_callback()
     std::vector<std::string> successful_names;
     std::vector<int16_t> successful_positions;
 
+    static int total_loop_count = 0;                  // contador do loop total
+    auto start_total = std::chrono::high_resolution_clock::now();
+
     {
         std::lock_guard<std::mutex> lock(driver_mutex_);
 
@@ -150,6 +153,16 @@ void ActuatorNode::state_callback()
         state_publisher_->publish(msg);
     } else {
         RCLCPP_WARN(this->get_logger(), "Nenhum atuador foi lido com sucesso. Publicação cancelada.");
+    }
+
+    auto end_total = std::chrono::high_resolution_clock::now(); // fim do loop total
+    auto duration_total = std::chrono::duration_cast<std::chrono::microseconds>(end_total - start_total);
+
+    // registra o tempo total apenas 5 vezes
+    if (timing_log_.is_open() && total_loop_count < 5) {
+        total_loop_count++;
+        timing_log_ << "LOOP_TOTAL loop" << total_loop_count
+                    << " tempo_us=" << duration_total.count() << "\n";
     }
 }
 
