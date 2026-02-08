@@ -4,6 +4,7 @@
 #include <memory>
 #include <map>
 #include <vector>
+#include <fstream>
 
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/msg/pressure_state.hpp"
@@ -46,6 +47,8 @@ class PressureNode : public rclcpp::Node
         
         rclcpp::TimerBase::SharedPtr timer_;
         int update_rate_ms_;
+
+        std::ofstream timing_log_;
 };
 
 #endif // PRESSURE_NODE_HPP

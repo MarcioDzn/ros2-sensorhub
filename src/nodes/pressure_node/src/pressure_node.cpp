@@ -9,6 +9,7 @@ using namespace std::chrono_literals;
 PressureNode::PressureNode(const rclcpp::NodeOptions& options) 
     : Node("pressure_node", options)
 {
+    timing_log_.open("tempos_pressure.txt", std::ios::out | std::ios::trunc);
     parameter_manager_ = std::make_shared<ParameterManager>(this);
     pressure_drivers_.resize(parameter_manager_->get_ids().size());
 
@@ -45,23 +46,41 @@ void PressureNode::state_callback()
     auto ids = parameter_manager_->get_ids();
     auto names = parameter_manager_->get_names();
 
+    static std::map<std::string, int> loop_count_map;
+    
     // evita segfault
     size_t min_size = std::min(ids.size(), names.size());
 
     msg.names.reserve(min_size);
     msg.pressures.reserve(min_size);
 
+    static int total_loop_count = 0;    
+    auto start_total = std::chrono::high_resolution_clock::now();
+
     uint8_t error_count = 0;
     for (size_t idx = 0; idx < min_size; idx++)
     {
         std::vector<uint16_t> data;
         
+        auto start = std::chrono::high_resolution_clock::now(); // INICIO CONTAGEM TEMPO
+
         if (pressure_drivers_[idx]->get_data(data) != 0)
         {
             error_count++;
             continue;
         }
+
+        auto end = std::chrono::high_resolution_clock::now(); // FIM CONTAGEM TEMPO
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         
+        // registra no log se ainda não atingiu 5 loops para este sensor de pressao
+        if (timing_log_.is_open() && loop_count_map[names[idx]] < 5) {
+            loop_count_map[names[idx]]++; // incrementa contador do sensor de pressao
+            timing_log_ << names[idx] 
+                        << " loop" << loop_count_map[names[idx]] 
+                        << " tempo_us=" << duration.count() << "\n";
+        }
+
         PressureData pd;
         pd.pressures.reserve(data.size());
 
@@ -86,6 +105,17 @@ void PressureNode::state_callback()
         publisher_->publish(msg);
         RCLCPP_INFO(this->get_logger(), "Publicado com %zu IDs", msg.names.size());
     }   
+
+    auto end_total = std::chrono::high_resolution_clock::now(); // FIM CONTAGEM LOOP TOTAL
+    auto duration_total = std::chrono::duration_cast<std::chrono::microseconds>(end_total - start_total);
+
+    // registra o tempo total apenas 5 vezes
+    if (timing_log_.is_open() && total_loop_count < 5) {
+        total_loop_count++;
+        timing_log_ << "LOOP_TOTAL loop" << total_loop_count
+                    << " tempo_us=" << duration_total.count() << "\n";
+    }
+
 }
 
 PressureNode::~PressureNode() = default;
