@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <vector>
+#include <fstream>
 
 #include "imu_manager.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -37,6 +38,8 @@ class IMUNode : public rclcpp::Node
         std::shared_ptr<IMUManager> manager_;
 
         rclcpp::TimerBase::SharedPtr timer_;
+
+        std::ofstream timing_log_;
 };
 
 #endif // IMU_NODE_HPP
