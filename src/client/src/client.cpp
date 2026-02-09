@@ -31,11 +31,15 @@ void ClientNode::execute_path()
         {230, 230, 230}
     };
     
+    std::system("ros2 bag record -a -o bag_movimento_completo &");
+    
+    RCLCPP_INFO(this->get_logger(), "Gravacao de todos os topicos iniciada.");
+    
     for (size_t idx = 0; idx < goals.size(); idx++) 
     {
         auto message = interfaces::msg::Command();
         message.names = names; // <n> nomes
-        
+    
         // converte de graus pra a unidade do dynamixel
         for (size_t i = 0; i < goals[idx].size(); i++)
         {
@@ -44,9 +48,11 @@ void ClientNode::execute_path()
         
         actuator_command_publisher_->publish(message);
         
-        RCLCPP_INFO(this->get_logger(), "Mensagem publicada com %zu actuators", names.size());
         rclcpp::sleep_for(500ms);
     }
+    
+    std::system("pkill -2 -f 'ros2 bag record'");
+    RCLCPP_INFO(this->get_logger(), "Movimento finalizado. Gravacao encerrada para economizar espaco.");
 }
 
 ClientNode::~ClientNode() {};
