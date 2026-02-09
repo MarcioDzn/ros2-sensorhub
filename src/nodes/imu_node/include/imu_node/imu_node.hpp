@@ -12,6 +12,13 @@
 #include "interfaces/msg/imu_state.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 
+
+struct LoopTiming {
+    long start = 0;
+    long end = 0;
+    long total = 0;
+};
+
 struct ImuConfig {
     std::string name;
     int id;

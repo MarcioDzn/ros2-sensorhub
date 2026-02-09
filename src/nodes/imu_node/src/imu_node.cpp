@@ -33,10 +33,11 @@ void IMUNode::state_callback()
     auto msg = IMUState();
 
     const auto& ids = parameter_manager_->get_ids();
-
-    static std::map<int, int> loop_count_map;
-
-    static int total_loop_count = 0;                  // contador do loop total
+    
+    std::vector<long> imu_times;
+    static int loop_idx = 0;  // <-- contador do loop
+    
+    // COMEÇO DA CONTAGEM TOTAL
     auto start_total = std::chrono::high_resolution_clock::now();
 
     for (const auto& [id, imu] : imus)
@@ -44,23 +45,19 @@ void IMUNode::state_callback()
         std::vector<float> imu_euler_data;
         std::vector<float> imu_quaternions_data;
         
+        // COMEÇO DA CONTAGEM INDIVIDUAL
         auto start = std::chrono::high_resolution_clock::now();
 
         imu->get_euler_data(imu_euler_data);
         imu->get_quaternions_data(imu_quaternions_data);
 
+        // FIM DA CONTAGEM INDIVIDUAL
         auto end = std::chrono::high_resolution_clock::now(); // finaliza contagem de tempo
 
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
-        // registra no log se ainda não atingiu 5 loops para este motor
-        if (timing_log_.is_open() && loop_count_map[ids[id]] < 5) {
-            loop_count_map[ids[id]]++; // incrementa contador do motor
-            timing_log_ << ids[id] 
-                        << " loop" << loop_count_map[ids[id]] 
-                        << " tempo_us=" << duration.count() << "\n";
-        }
-
+        imu_times.push_back(duration.count());
+        
         IMUData data;
         data.id = id;
 
@@ -81,16 +78,19 @@ void IMUNode::state_callback()
     msg.header.stamp = this->get_clock()->now();
     publisher_->publish(msg);
 
-    // FIM CONTAGEM DE TEMPO
-    auto end_total = std::chrono::high_resolution_clock::now(); // fim do loop total
+    // FIM DA CONTAGEM TOTAL
+    auto end_total = std::chrono::high_resolution_clock::now(); 
     auto duration_total = std::chrono::duration_cast<std::chrono::microseconds>(end_total - start_total);
 
-    // registra o tempo total apenas 5 vezes
-    if (timing_log_.is_open() && total_loop_count < 5) {
-        total_loop_count++;
-        timing_log_ << "LOOP_TOTAL loop" << total_loop_count
-                    << " tempo_us=" << duration_total.count() << "\n";
-    }
+    // grava todos os IMUs + tempo total
+    if (loop_idx >= 5) return;
+    
+    timing_log_ << (loop_idx + 1) << "\t";
+    for (auto t_us : imu_times)
+        timing_log_ << t_us << "\t";
+    timing_log_ << duration_total.count() << "\n";
+    
+    loop_idx++;
 }
 
 IMUNode::~IMUNode() = default;
