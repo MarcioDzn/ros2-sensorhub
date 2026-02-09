@@ -18,15 +18,15 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
     actuator_driver_ = ActuatorFactory::createDynamixel();
 
     // inicializa porta serial inserida nos parâmetros do yaml
-    // if (actuator_driver_->init(
-    //     parameter_manager_->get_usb_port(), 
-    //     parameter_manager_->get_baudrate()) != 0)
-    // {
-    //     RCLCPP_FATAL(this->get_logger(), 
-    //         "Falha na inicialização do hardware serial na porta %s.", 
-    //         parameter_manager_->get_usb_port().c_str());
-    //     throw std::runtime_error("Falha ao inicializar ActuatorNode");
-    // }
+    if (actuator_driver_->init(
+        parameter_manager_->get_usb_port(), 
+        parameter_manager_->get_baudrate()) != 0)
+    {
+        RCLCPP_FATAL(this->get_logger(), 
+            "Falha na inicialização do hardware serial na porta %s.", 
+            parameter_manager_->get_usb_port().c_str());
+        throw std::runtime_error("Falha ao inicializar ActuatorNode");
+    }
 
     // TODO: verificar se os ids fornecidos pelo yaml
     // são de atuadores realmente conectados
@@ -119,8 +119,8 @@ void ActuatorNode::state_callback()
             uint16_t temp_pos;
 
             auto start = std::chrono::high_resolution_clock::now(); // inicia contagem de tempo
-            // auto result = actuator_driver_->get_current_position(ids[idx], temp_pos);
-            auto result = 0;
+            auto result = actuator_driver_->get_current_position(ids[idx], temp_pos);
+            //auto result = 0;
             auto end = std::chrono::high_resolution_clock::now(); // finaliza contagem de tempo
 
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
