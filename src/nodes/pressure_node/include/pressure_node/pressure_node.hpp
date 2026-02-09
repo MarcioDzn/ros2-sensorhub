@@ -18,6 +18,12 @@ using PressureState = interfaces::msg::PressureState;
 using PressureData = interfaces::msg::PressureData;
 using PressureUnitSensor = interfaces::msg::PressureUnitSensor;
 
+struct LoopTiming {
+    long start = 0;
+    long end = 0;
+    long total = 0;
+};
+
 struct DeviceInterface
 {
     std::shared_ptr<SerialHandler> serial;

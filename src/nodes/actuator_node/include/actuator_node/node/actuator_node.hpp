@@ -20,6 +20,12 @@ using SetTorque = interfaces::srv::SetTorque;
 using Command = interfaces::msg::Command;
 using State = interfaces::msg::ActuatorState;
 
+struct LoopTiming {
+    long start = 0;
+    long end = 0;
+    long total = 0;
+};
+
 class ActuatorNode : public rclcpp::Node
 {
     public:

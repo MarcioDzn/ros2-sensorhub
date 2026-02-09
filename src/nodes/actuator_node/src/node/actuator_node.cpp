@@ -103,12 +103,13 @@ void ActuatorNode::state_callback()
     const auto& ids = parameter_manager_->get_ids();
     const auto& names = parameter_manager_->get_names();
 
-    static std::map<std::string, int> loop_count_map; // contador por motor
+    std::vector<long> actuator_times;
+    static int loop_idx = 0;
 
     std::vector<std::string> successful_names;
     std::vector<int16_t> successful_positions;
 
-    static int total_loop_count = 0;                  // contador do loop total
+    // COMEÇO DA CONTAGEM TOTAL
     auto start_total = std::chrono::high_resolution_clock::now();
 
     {
@@ -117,22 +118,17 @@ void ActuatorNode::state_callback()
         for (size_t idx = 0; idx < ids.size(); idx++)
         {
             uint16_t temp_pos;
-
+            
+            // COMEÇO DA CONTAGEM INDIVIDUAL
             auto start = std::chrono::high_resolution_clock::now(); // inicia contagem de tempo
+            
             auto result = actuator_driver_->get_current_position(ids[idx], temp_pos);
-            //auto result = 0;
+            
+            // FIM DA CONTAGEM INDIVIDUAL
             auto end = std::chrono::high_resolution_clock::now(); // finaliza contagem de tempo
-
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
-            // registra no log se ainda não atingiu 5 loops para este motor
-            if (timing_log_.is_open() && loop_count_map[names[idx]] < 5) {
-                loop_count_map[names[idx]]++; // incrementa contador do motor
-                timing_log_ << names[idx] 
-                            << " loop" << loop_count_map[names[idx]] 
-                            << " result=" << result 
-                            << " tempo_us=" << duration.count() << "\n";
-            }
+            actuator_times.push_back(duration.count());
 
             if (result == 0) {
                 // adiciona apenas os nomes e posições válidos
@@ -155,15 +151,19 @@ void ActuatorNode::state_callback()
         RCLCPP_WARN(this->get_logger(), "Nenhum atuador foi lido com sucesso. Publicação cancelada.");
     }
 
+    // FIM DA CONTAGEM TOTAL
     auto end_total = std::chrono::high_resolution_clock::now(); // fim do loop total
     auto duration_total = std::chrono::duration_cast<std::chrono::microseconds>(end_total - start_total);
 
-    // registra o tempo total apenas 5 vezes
-    if (timing_log_.is_open() && total_loop_count < 5) {
-        total_loop_count++;
-        timing_log_ << "LOOP_TOTAL loop" << total_loop_count
-                    << " tempo_us=" << duration_total.count() << "\n";
-    }
+    // grava todos os tempos
+    if (loop_idx >= 5) return;
+    
+    timing_log_ << (loop_idx + 1) << "\t";
+    for (auto t_us : actuator_times)
+        timing_log_ << t_us << "\t";
+    timing_log_ << duration_total.count() << "\n";
+    
+    loop_idx++;
 }
 
 void ActuatorNode::goal_position_callback(const Command::SharedPtr msg)
