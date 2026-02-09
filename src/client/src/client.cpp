@@ -1,36 +1,7 @@
 #include "client.hpp"
 
-
-#include <iostream>
-#include <sstream>
 #include <vector>
 #include <string>
-#include <algorithm>
-
-// funcao auxiliar para split de strings
-std::vector<std::string> split_string(const std::string &s, char delimiter)
-{
-    std::vector<std::string> result;
-    std::string token;
-    std::istringstream tokenStream(s);
-    while (std::getline(tokenStream, token, delimiter))
-    {
-        token.erase(std::remove_if(token.begin(), token.end(), ::isspace), token.end());
-        if (!token.empty())
-            result.push_back(token);
-    }
-    return result;
-}
-
-// funcao auxiliar para converter string para int16_t
-std::vector<int16_t> split_ints(const std::string &s, char delimiter)
-{
-    std::vector<int16_t> result;
-    auto tokens = split_string(s, delimiter);
-    for (auto &t : tokens)
-        result.push_back(static_cast<int16_t>(std::stoi(t)));
-    return result;
-}
 
 using namespace std::chrono_literals;
 
@@ -44,32 +15,6 @@ ClientNode::ClientNode(const rclcpp::NodeOptions& options)
 
 void ClientNode::run(int argc, char **argv)
 {
-    /*
-    std::vector<std::string> names;
-    std::vector<int16_t> goals;
-
-    for (int i = 1; i < argc; i++)
-    {
-        std::string arg = argv[i];
-        if (arg == "--names" && i + 1 < argc)
-            names = split_string(argv[++i], ',');
-        else if (arg == "--goals" && i + 1 < argc)
-            goals = split_ints(argv[++i], ',');
-    }
-
-    if (names.empty() || goals.empty() || names.size() != goals.size())
-    {
-        RCLCPP_ERROR(this->get_logger(), "Use: --names nome1,nome2 --goals 10,20 (mesmo tamanho)");
-        return;
-    }
-
-    auto message = interfaces::msg::Command();
-    message.names = names;
-    message.goals = goals;
-
-    actuator_command_publisher_->publish(message);
-    RCLCPP_INFO(this->get_logger(), "Mensagem publicada com %zu actuators", names.size());
-    */
     execute_path();
 }
 
@@ -78,20 +23,27 @@ void ClientNode::execute_path()
     std::vector<std::string> names = {"joint_1", "joint_2", "joint_3"};
     std::vector<std::vector<int16_t>> goals = 
     {
-        {2000, 1900, 1800}, 
-        {2100, 2000, 1900}, 
-        {2200, 2100, 2000}, 
-        {2300, 2200, 2100}, 
-        {2400, 2300, 2200}
+        {180, 180, 180}, 
+        {190, 190, 190}, 
+        {200, 200, 200}, 
+        {210, 210, 210}, 
+        {220, 220, 220}, 
+        {230, 230, 230}
     };
     
     for (size_t idx = 0; idx < goals.size(); idx++) 
     {
         auto message = interfaces::msg::Command();
         message.names = names; // <n> nomes
-        message.goals = goals[idx]; // <n> posicoes
+        
+        // converte de graus pra a unidade do dynamixel
+        for (size_t i = 0; i < goals[idx].size(); i++)
+        {
+            message.goals.push_back(static_cast<int16_t>(std::round(goals[idx][i] / 0.088))); // <n> posicoes
+        } 
         
         actuator_command_publisher_->publish(message);
+        
         RCLCPP_INFO(this->get_logger(), "Mensagem publicada com %zu actuators", names.size());
         rclcpp::sleep_for(500ms);
     }
