@@ -12,6 +12,7 @@ class ClientNode : public rclcpp::Node
         virtual ~ClientNode();
                 
         void run(int argc, char **argv);
+        void execute_path(); 
         
     private:
         rclcpp::Publisher<interfaces::msg::Command>::SharedPtr actuator_command_publisher_;

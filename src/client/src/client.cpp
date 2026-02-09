@@ -44,10 +44,10 @@ ClientNode::ClientNode(const rclcpp::NodeOptions& options)
 
 void ClientNode::run(int argc, char **argv)
 {
+    /*
     std::vector<std::string> names;
     std::vector<int16_t> goals;
 
-    // Parse CLI simples
     for (int i = 1; i < argc; i++)
     {
         std::string arg = argv[i];
@@ -69,6 +69,32 @@ void ClientNode::run(int argc, char **argv)
 
     actuator_command_publisher_->publish(message);
     RCLCPP_INFO(this->get_logger(), "Mensagem publicada com %zu actuators", names.size());
+    */
+    execute_path();
+}
+
+void ClientNode::execute_path() 
+{
+    std::vector<std::string> names = {"joint_1", "joint_2", "joint_3"};
+    std::vector<std::vector<int16_t>> goals = 
+    {
+        {2000, 1900, 1800}, 
+        {2100, 2000, 1900}, 
+        {2200, 2100, 2000}, 
+        {2300, 2200, 2100}, 
+        {2400, 2300, 2200}
+    };
+    
+    for (size_t idx = 0; idx < goals.size(); idx++) 
+    {
+        auto message = interfaces::msg::Command();
+        message.names = names; // <n> nomes
+        message.goals = goals[idx]; // <n> posicoes
+        
+        actuator_command_publisher_->publish(message);
+        RCLCPP_INFO(this->get_logger(), "Mensagem publicada com %zu actuators", names.size());
+        rclcpp::sleep_for(500ms);
+    }
 }
 
 ClientNode::~ClientNode() {};
