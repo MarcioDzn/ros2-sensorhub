@@ -4,6 +4,8 @@ using namespace std::chrono_literals;
 
 IMUNode::IMUNode(const rclcpp::NodeOptions & options) : Node("imu_node", options)
 {
+    timing_log_.open("tempos_imus.txt", std::ios::out | std::ios::trunc);
+
     parameter_manager_ = std::make_shared<ParameterManager>(this);
     manager_ = std::make_unique<IMUManager>(parameter_manager_);
 
@@ -30,14 +32,32 @@ void IMUNode::state_callback()
     const auto& imus = manager_->get_imus();
     auto msg = IMUState();
 
+    const auto& ids = parameter_manager_->get_ids();
+    
+    std::vector<long> imu_times;
+    static int loop_idx = 0;  // <-- contador do loop
+    
+    // COMEÇO DA CONTAGEM TOTAL
+    auto start_total = std::chrono::high_resolution_clock::now();
+
     for (const auto& [id, imu] : imus)
     {
         std::vector<float> imu_euler_data;
         std::vector<float> imu_quaternions_data;
         
+        // COMEÇO DA CONTAGEM INDIVIDUAL
+        auto start = std::chrono::high_resolution_clock::now();
+
         imu->get_euler_data(imu_euler_data);
         imu->get_quaternions_data(imu_quaternions_data);
 
+        // FIM DA CONTAGEM INDIVIDUAL
+        auto end = std::chrono::high_resolution_clock::now(); // finaliza contagem de tempo
+
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+        imu_times.push_back(duration.count());
+        
         IMUData data;
         data.id = id;
 
@@ -57,6 +77,20 @@ void IMUNode::state_callback()
 
     msg.header.stamp = this->get_clock()->now();
     publisher_->publish(msg);
+
+    // FIM DA CONTAGEM TOTAL
+    auto end_total = std::chrono::high_resolution_clock::now(); 
+    auto duration_total = std::chrono::duration_cast<std::chrono::microseconds>(end_total - start_total);
+
+    // grava todos os IMUs + tempo total
+    if (loop_idx >= 5) return;
+    
+    timing_log_ << (loop_idx + 1) << "\t";
+    for (auto t_us : imu_times)
+        timing_log_ << t_us << "\t";
+    timing_log_ << duration_total.count() << "\n";
+    
+    loop_idx++;
 }
 
 IMUNode::~IMUNode() = default;

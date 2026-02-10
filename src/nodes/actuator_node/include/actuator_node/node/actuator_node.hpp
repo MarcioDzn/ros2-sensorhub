@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <mutex>
+#include <fstream>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -18,6 +19,12 @@ class ParameterManager;
 using SetTorque = interfaces::srv::SetTorque;
 using Command = interfaces::msg::Command;
 using State = interfaces::msg::ActuatorState;
+
+struct LoopTiming {
+    long start = 0;
+    long end = 0;
+    long total = 0;
+};
 
 class ActuatorNode : public rclcpp::Node
 {
@@ -42,6 +49,8 @@ class ActuatorNode : public rclcpp::Node
         rclcpp::Service<SetTorque>::SharedPtr set_torque_service_;
         
         rclcpp::TimerBase::SharedPtr timer_;
+
+        std::ofstream timing_log_;
 };
 
 #endif // ACTUATOR_NODE_HPP

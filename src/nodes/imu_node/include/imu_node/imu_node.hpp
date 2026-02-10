@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <vector>
+#include <fstream>
 
 #include "imu_manager.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -10,6 +11,13 @@
 #include "interfaces/msg/imu_data.hpp"
 #include "interfaces/msg/imu_state.hpp"
 #include "sensor_msgs/msg/imu.hpp"
+
+
+struct LoopTiming {
+    long start = 0;
+    long end = 0;
+    long total = 0;
+};
 
 struct ImuConfig {
     std::string name;
@@ -37,6 +45,8 @@ class IMUNode : public rclcpp::Node
         std::shared_ptr<IMUManager> manager_;
 
         rclcpp::TimerBase::SharedPtr timer_;
+
+        std::ofstream timing_log_;
 };
 
 #endif // IMU_NODE_HPP

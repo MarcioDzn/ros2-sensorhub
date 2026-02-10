@@ -9,6 +9,7 @@ using namespace std::chrono_literals;
 PressureNode::PressureNode(const rclcpp::NodeOptions& options) 
     : Node("pressure_node", options)
 {
+    timing_log_.open("tempos_pressure.txt", std::ios::out | std::ios::trunc);
     parameter_manager_ = std::make_shared<ParameterManager>(this);
     pressure_drivers_.resize(parameter_manager_->get_ids().size());
 
@@ -44,24 +45,39 @@ void PressureNode::state_callback()
 
     auto ids = parameter_manager_->get_ids();
     auto names = parameter_manager_->get_names();
-
+    
+    std::vector<long> pressure_times;
+    static int loop_idx = 0;
+    
     // evita segfault
     size_t min_size = std::min(ids.size(), names.size());
 
     msg.names.reserve(min_size);
     msg.pressures.reserve(min_size);
 
+    // COMEÇO DA CONTAGEM TOTAL
+    auto start_total = std::chrono::high_resolution_clock::now();
+
     uint8_t error_count = 0;
     for (size_t idx = 0; idx < min_size; idx++)
     {
         std::vector<uint16_t> data;
         
+        // COMEÇO DA CONTAGEM INDIVIDUAL
+        auto start = std::chrono::high_resolution_clock::now(); 
+
         if (pressure_drivers_[idx]->get_data(data) != 0)
         {
             error_count++;
             continue;
         }
         
+        // FIM DA CONTAGEM INDIVIDUAL
+        auto end = std::chrono::high_resolution_clock::now(); 
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        
+        pressure_times.push_back(duration.count());
+
         PressureData pd;
         pd.pressures.reserve(data.size());
 
@@ -86,6 +102,21 @@ void PressureNode::state_callback()
         publisher_->publish(msg);
         RCLCPP_INFO(this->get_logger(), "Publicado com %zu IDs", msg.names.size());
     }   
+
+    // FIM DA CONTAGEM TOTAL
+    auto end_total = std::chrono::high_resolution_clock::now(); // FIM CONTAGEM LOOP TOTAL
+    auto duration_total = std::chrono::duration_cast<std::chrono::microseconds>(end_total - start_total);
+
+    // grava todos os tempos
+    if (loop_idx >= 5) return;
+    
+    timing_log_ << (loop_idx + 1) << "\t";
+    for (auto t_us : pressure_times)
+        timing_log_ << t_us << "\t";
+    timing_log_ << duration_total.count() << "\n";
+    
+    loop_idx++;
+
 }
 
 PressureNode::~PressureNode() = default;

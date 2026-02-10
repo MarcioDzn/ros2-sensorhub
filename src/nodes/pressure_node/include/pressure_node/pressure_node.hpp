@@ -4,6 +4,7 @@
 #include <memory>
 #include <map>
 #include <vector>
+#include <fstream>
 
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/msg/pressure_state.hpp"
@@ -16,6 +17,12 @@
 using PressureState = interfaces::msg::PressureState;
 using PressureData = interfaces::msg::PressureData;
 using PressureUnitSensor = interfaces::msg::PressureUnitSensor;
+
+struct LoopTiming {
+    long start = 0;
+    long end = 0;
+    long total = 0;
+};
 
 struct DeviceInterface
 {
@@ -46,6 +53,8 @@ class PressureNode : public rclcpp::Node
         
         rclcpp::TimerBase::SharedPtr timer_;
         int update_rate_ms_;
+
+        std::ofstream timing_log_;
 };
 
 #endif // PRESSURE_NODE_HPP
