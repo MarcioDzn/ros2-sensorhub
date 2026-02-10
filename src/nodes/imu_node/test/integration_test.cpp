@@ -8,6 +8,11 @@
 #include <chrono>
 #include <map>
 
+#include <sys/ioctl.h>
+#include <linux/i2c.h>
+#include <linux/i2c-dev.h>
+#include <stdarg.h> // Para va_list e va_arg
+
 #include "imu_node.hpp"
 #include "driver/imu.hpp"
 
@@ -44,6 +49,33 @@ extern "C" {
 
     void pinMode(int p, int m) { (void)p; (void)m; }
     void delay(unsigned int t) { (void)t; }
+
+    int ioctl(int fd, unsigned long request, ...) {
+        va_list args;
+        va_start(args, request);
+
+        if (request == I2C_RDWR) {
+            struct i2c_rdwr_ioctl_data* msgset = va_arg(args, struct i2c_rdwr_ioctl_data*);
+            
+            if (msgset != nullptr && msgset->nmsgs >= 2) {
+                
+                uint8_t reg_inicial = msgset->msgs[0].buf[0];
+
+                uint8_t* buffer_destino = msgset->msgs[1].buf;
+                int tamanho = msgset->msgs[1].len;
+
+                for (int i = 0; i < tamanho; i++) {
+                    
+                    buffer_destino[i] = mux_registers[current_sel_a][current_sel_b][fd][reg_inicial + i];
+                }
+            }
+            va_end(args);
+            return 0; 
+        }
+
+        va_end(args);
+        return 0; 
+    }
 }
 
 using namespace std::chrono_literals;

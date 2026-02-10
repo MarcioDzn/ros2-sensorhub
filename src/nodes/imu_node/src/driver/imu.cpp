@@ -61,52 +61,43 @@ void IMU::read_quaternions(float quaternion[4])
 {
     if (dev_ < 0) return;
 
-    int wl = (int) wiringPiI2CReadReg8(dev_, BNO055_QUATERNION_DATA_W_LSB_ADDR);
-    int wm = (int) wiringPiI2CReadReg8(dev_, BNO055_QUATERNION_DATA_W_MSB_ADDR);
-    int xl = (int) wiringPiI2CReadReg8(dev_, BNO055_QUATERNION_DATA_X_LSB_ADDR);
-    int xm = (int) wiringPiI2CReadReg8(dev_, BNO055_QUATERNION_DATA_X_MSB_ADDR);
-    int yl = (int) wiringPiI2CReadReg8(dev_, BNO055_QUATERNION_DATA_Y_LSB_ADDR);
-    int ym = (int) wiringPiI2CReadReg8(dev_, BNO055_QUATERNION_DATA_Y_MSB_ADDR);
-    int zl = (int) wiringPiI2CReadReg8(dev_, BNO055_QUATERNION_DATA_Z_LSB_ADDR);
-    int zm = (int) wiringPiI2CReadReg8(dev_, BNO055_QUATERNION_DATA_Z_MSB_ADDR);
+    uint8_t reg = BNO055_QUATERNION_DATA_W_LSB_ADDR;
+    uint8_t buf[8];
 
-    quaternion[0] = (float)((int16_t)(wl | (wm << 8))) / 16384.0f;
-    quaternion[1] = (float)((int16_t)(xl | (xm << 8))) / 16384.0f;
-    quaternion[2] = (float)((int16_t)(yl | (ym << 8))) / 16384.0f;
-    quaternion[3] = (float)((int16_t)(zl | (zm << 8))) / 16384.0f;
+    // estrutura de mensagens para o I2C
+    struct i2c_msg msgs[2];
+    struct i2c_rdwr_ioctl_data msgset;
+
+    // informa qual reg será lido
+    msgs[0].addr  = address_; 
+    msgs[0].flags = 0;        // 0 -> escrita
+    msgs[0].len   = 1;
+    msgs[0].buf   = &reg;
+
+    // lê 8 bytes em sequência
+    msgs[1].addr  = address_;
+    msgs[1].flags = I2C_M_RD; // read flag
+    msgs[1].len   = 8;
+    msgs[1].buf   = buf;
+
+    msgset.msgs = msgs;
+    msgset.nmsgs = 2;
+
+    if (ioctl(dev_, I2C_RDWR, &msgset) < 0) {
+        return; 
+    }
+
+    quaternion[0] = (float)((int16_t)(buf[0] | (buf[1] << 8))) / 16384.0f;
+    quaternion[1] = (float)((int16_t)(buf[2] | (buf[3] << 8))) / 16384.0f;
+    quaternion[2] = (float)((int16_t)(buf[4] | (buf[5] << 8))) / 16384.0f;
+    quaternion[3] = (float)((int16_t)(buf[6] | (buf[7] << 8))) / 16384.0f;
 
     // normalização
     float n = sqrt(quaternion[0]*quaternion[0] + quaternion[1]*quaternion[1] + 
                    quaternion[2]*quaternion[2] + quaternion[3]*quaternion[3]);
-    if (n > 0) {
+    if (n > 0.0001f) {
         quaternion[0] /= n; quaternion[1] /= n; quaternion[2] /= n; quaternion[3] /= n;
     }
-}
-
-// https://madecalculators.com/quaternion-to-euler-calculator/?utm_source=chatgpt.com
-void IMU::read_quaternions_euler(float euler[3])
-{
-    if (dev_ < 0) return;
-
-    float quaternion[4];
-    read_quaternions(quaternion);
-    float w = quaternion[0];
-    float x = quaternion[1];
-    float y = quaternion[2];
-    float z = quaternion[3];
-
-    float roll = atan2(2.0 * (w*x + z*y), 1.0 - 2.0 * (x*x + y*y));
-
-    float sinp = 2.0 * (w*y - z*x);
-    if (sinp > 1.0f) sinp = 1.0f;
-    if (sinp < -1.0f) sinp = -1.0f;
-    float pitch = asin(sinp);
-
-    float yaw = atan2(2.0 * (w*z + x*y), 1.0 - 2.0 * (y*y + z*z));
-
-    euler[0] = roll;
-    euler[1] = pitch;
-    euler[2] = yaw;
 }
 
 void IMU::read_euler(float euler[3])
