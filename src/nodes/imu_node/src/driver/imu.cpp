@@ -81,7 +81,7 @@ void IMU::read_quaternions(float quaternion[4])
     msgs[1].buf   = buf;
 
     msgset.msgs = msgs;
-    msgset.nmsgs = 2;
+    msgset.nmsgs = 2; // 2 operações sequenciais
 
     if (ioctl(dev_, I2C_RDWR, &msgset) < 0) {
         return; 
@@ -102,21 +102,33 @@ void IMU::read_quaternions(float quaternion[4])
 
 void IMU::read_euler(float euler[3])
 {
-    int hl = (int) wiringPiI2CReadReg8(dev_, BNO055_EULER_H_LSB_ADDR);
-    int hm = (int) wiringPiI2CReadReg8(dev_, BNO055_EULER_H_MSB_ADDR);
-    int rl = (int) wiringPiI2CReadReg8(dev_, BNO055_EULER_R_LSB_ADDR);
-    int rm = (int) wiringPiI2CReadReg8(dev_, BNO055_EULER_R_MSB_ADDR);
-    int pl = (int) wiringPiI2CReadReg8(dev_, BNO055_EULER_P_LSB_ADDR);
-    int pm = (int) wiringPiI2CReadReg8(dev_, BNO055_EULER_P_MSB_ADDR);
+    if (dev_ < 0) return;
 
-    int h = (hm << 8) | hl;
-    int r = (rm << 8) | rl;
-    int p = (pm << 8) | pl;
+    uint8_t reg = BNO055_EULER_H_LSB_ADDR;
+    uint8_t buf[6]; // 2 bytes para cada: roll, pitch e yaw
 
-    // divide por 16 pra converter de LSB pra graus
-    // 1 grau = 16 (LSB)
+    struct i2c_msg msgs[2];
+    struct i2c_rdwr_ioctl_data msgset;
+
+    msgs[0].addr = address_; 
+    msgs[0].flags = 0; 
+    msgs[0].len = 1; 
+    msgs[0].buf = &reg;
+
+    msgs[1].addr = address_; 
+    msgs[1].flags = I2C_M_RD; 
+    msgs[1].len = 6; 
+    msgs[1].buf = buf;
+    msgset.msgs = msgs; msgset.nmsgs = 2;
+
+    if (ioctl(dev_, I2C_RDWR, &msgset) < 0) return;
+
+    int16_t h = (int16_t)(buf[0] | (buf[1] << 8)); // yaw
+    int16_t r = (int16_t)(buf[2] | (buf[3] << 8)); // roll
+    int16_t p = (int16_t)(buf[4] | (buf[5] << 8)); // pitch
+
     euler[0] = r / 16.0f; // roll
     euler[1] = p / 16.0f; // pitch
-    euler[2] = h / 16.0f; // yaw
+    euler[2] = h / 16.0f; // yaw 
 }
 
