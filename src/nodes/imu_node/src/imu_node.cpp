@@ -60,6 +60,7 @@ void IMUNode::state_callback()
         
         IMUData data;
         data.id = id;
+        data.name = parameter_manager_->get_name(id);
 
         // euler angles
         data.roll = imu_euler_data[0];
