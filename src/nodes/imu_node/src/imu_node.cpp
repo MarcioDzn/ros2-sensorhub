@@ -59,7 +59,6 @@ void IMUNode::state_callback()
         imu_times.push_back(duration.count());
         
         IMUData data;
-        data.id = id;
         data.name = parameter_manager_->get_name(id);
 
         // euler angles
