@@ -1,4 +1,4 @@
-int8 id
+string name
 
 float64 q_w
 float64 q_x
