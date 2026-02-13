@@ -47,8 +47,6 @@ void IMUNode::state_callback()
         
         // COMEÇO DA CONTAGEM INDIVIDUAL
         auto start = std::chrono::high_resolution_clock::now();
-
-        imu->get_euler_data(imu_euler_data);
         imu->get_quaternions_data(imu_quaternions_data);
 
         // FIM DA CONTAGEM INDIVIDUAL
@@ -60,11 +58,6 @@ void IMUNode::state_callback()
         
         IMUData data;
         data.name = parameter_manager_->get_name(id);
-
-        // euler angles
-        data.roll = imu_euler_data[0];
-        data.pitch = imu_euler_data[1];
-        data.yaw = imu_euler_data[2];
 
         // quaternions
         data.q_w = imu_quaternions_data[0];

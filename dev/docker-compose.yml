@@ -15,7 +15,6 @@ services:
     environment:
       - ROS_DOMAIN_ID=42
       - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
-      - FASTRTPS_DEFAULT_PROFILES_FILE=/app/ros2_ws/dev/fastdds_sensorhub.xml
     
     # apenas na raspberry
     devices:

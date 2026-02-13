@@ -61,71 +61,74 @@ void IMU::read_quaternions(float quaternion[4])
 {
     if (dev_ < 0) return;
 
-    int wl = (int) wiringPiI2CReadReg8(dev_, BNO055_QUATERNION_DATA_W_LSB_ADDR);
-    int wm = (int) wiringPiI2CReadReg8(dev_, BNO055_QUATERNION_DATA_W_MSB_ADDR);
-    int xl = (int) wiringPiI2CReadReg8(dev_, BNO055_QUATERNION_DATA_X_LSB_ADDR);
-    int xm = (int) wiringPiI2CReadReg8(dev_, BNO055_QUATERNION_DATA_X_MSB_ADDR);
-    int yl = (int) wiringPiI2CReadReg8(dev_, BNO055_QUATERNION_DATA_Y_LSB_ADDR);
-    int ym = (int) wiringPiI2CReadReg8(dev_, BNO055_QUATERNION_DATA_Y_MSB_ADDR);
-    int zl = (int) wiringPiI2CReadReg8(dev_, BNO055_QUATERNION_DATA_Z_LSB_ADDR);
-    int zm = (int) wiringPiI2CReadReg8(dev_, BNO055_QUATERNION_DATA_Z_MSB_ADDR);
+    uint8_t reg = BNO055_QUATERNION_DATA_W_LSB_ADDR;
+    uint8_t buf[8];
 
-    quaternion[0] = (float)((int16_t)(wl | (wm << 8))) / 16384.0f;
-    quaternion[1] = (float)((int16_t)(xl | (xm << 8))) / 16384.0f;
-    quaternion[2] = (float)((int16_t)(yl | (ym << 8))) / 16384.0f;
-    quaternion[3] = (float)((int16_t)(zl | (zm << 8))) / 16384.0f;
+    // estrutura de mensagens para o I2C
+    struct i2c_msg msgs[2];
+    struct i2c_rdwr_ioctl_data msgset;
+
+    // informa qual reg será lido
+    msgs[0].addr  = address_; 
+    msgs[0].flags = 0;        // 0 -> escrita
+    msgs[0].len   = 1;
+    msgs[0].buf   = &reg;
+
+    // lê 8 bytes em sequência
+    msgs[1].addr  = address_;
+    msgs[1].flags = I2C_M_RD; // read flag
+    msgs[1].len   = 8;
+    msgs[1].buf   = buf;
+
+    msgset.msgs = msgs;
+    msgset.nmsgs = 2; // 2 operações sequenciais
+
+    if (ioctl(dev_, I2C_RDWR, &msgset) < 0) {
+        return; 
+    }
+
+    quaternion[0] = (float)((int16_t)(buf[0] | (buf[1] << 8))) / 16384.0f;
+    quaternion[1] = (float)((int16_t)(buf[2] | (buf[3] << 8))) / 16384.0f;
+    quaternion[2] = (float)((int16_t)(buf[4] | (buf[5] << 8))) / 16384.0f;
+    quaternion[3] = (float)((int16_t)(buf[6] | (buf[7] << 8))) / 16384.0f;
 
     // normalização
     float n = sqrt(quaternion[0]*quaternion[0] + quaternion[1]*quaternion[1] + 
                    quaternion[2]*quaternion[2] + quaternion[3]*quaternion[3]);
-    if (n > 0) {
+    if (n > 0.0001f) {
         quaternion[0] /= n; quaternion[1] /= n; quaternion[2] /= n; quaternion[3] /= n;
     }
 }
 
-// https://madecalculators.com/quaternion-to-euler-calculator/?utm_source=chatgpt.com
-void IMU::read_quaternions_euler(float euler[3])
+void IMU::read_euler(float euler[3])
 {
     if (dev_ < 0) return;
 
-    float quaternion[4];
-    read_quaternions(quaternion);
-    float w = quaternion[0];
-    float x = quaternion[1];
-    float y = quaternion[2];
-    float z = quaternion[3];
+    uint8_t reg = BNO055_EULER_H_LSB_ADDR;
+    uint8_t buf[6]; // 2 bytes para cada: roll, pitch e yaw
 
-    float roll = atan2(2.0 * (w*x + z*y), 1.0 - 2.0 * (x*x + y*y));
+    struct i2c_msg msgs[2];
+    struct i2c_rdwr_ioctl_data msgset;
 
-    float sinp = 2.0 * (w*y - z*x);
-    if (sinp > 1.0f) sinp = 1.0f;
-    if (sinp < -1.0f) sinp = -1.0f;
-    float pitch = asin(sinp);
+    msgs[0].addr = address_; 
+    msgs[0].flags = 0; 
+    msgs[0].len = 1; 
+    msgs[0].buf = &reg;
 
-    float yaw = atan2(2.0 * (w*z + x*y), 1.0 - 2.0 * (y*y + z*z));
+    msgs[1].addr = address_; 
+    msgs[1].flags = I2C_M_RD; 
+    msgs[1].len = 6; 
+    msgs[1].buf = buf;
+    msgset.msgs = msgs; msgset.nmsgs = 2;
 
-    euler[0] = roll;
-    euler[1] = pitch;
-    euler[2] = yaw;
-}
+    if (ioctl(dev_, I2C_RDWR, &msgset) < 0) return;
 
-void IMU::read_euler(float euler[3])
-{
-    int hl = (int) wiringPiI2CReadReg8(dev_, BNO055_EULER_H_LSB_ADDR);
-    int hm = (int) wiringPiI2CReadReg8(dev_, BNO055_EULER_H_MSB_ADDR);
-    int rl = (int) wiringPiI2CReadReg8(dev_, BNO055_EULER_R_LSB_ADDR);
-    int rm = (int) wiringPiI2CReadReg8(dev_, BNO055_EULER_R_MSB_ADDR);
-    int pl = (int) wiringPiI2CReadReg8(dev_, BNO055_EULER_P_LSB_ADDR);
-    int pm = (int) wiringPiI2CReadReg8(dev_, BNO055_EULER_P_MSB_ADDR);
+    int16_t h = (int16_t)(buf[0] | (buf[1] << 8)); // yaw
+    int16_t r = (int16_t)(buf[2] | (buf[3] << 8)); // roll
+    int16_t p = (int16_t)(buf[4] | (buf[5] << 8)); // pitch
 
-    int h = (hm << 8) | hl;
-    int r = (rm << 8) | rl;
-    int p = (pm << 8) | pl;
-
-    // divide por 16 pra converter de LSB pra graus
-    // 1 grau = 16 (LSB)
     euler[0] = r / 16.0f; // roll
     euler[1] = p / 16.0f; // pitch
-    euler[2] = h / 16.0f; // yaw
+    euler[2] = h / 16.0f; // yaw 
 }
 
