@@ -27,20 +27,3 @@ services:
       bash -c "
         source /opt/ros/humble/setup.bash &&
         bash"
-
-  pc_remoto:
-      build: 
-        context: ..
-        dockerfile: dev/Dockerfile
-      network_mode: host
-      ipc: host
-      volumes: 
-        - ..:/app/ros2_ws
-      environment:
-        - ROS_DOMAIN_ID=42
-        - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
-        - FASTRTPS_DEFAULT_PROFILES_FILE=/app/ros2_ws/dev/fastdds_remoto.xml
-      command: >
-        bash -c "
-          source /opt/ros/humble/setup.bash &&
-          bash"
