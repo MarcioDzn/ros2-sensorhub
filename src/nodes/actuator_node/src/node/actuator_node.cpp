@@ -39,7 +39,7 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
     // recebe dados de comando contínuo
     // ex: posição alvo
     actuator_subscriber_ = this->create_subscription<Command>(
-        parameter_manager_->get_base_name() + "/command", qos, 
+        "actuator/command", qos, 
         [this](const Command::SharedPtr msg) {
             
             this->goal_position_callback(msg);
@@ -48,7 +48,7 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
     // recebe dados de comando pontual
     // ex: habilitar/desabilitar torque
     set_torque_service_ = this->create_service<SetTorque>(
-        parameter_manager_->get_base_name() + "/set_torque", 
+        "actuator/set_torque", 
         [this](const std::shared_ptr<SetTorque::Request> req, 
                 std::shared_ptr<SetTorque::Response> res) {
             this->set_torque_service_callback(req, res);
@@ -56,8 +56,7 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
 
     // envia dados de estado
     // ex: posição atual
-    state_publisher_ = this->create_publisher<State>(
-        parameter_manager_->get_base_name() + "/state", qos);
+    state_publisher_ = this->create_publisher<State>("actuator/state", qos);
 
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
