@@ -102,7 +102,6 @@ class IMUFixture : public ::testing::Test {
         sub_node = std::make_shared<rclcpp::Node>("test_subscriber");
 
         rclcpp::NodeOptions options;
-        options.append_parameter_override("base_name", "imu");
         options.append_parameter_override("update_rate_ms", 15);
         options.append_parameter_override("ids", std::vector<int64_t>{1, 2, 3});
         options.append_parameter_override("multiplexer", std::vector<int64_t>{0, 1, 0});
@@ -158,48 +157,6 @@ TEST(IMUInitTest, init_fail_wrong_id)
     rclcpp::shutdown();
 }
 
-TEST_F(IMUFixture, read_euler_success)
-{
-    // simula dados de Euler no mapa (Roll, Pitch e Yaw = 20 graus)
-    // 20.0 * 16 = 320 -> 0x0140
-    // roll
-    mux_registers[0][0][40][IMU::BNO055_EULER_R_LSB_ADDR] = 0x40;
-    mux_registers[0][0][40][IMU::BNO055_EULER_R_MSB_ADDR] = 0x01; 
-
-    // pitch
-    mux_registers[0][0][40][IMU::BNO055_EULER_P_LSB_ADDR] = 0x40; 
-    mux_registers[0][0][40][IMU::BNO055_EULER_P_MSB_ADDR] = 0x01; 
-
-    // yaw
-    mux_registers[0][0][40][IMU::BNO055_EULER_H_LSB_ADDR] = 0x40; 
-    mux_registers[0][0][40][IMU::BNO055_EULER_H_MSB_ADDR] = 0x01; 
-
-    using IMUState = interfaces::msg::IMUState;
-    IMUState::SharedPtr received_msg = nullptr;
-
-    auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
-        .best_effort()
-        .durability_volatile();
-    auto sub = sub_node->create_subscription<IMUState>(
-        "imu/state", qos, [&](IMUState::SharedPtr msg) {
-            received_msg = msg;
-        });
-
-    auto start_time = std::chrono::steady_clock::now();
-    while (!received_msg && (std::chrono::steady_clock::now() - start_time < 2s)) {
-        rclcpp::spin_some(node);
-        rclcpp::spin_some(sub_node);
-        std::this_thread::sleep_for(10ms);
-    }
-
-    ASSERT_NE(received_msg, nullptr) << "Timeout: O nó não publicou nada!";
-    ASSERT_FALSE(received_msg->imus.empty());
-    
-    // 320 / 16.0 = 20.0
-    EXPECT_NEAR(received_msg->imus[0].roll, 0, 0.05);
-    EXPECT_NEAR(received_msg->imus[0].pitch, 20.0f, 0.05);
-    EXPECT_NEAR(received_msg->imus[0].yaw, 20.0f, 0.05);
-}
 
 TEST_F(IMUFixture, read_quaternions_success)
 {
@@ -254,17 +211,38 @@ TEST_F(IMUFixture, read_quaternions_success)
     EXPECT_NEAR(norm, 1.0, 0.0001);
 }
 
-TEST_F(IMUFixture, read_multisensor_euler_success)
+TEST_F(IMUFixture, read_multisensor_quaternions_success)
 {
-    // simula dados de Euler no mapa (Roll = 20 graus)
-    // 20.0 * 16 = 320 -> 0x0140
-    // sensor de id = 1 (roll)
-    mux_registers[0][0][40][IMU::BNO055_EULER_R_LSB_ADDR] = 0x40;
-    mux_registers[0][0][40][IMU::BNO055_EULER_R_MSB_ADDR] = 0x01; 
+    // TODO: colocar mock consistente com um quaternion
+    uint8_t mock_val_lsb = 0x40;
+    uint8_t mock_val_msb = 0x01;
+    
+    // 1
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_W_LSB_ADDR] = mock_val_lsb;
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_W_MSB_ADDR] = mock_val_msb;
 
-    // sensor de id = 2 (roll)
-    mux_registers[0][0][41][IMU::BNO055_EULER_R_LSB_ADDR] = 0x40;
-    mux_registers[0][0][41][IMU::BNO055_EULER_R_MSB_ADDR] = 0x01; 
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_X_LSB_ADDR] = mock_val_lsb;
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_X_MSB_ADDR] = mock_val_msb;
+
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_Y_LSB_ADDR] = mock_val_lsb;
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_Y_MSB_ADDR] = mock_val_msb;
+
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_Z_LSB_ADDR] = mock_val_lsb;
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_Z_MSB_ADDR] = mock_val_msb;
+
+
+    // 2
+    mux_registers[0][0][41][IMU::BNO055_QUATERNION_DATA_W_LSB_ADDR] = mock_val_lsb;
+    mux_registers[0][0][41][IMU::BNO055_QUATERNION_DATA_W_MSB_ADDR] = mock_val_msb;
+
+    mux_registers[0][0][41][IMU::BNO055_QUATERNION_DATA_X_LSB_ADDR] = mock_val_lsb;
+    mux_registers[0][0][41][IMU::BNO055_QUATERNION_DATA_X_MSB_ADDR] = mock_val_msb;
+
+    mux_registers[0][0][41][IMU::BNO055_QUATERNION_DATA_Y_LSB_ADDR] = mock_val_lsb;
+    mux_registers[0][0][41][IMU::BNO055_QUATERNION_DATA_Y_MSB_ADDR] = mock_val_msb;
+
+    mux_registers[0][0][41][IMU::BNO055_QUATERNION_DATA_Z_LSB_ADDR] = mock_val_lsb;
+    mux_registers[0][0][41][IMU::BNO055_QUATERNION_DATA_Z_MSB_ADDR] = mock_val_msb;
 
 
     using IMUState = interfaces::msg::IMUState;
@@ -288,23 +266,71 @@ TEST_F(IMUFixture, read_multisensor_euler_success)
     ASSERT_NE(received_msg, nullptr) << "Timeout: O nó não publicou nada!";
     ASSERT_FALSE(received_msg->imus.empty());
     
-    // 320 / 16.0 = 20.0
-    EXPECT_NEAR(received_msg->imus[0].roll, 0, 0.05);
-    EXPECT_NEAR(received_msg->imus[1].roll, 20.0f, 0.05);
+    //ASSERT_EQ(received_msg->imus.size(), 2);
+
+    // Valor bruto mockado
+    int16_t raw = (0x01 << 8) | 0x40;   // 0x0140 = 320
+    double val = static_cast<double>(raw) / 16384.0;
+
+    // Como W=X=Y=Z
+    double expected = val / std::sqrt(4 * val * val);
+
+    // Sensor 0
+    EXPECT_NEAR(received_msg->imus[0].q_w, expected, 0.0001);
+    EXPECT_NEAR(received_msg->imus[0].q_x, expected, 0.0001);
+    EXPECT_NEAR(received_msg->imus[0].q_y, expected, 0.0001);
+    EXPECT_NEAR(received_msg->imus[0].q_z, expected, 0.0001);
+
+    // Sensor 1
+    EXPECT_NEAR(received_msg->imus[1].q_w, expected, 0.0001);
+    EXPECT_NEAR(received_msg->imus[1].q_x, expected, 0.0001);
+    EXPECT_NEAR(received_msg->imus[1].q_y, expected, 0.0001);
+    EXPECT_NEAR(received_msg->imus[1].q_z, expected, 0.0001);
+
+    // Norma deve ser 1
+    auto norm = [](const auto &q) {
+        return std::sqrt(q.q_w*q.q_w +
+                        q.q_x*q.q_x +
+                        q.q_y*q.q_y +
+                        q.q_z*q.q_z);
+    };
+
+    EXPECT_NEAR(norm(received_msg->imus[0]), 1.0, 0.0001);
+    EXPECT_NEAR(norm(received_msg->imus[1]), 1.0, 0.0001);
 }
 
-TEST_F(IMUFixture, read_conflict_mux_euler_success)
+TEST_F(IMUFixture, read_conflict_mux_quaternions_success)
 {
-    // simula dados de Euler no mapa (Roll = 20 graus)
-    // 20.0 * 16 = 320 -> 0x0140
-    // sensor de id = 1 (roll)
-    mux_registers[0][0][40][IMU::BNO055_EULER_R_LSB_ADDR] = 0x40;
-    mux_registers[0][0][40][IMU::BNO055_EULER_R_MSB_ADDR] = 0x01; 
+    // TODO: colocar mock consistente com um quaternion
+    uint8_t mock_val_lsb = 0x40;
+    uint8_t mock_val_msb = 0x01;
+    
+    // 1
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_W_LSB_ADDR] = mock_val_lsb;
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_W_MSB_ADDR] = mock_val_msb;
 
-    // sensor de id = 3 (roll) (mesmo endereço do sensor 1)
-    mux_registers[0][1][40][IMU::BNO055_EULER_R_LSB_ADDR] = 0x40;
-    mux_registers[0][1][40][IMU::BNO055_EULER_R_MSB_ADDR] = 0x01; 
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_X_LSB_ADDR] = mock_val_lsb;
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_X_MSB_ADDR] = mock_val_msb;
 
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_Y_LSB_ADDR] = mock_val_lsb;
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_Y_MSB_ADDR] = mock_val_msb;
+
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_Z_LSB_ADDR] = mock_val_lsb;
+    mux_registers[0][0][40][IMU::BNO055_QUATERNION_DATA_Z_MSB_ADDR] = mock_val_msb;
+
+
+    // 2
+    mux_registers[0][1][40][IMU::BNO055_QUATERNION_DATA_W_LSB_ADDR] = mock_val_lsb;
+    mux_registers[0][1][40][IMU::BNO055_QUATERNION_DATA_W_MSB_ADDR] = mock_val_msb;
+
+    mux_registers[0][1][40][IMU::BNO055_QUATERNION_DATA_X_LSB_ADDR] = mock_val_lsb;
+    mux_registers[0][1][40][IMU::BNO055_QUATERNION_DATA_X_MSB_ADDR] = mock_val_msb;
+
+    mux_registers[0][1][40][IMU::BNO055_QUATERNION_DATA_Y_LSB_ADDR] = mock_val_lsb;
+    mux_registers[0][1][40][IMU::BNO055_QUATERNION_DATA_Y_MSB_ADDR] = mock_val_msb;
+
+    mux_registers[0][1][40][IMU::BNO055_QUATERNION_DATA_Z_LSB_ADDR] = mock_val_lsb;
+    mux_registers[0][1][40][IMU::BNO055_QUATERNION_DATA_Z_MSB_ADDR] = mock_val_msb;
 
     using IMUState = interfaces::msg::IMUState;
     IMUState::SharedPtr received_msg = nullptr;
@@ -327,40 +353,34 @@ TEST_F(IMUFixture, read_conflict_mux_euler_success)
     ASSERT_NE(received_msg, nullptr) << "Timeout: O nó não publicou nada!";
     ASSERT_FALSE(received_msg->imus.empty());
     
-    // 320 / 16.0 = 20.0
-    EXPECT_NEAR(received_msg->imus[0].roll, 0, 0.05);
-    EXPECT_NEAR(received_msg->imus[2].roll, 20.0f, 0.05);
-}
 
-TEST_F(IMUFixture, calibration_logic)
-{
-    // simula dados de Euler no mapa (Roll = 20 graus)
-    // 5.0 * 16 = 80 (0x50 em hexadecimal)
-    mux_registers[0][0][40][IMU::BNO055_EULER_R_LSB_ADDR] = 0x50;
-    mux_registers[0][0][40][IMU::BNO055_EULER_R_MSB_ADDR] = 0x00; 
+    // Valor bruto mockado
+    int16_t raw = (0x01 << 8) | 0x40;   // 0x0140 = 320
+    double val = static_cast<double>(raw) / 16384.0;
 
+    // Como W=X=Y=Z
+    double expected = val / std::sqrt(4 * val * val);
 
-    using IMUState = interfaces::msg::IMUState;
-    IMUState::SharedPtr received_msg = nullptr;
+    // Sensor 0
+    EXPECT_NEAR(received_msg->imus[0].q_w, expected, 0.0001);
+    EXPECT_NEAR(received_msg->imus[0].q_x, expected, 0.0001);
+    EXPECT_NEAR(received_msg->imus[0].q_y, expected, 0.0001);
+    EXPECT_NEAR(received_msg->imus[0].q_z, expected, 0.0001);
 
-    auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
-        .best_effort()
-        .durability_volatile();
-    auto sub = sub_node->create_subscription<IMUState>(
-        "imu/state", qos, [&](IMUState::SharedPtr msg) {
-            received_msg = msg;
-        });
+    // Sensor 1
+    EXPECT_NEAR(received_msg->imus[2].q_w, expected, 0.0001);
+    EXPECT_NEAR(received_msg->imus[2].q_x, expected, 0.0001);
+    EXPECT_NEAR(received_msg->imus[2].q_y, expected, 0.0001);
+    EXPECT_NEAR(received_msg->imus[2].q_z, expected, 0.0001);
 
-    auto start_time = std::chrono::steady_clock::now();
-    while (!received_msg && (std::chrono::steady_clock::now() - start_time < 2s)) {
-        rclcpp::spin_some(node);
-        rclcpp::spin_some(sub_node);
-        std::this_thread::sleep_for(10ms);
-    }
+    // Norma deve ser 1
+    auto norm = [](const auto &q) {
+        return std::sqrt(q.q_w*q.q_w +
+                        q.q_x*q.q_x +
+                        q.q_y*q.q_y +
+                        q.q_z*q.q_z);
+    };
 
-    ASSERT_NE(received_msg, nullptr) << "Timeout: O nó não publicou nada!";
-    ASSERT_FALSE(received_msg->imus.empty());
-    
-    // 320 / 16.0 = 20.0
-    EXPECT_NEAR(received_msg->imus[0].roll, -15, 0.05);
+    EXPECT_NEAR(norm(received_msg->imus[0]), 1.0, 0.0001);
+    EXPECT_NEAR(norm(received_msg->imus[2]), 1.0, 0.0001);
 }
