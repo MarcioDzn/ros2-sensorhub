@@ -5,19 +5,19 @@ from launch.substitutions import PathJoinSubstitution
 
 def generate_launch_description():
     imu_params = PathJoinSubstitution([
-        FindPackageShare('bringup'),
+        FindPackageShare('imu_node'),
         'config',
         'imu.yaml'
     ])
 
     actuator_params = PathJoinSubstitution([
-        FindPackageShare('bringup'),
+        FindPackageShare('actuator_node'),
         'config',
         'actuator.yaml'
     ])
 
     pressure_params = PathJoinSubstitution([
-        FindPackageShare('bringup'),
+        FindPackageShare('pressure_node'),
         'config',
         'pressure.yaml'
     ])
