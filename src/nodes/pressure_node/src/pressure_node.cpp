@@ -31,7 +31,7 @@ PressureNode::PressureNode(const rclcpp::NodeOptions& options)
         .best_effort()
         .durability_volatile();
     publisher_ = this->create_publisher<PressureState>(
-        parameter_manager_->get_base_name() + "/state", qos);
+        "pressure/state", qos);
 
     // executa o callback a cada <update_rate_ms_> segundos
     timer_ = this->create_wall_timer(
