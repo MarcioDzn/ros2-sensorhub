@@ -41,7 +41,6 @@ def generate_launch_description():
             package='actuator_node',
             executable='actuator_node',
             output='screen',
-            name='base_actuator_node',
             parameters=[actuator_params]
         ),
 
