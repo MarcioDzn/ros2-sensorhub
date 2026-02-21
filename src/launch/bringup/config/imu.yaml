@@ -1,7 +1,6 @@
 imu_node:
   ros__parameters:
     # cada índice nos arrays corresponde a um imu
-    base_name: "imu"
     update_rate_ms: 15
     names: ["bottom", "middle", "top"]
     ids: [1, 2, 3]
