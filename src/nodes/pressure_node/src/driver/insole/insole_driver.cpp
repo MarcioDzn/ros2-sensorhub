@@ -15,22 +15,6 @@ int InsoleDriver::init(std::string device, int baudrate)
     return 0;
 }
 
-int InsoleDriver::get_data(std::vector<uint16_t>& data)
-{
-    char buffer[BUFFER_SIZE];
-
-    if (!read_c_string(buffer, BUFFER_SIZE)) {
-        return -1; 
-    }
-
-    data = parse_numbers_from_string(std::string(buffer));
-
-    if (data.empty()) {
-        return -2;
-    }
-    return 0; 
-}
-
 std::vector<uint16_t> InsoleDriver::parse_numbers_from_string(
     const std::string& input)
 {
@@ -47,6 +31,21 @@ std::vector<uint16_t> InsoleDriver::parse_numbers_from_string(
     } 
     return values;
 }
+
+int InsoleDriver::get_data(std::vector<uint16_t>& data)
+{
+    char buffer[BUFFER_SIZE];
+
+    if (!read_c_string(buffer, BUFFER_SIZE)) 
+        return -1; 
+
+    data = parse_numbers_from_string(std::string(buffer));
+    if (data.empty()) 
+        return -2;
+
+    return 0; 
+}
+
 
 bool InsoleDriver::read_c_string(char* buffer, size_t max_size)
 {

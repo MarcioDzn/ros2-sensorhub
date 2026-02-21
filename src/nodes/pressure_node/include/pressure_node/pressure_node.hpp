@@ -44,7 +44,7 @@ class PressureNode : public rclcpp::Node
         bool init_serial(const char* device, int baudrate);
         
     private:
-        void state_callback();
+        void publish_pressure_data();
 
         std::vector<std::shared_ptr<IPressureDriver>> pressure_drivers_;
         std::shared_ptr<ParameterManager> parameter_manager_;
