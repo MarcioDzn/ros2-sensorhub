@@ -29,37 +29,37 @@ IMUNode::IMUNode(const rclcpp::NodeOptions & options) : Node("imu_node", options
 
 void IMUNode::state_callback()
 {
+    std::vector<long> imu_times;
+    static int loop_idx = 0;
+
     const auto& imus = manager_->get_imus();
     auto msg = IMUState();
 
     const auto& ids = parameter_manager_->get_ids();
     
-    std::vector<long> imu_times;
-    static int loop_idx = 0;  // <-- contador do loop
-    
-    // COMEÇO DA CONTAGEM TOTAL
+    // ======= COMEÇO DA CONTAGEM TOTAL =======
     auto start_total = std::chrono::high_resolution_clock::now();
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     for (const auto& [id, imu] : imus)
     {
-        std::vector<float> imu_euler_data;
         std::vector<float> imu_quaternions_data;
         
-        // COMEÇO DA CONTAGEM INDIVIDUAL
+        // ==== COMEÇO DA CONTAGEM INDIVIDUAL ====
         auto start = std::chrono::high_resolution_clock::now();
+        // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
         imu->get_quaternions_data(imu_quaternions_data);
 
-        // FIM DA CONTAGEM INDIVIDUAL
-        auto end = std::chrono::high_resolution_clock::now(); // finaliza contagem de tempo
-
+        // ====== FIM DA CONTAGEM INDIVIDUAL ======
+        auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
         imu_times.push_back(duration.count());
+        // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         
         IMUData data;
         data.name = parameter_manager_->get_name(id);
 
-        // quaternions
         data.q_w = imu_quaternions_data[0];
         data.q_x = imu_quaternions_data[1];
         data.q_y = imu_quaternions_data[2];
@@ -68,14 +68,16 @@ void IMUNode::state_callback()
         msg.imus.push_back(data);
     }
 
+    // publica os dados de todos os imus
     msg.header.stamp = this->get_clock()->now();
     publisher_->publish(msg);
 
-    // FIM DA CONTAGEM TOTAL
+    // ======== FIM DA CONTAGEM TOTAL ========
     auto end_total = std::chrono::high_resolution_clock::now(); 
     auto duration_total = std::chrono::duration_cast<std::chrono::microseconds>(end_total - start_total);
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-    // grava todos os IMUs + tempo total
+    // ======== GRAVA TODOS OS TEMPOS ========
     if (loop_idx >= 5) return;
     
     timing_log_ << (loop_idx + 1) << "\t";
@@ -84,6 +86,7 @@ void IMUNode::state_callback()
     timing_log_ << duration_total.count() << "\n";
     
     loop_idx++;
+    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 }
 
 IMUNode::~IMUNode() = default;
