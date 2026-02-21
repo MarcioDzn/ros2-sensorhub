@@ -97,9 +97,9 @@ void PressureNode::state_callback()
 
     // se nenhuma palmilha enviou a posição
     // entao nao publica nada
-    if (error_count < min_size) {
+    if (error_count < min_size) 
+    {
         publisher_->publish(msg);
-        RCLCPP_INFO(this->get_logger(), "Publicado com %zu IDs", msg.names.size());
     }   
 
     // ======== FIM DA CONTAGEM TOTAL ========
