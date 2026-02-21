@@ -37,10 +37,10 @@ PressureNode::PressureNode(const rclcpp::NodeOptions& options)
 
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
-        std::bind(&PressureNode::state_callback, this));
+        std::bind(&PressureNode::publish_pressure_data, this));
 }
 
-void PressureNode::state_callback()
+void PressureNode::publish_pressure_data()
 {
     std::vector<long> pressure_times;
     static int loop_idx = 0;
