@@ -20,7 +20,6 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
     auto init_response = actuator_driver_->init(
         parameter_manager_->get_usb_port(), 
         parameter_manager_->get_baudrate());
-
     if (init_response != 0)
     {
         RCLCPP_FATAL(this->get_logger(), 
@@ -71,6 +70,7 @@ void ActuatorNode::set_torque(
 {
     std::lock_guard<std::mutex> lock(driver_mutex_);
 
+    // busca o atuador referente ao id
     auto id = parameter_manager_->get_id_by_name(request->name);
     if (id == -1){
         RCLCPP_WARN(this->get_logger(), "Atuador %s não encontrado", 
