@@ -18,14 +18,15 @@ PressureNode::PressureNode(const rclcpp::NodeOptions& options)
     for (size_t idx = 0; idx < parameter_manager_->get_ids().size(); idx++)
     {
         pressure_drivers_[idx] = PressureFactory::create_pressure();
-
-        if (pressure_drivers_[idx]->init(
+        auto init_response = pressure_drivers_[idx]->init(
             parameter_manager_->get_usb_ports()[idx], 
-            parameter_manager_->get_baudrate()) < 0) {
-                RCLCPP_FATAL(this->get_logger(), 
-                    "Falha na inicialização do hardware serial na porta %s.", 
-                    parameter_manager_->get_usb_ports()[idx].c_str());
-                throw std::runtime_error("Falha ao inicializar PressureNode"); 
+            parameter_manager_->get_baudrate());
+
+        if (init_response < 0) {
+            RCLCPP_FATAL(this->get_logger(), 
+                "Falha na inicialização do hardware serial na porta %s.", 
+                parameter_manager_->get_usb_ports()[idx].c_str());
+            throw std::runtime_error("Falha ao inicializar PressureNode"); 
         }
     }
     
