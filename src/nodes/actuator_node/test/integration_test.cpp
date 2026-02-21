@@ -29,7 +29,6 @@ class ActuatorNodeFixture : public ::testing::Test {
         ASSERT_EQ(0, openpty(&master_fd, &slave_fd, slave_name, nullptr, nullptr));
 
         rclcpp::NodeOptions options;
-        options.append_parameter_override("base_name", "dxl");
         options.append_parameter_override("update_rate_ms", 15);
         options.append_parameter_override("usb_port", slave_name);
         options.append_parameter_override("baudrate", 2000000);
@@ -63,7 +62,7 @@ TEST_F(ActuatorNodeFixture, publishes_data_success) {
         .reliable()
         .durability_volatile();
     auto sub = node->create_subscription<interfaces::msg::ActuatorState>(
-        "dxl/state",
+        "actuator/state",
         qos,
         [&received](const interfaces::msg::ActuatorState::SharedPtr msg) {
             received = true;
@@ -88,7 +87,7 @@ TEST_F(ActuatorNodeFixture, publishes_data_checksum_error) {
         .reliable()
         .durability_volatile();
     auto sub = node->create_subscription<interfaces::msg::ActuatorState>(
-        "dxl/state",
+        "actuator/state",
         qos,
         [&received](const interfaces::msg::ActuatorState::SharedPtr msg) {
             received = true;
@@ -115,7 +114,7 @@ TEST_F(ActuatorNodeFixture, publishes_data_content) {
         .reliable()
         .durability_volatile();
     auto sub = node->create_subscription<interfaces::msg::ActuatorState>(
-        "dxl/state",
+        "actuator/state",
         qos,
         [&received, &name, &curr_pos](const interfaces::msg::ActuatorState::SharedPtr msg) {
             received = true;
@@ -149,7 +148,7 @@ TEST_F(ActuatorNodeFixture, subscribes_data_success) {
         .reliable()
         .durability_volatile();
     auto pub = node->create_publisher<interfaces::msg::Command>(
-        "dxl/command",
+        "actuator/command",
         qos);
 
     auto msg = interfaces::msg::Command();
@@ -189,7 +188,7 @@ TEST_F(ActuatorNodeFixture, service_command_success_set_torque_enable_success) {
     while (read(master_fd, read_buffer, sizeof(read_buffer)) > 0);
 
     auto client = node->create_client<interfaces::srv::SetTorque>(
-        "dxl/set_torque");
+        "actuator/set_torque");
     // precisa esperar o service ficar on
     ASSERT_TRUE(client->wait_for_service(std::chrono::seconds(1)));
 

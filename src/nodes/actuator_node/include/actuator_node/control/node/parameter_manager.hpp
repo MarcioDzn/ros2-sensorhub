@@ -16,7 +16,6 @@ class ParameterManager {
         explicit ParameterManager(rclcpp::Node* node);
         virtual ~ParameterManager() = default;
 
-        std::string get_base_name() { return base_name_; }
         std::string get_usb_port() { return usb_port_; }
         int get_update_rate() { return update_rate_; }
         int get_baudrate() { return baudrate_; }
@@ -32,7 +31,6 @@ class ParameterManager {
         void declare_parameters();
         void load_parameters();
 
-        std::string base_name_;
         std::string usb_port_;
         int update_rate_;
         int baudrate_;
