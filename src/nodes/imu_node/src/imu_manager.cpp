@@ -7,7 +7,6 @@ IMUManager::IMUManager(
 :  parameter_manager_(parameter_manager) {}
 
 int IMUManager::init(rclcpp::Node* node)
-
 {
     if (create_imus() != 0) return -1;
     if (setup_imus() != 0) return -1;
