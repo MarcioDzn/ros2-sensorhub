@@ -37,9 +37,9 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
         .durability_volatile();
 
     // recebe dados de comando contínuo. Ex: posição alvo
-    actuator_subscriber_ = this->create_subscription<Command>(
+    actuator_subscriber_ = this->create_subscription<ActuatorCommand>(
         parameter_manager_->get_base_name() + "/command", qos, 
-        [this](const Command::SharedPtr msg) {
+        [this](const ActuatorCommand::SharedPtr msg) {
             
             this->set_goal_position(msg);
         });
@@ -53,7 +53,7 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
         });
 
     // envia dados de estado. Ex: posição atual
-    state_publisher_ = this->create_publisher<State>(
+    state_publisher_ = this->create_publisher<ActuatorState>(
         parameter_manager_->get_base_name() + "/state", qos);
 
     timer_ = this->create_wall_timer(
@@ -99,7 +99,7 @@ void ActuatorNode::publish_position_data()
     std::vector<long> actuator_times;
     static int loop_idx = 0;
 
-    State msg;
+    ActuatorState msg;
     const auto& ids = parameter_manager_->get_ids();
     const auto& names = parameter_manager_->get_names();
 
@@ -167,7 +167,7 @@ void ActuatorNode::publish_position_data()
     // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 }
 
-void ActuatorNode::set_goal_position(const Command::SharedPtr msg)
+void ActuatorNode::set_goal_position(const ActuatorCommand::SharedPtr msg)
 {
     if (msg->names.empty() || msg->goals.empty()) return;
 
