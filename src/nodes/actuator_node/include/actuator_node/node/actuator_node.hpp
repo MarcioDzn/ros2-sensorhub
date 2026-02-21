@@ -33,9 +33,9 @@ class ActuatorNode : public rclcpp::Node
         virtual ~ActuatorNode();
 
     private:
-        void goal_position_callback(const Command::SharedPtr msg);
-        void state_callback();
-        void set_torque_service_callback(
+        void set_goal_position(const Command::SharedPtr msg);
+        void publish_position_data();
+        void set_torque(
             const std::shared_ptr<SetTorque::Request> request,
             std::shared_ptr<SetTorque::Response> response);
 
