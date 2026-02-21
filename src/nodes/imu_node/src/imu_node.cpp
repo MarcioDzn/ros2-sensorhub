@@ -20,7 +20,7 @@ IMUNode::IMUNode(const rclcpp::NodeOptions & options) : Node("imu_node", options
         .best_effort()
         .durability_volatile();
     publisher_ = this->create_publisher<IMUState>(
-        parameter_manager_->get_base_name() + "/state", qos);
+        "imu/state", qos);
     
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
