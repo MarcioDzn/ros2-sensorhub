@@ -14,6 +14,10 @@ void ActuatorTimeNode::time_callback(const interfaces::msg::Time::SharedPtr msg)
     RCLCPP_INFO(this->get_logger(),
                 "[Actuator] Total time: %ld us | Names: %lu",
                 msg->total_time, msg->names.size());
+
+    // adiciona ao plot
+    plotter_.add_data("actuator_time", msg_counter_++, static_cast<double>(msg->total_time));
+    plotter_.plot();
 }
 
 int main(int argc, char * argv[])
