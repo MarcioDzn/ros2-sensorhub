@@ -26,9 +26,24 @@ void ActuatorTimeNode::time_callback(const interfaces::msg::Time::SharedPtr msg)
     // TODO: enviar pela msg
     plotter_.add_data("actuator_update_rate", msg_counter_, static_cast<double>(15000.0)); // 15ms
 
-    msg_counter_++;
-
     plotter_.plot();
+
+    // --- CSV ---
+    CsvRow row;
+    for (double t : msg->times)
+        row.values.push_back(static_cast<double>(t));
+    row.values.push_back(static_cast<double>(msg->total_time)); // última coluna = total
+    csv_writer_.add_row(row);
+
+    // cabeçalho dinâmico
+    std::vector<std::string> header;
+    for (size_t idx = 0; idx < msg->times.size(); idx++)
+        header.push_back(msg->names[idx]);
+    header.push_back("TotalTime");
+
+    csv_writer_.save("actuator_times.csv", header);
+
+    msg_counter_++;
 }
 
 int main(int argc, char * argv[])

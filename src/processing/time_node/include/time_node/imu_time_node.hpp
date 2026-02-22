@@ -4,6 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/msg/time.hpp"
 #include "plotter.hpp"
+#include "csv_writer.hpp"
 
 class IMUTimeNode : public rclcpp::Node
 {
@@ -13,6 +14,8 @@ class IMUTimeNode : public rclcpp::Node
     private:
         void time_callback(const interfaces::msg::Time::SharedPtr msg);
         rclcpp::Subscription<interfaces::msg::Time>::SharedPtr sub_;
+
+        CsvWriter csv_writer_;
 
         Plotter plotter_;
         int msg_counter_ = 0; // eixo X do gráfico
