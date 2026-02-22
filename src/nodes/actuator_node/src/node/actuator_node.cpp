@@ -100,10 +100,9 @@ void ActuatorNode::set_torque(
 
 void ActuatorNode::publish_position_data()
 {
-    std::vector<long> actuator_times;
-    static int loop_idx = 0;
-
+    Time time_msg;
     ActuatorState msg;
+
     const auto& ids = parameter_manager_->get_ids();
     const auto& names = parameter_manager_->get_names();
 
@@ -129,9 +128,12 @@ void ActuatorNode::publish_position_data()
             // ====== FIM DA CONTAGEM INDIVIDUAL ======
             auto end = std::chrono::high_resolution_clock::now(); // finaliza contagem de tempo
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-            actuator_times.push_back(duration.count());
             // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
             
+            // guarda o tempo individual (mesmo com falha)
+            time_msg.names.push_back(names[idx]);
+            time_msg.times.push_back(duration.count());
+
             // guarda infos de atuadores que enviaram posição
             if (result == 0) {
                 successful_names.push_back(names[idx]);
@@ -159,16 +161,9 @@ void ActuatorNode::publish_position_data()
     auto duration_total = std::chrono::duration_cast<std::chrono::microseconds>(end_total - start_total);
     // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-    // ======== GRAVA TODOS OS TEMPOS =========
-    if (loop_idx >= 5) return;
-    
-    timing_log_ << (loop_idx + 1) << "\t";
-    for (auto t_us : actuator_times)
-        timing_log_ << t_us << "\t";
-    timing_log_ << duration_total.count() << "\n";
-    
-    loop_idx++;
-    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    // publica os tempos individuais + tempo total
+    time_msg.total_time = duration_total.count();
+    time_publisher_->publish(time_msg);
 }
 
 void ActuatorNode::set_goal_position(const ActuatorCommand::SharedPtr msg)
