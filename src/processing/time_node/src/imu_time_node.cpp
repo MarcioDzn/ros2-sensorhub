@@ -15,8 +15,19 @@ void IMUTimeNode::time_callback(const interfaces::msg::Time::SharedPtr msg)
                 "[IMU] Total time: %ld us | Names: %lu",
                 msg->total_time, msg->names.size());
 
-    // adiciona ao plot
-    plotter_.add_data("imu_time", msg_counter_++, static_cast<double>(msg->total_time));
+    // tempo total
+    plotter_.add_data("imu_total_time", msg_counter_, static_cast<double>(msg->total_time));
+
+    // tempos individuais
+    for (size_t idx = 0; idx < msg->times.size(); idx++) 
+        plotter_.add_data("imu_time_" + msg->names[idx], msg_counter_, static_cast<double>(msg->times[idx]));
+
+    // tempo esperado (update_rate)
+    // TODO: enviar pela msg
+    plotter_.add_data("imu_update_rate", msg_counter_, static_cast<double>(15000.0)); // 15ms
+
+    msg_counter_++;
+
     plotter_.plot();
 }
 
