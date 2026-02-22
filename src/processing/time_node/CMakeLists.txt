@@ -14,7 +14,7 @@ find_package(interfaces REQUIRED)  # pacote com a mensagem Time
 find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
 
 include_directories(
-  include
+  include/time_node
   ${Python3_INCLUDE_DIRS}
 )
 
