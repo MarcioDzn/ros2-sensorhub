@@ -23,6 +23,8 @@ set(msg_files
   "msg/actuator/ActuatorState.msg"
 
   "msg/sync/SyncedSensorData.msg"
+
+  "msg/time/Time.msg"
 )
 
 set(srv_files
