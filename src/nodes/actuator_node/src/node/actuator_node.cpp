@@ -55,6 +55,10 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
     state_publisher_ = this->create_publisher<ActuatorState>(
          "actuator/state", qos);
 
+    // envia dados de tempo
+    time_publisher_ = this->create_publisher<Time>(
+         "actuator/time", qos);
+
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
         [this]() {

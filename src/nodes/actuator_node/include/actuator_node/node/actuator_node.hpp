@@ -12,6 +12,7 @@
 #include "interfaces/srv/set_torque.hpp"
 #include "interfaces/msg/command.hpp"
 #include "interfaces/msg/actuator_state.hpp"
+#include "interfaces/msg/time.hpp"
 
 class NodeManager;
 class ParameterManager;
@@ -19,6 +20,7 @@ class ParameterManager;
 using SetTorque = interfaces::srv::SetTorque;
 using ActuatorCommand = interfaces::msg::Command;
 using ActuatorState = interfaces::msg::ActuatorState;
+using Time = interfaces::msg::Time;
 
 struct LoopTiming {
     long start = 0;
@@ -46,6 +48,7 @@ class ActuatorNode : public rclcpp::Node
         
         rclcpp::Subscription<ActuatorCommand>::SharedPtr actuator_subscriber_;
         rclcpp::Publisher<ActuatorState>::SharedPtr state_publisher_;
+        rclcpp::Publisher<Time>::SharedPtr time_publisher_;
         rclcpp::Service<SetTorque>::SharedPtr set_torque_service_;
         
         rclcpp::TimerBase::SharedPtr timer_;
