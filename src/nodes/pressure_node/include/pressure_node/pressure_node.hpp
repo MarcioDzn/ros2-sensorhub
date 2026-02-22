@@ -10,6 +10,7 @@
 #include "interfaces/msg/pressure_state.hpp"
 #include "interfaces/msg/pressure_data.hpp"
 #include "interfaces/msg/pressure_unit_sensor.hpp"
+#include "interfaces/msg/time.hpp"
 
 #include "control/node/parameter_manager.hpp"
 #include "driver/pressure_driver.hpp"
@@ -17,6 +18,7 @@
 using PressureState = interfaces::msg::PressureState;
 using PressureData = interfaces::msg::PressureData;
 using PressureUnitSensor = interfaces::msg::PressureUnitSensor;
+using Time = interfaces::msg::Time;
 
 struct LoopTiming {
     long start = 0;
@@ -50,6 +52,7 @@ class PressureNode : public rclcpp::Node
         std::shared_ptr<ParameterManager> parameter_manager_;
 
         rclcpp::Publisher<PressureState>::SharedPtr publisher_;
+        rclcpp::Publisher<Time>::SharedPtr time_publisher_;
         
         rclcpp::TimerBase::SharedPtr timer_;
         int update_rate_ms_;

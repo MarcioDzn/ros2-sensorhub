@@ -33,8 +33,13 @@ PressureNode::PressureNode(const rclcpp::NodeOptions& options)
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .best_effort()
         .durability_volatile();
+
     publisher_ = this->create_publisher<PressureState>(
         "pressure/state", qos);
+
+    // envia dados de tempo
+    time_publisher_ = this->create_publisher<Time>(
+        "pressure/time", qos);
 
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
@@ -43,10 +48,9 @@ PressureNode::PressureNode(const rclcpp::NodeOptions& options)
 
 void PressureNode::publish_pressure_data()
 {
-    std::vector<long> pressure_times;
-    static int loop_idx = 0;
-
+    Time time_msg;
     auto msg = PressureState();
+
     auto ids = parameter_manager_->get_ids();
     auto names = parameter_manager_->get_names();
     
@@ -76,8 +80,11 @@ void PressureNode::publish_pressure_data()
         // ====== FIM DA CONTAGEM INDIVIDUAL ======
         auto end = std::chrono::high_resolution_clock::now(); 
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        pressure_times.push_back(duration.count());
         // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+        // guarda o tempo individual (mesmo com falha)
+        time_msg.names.push_back(parameter_manager_->get_names()[idx]);
+        time_msg.times.push_back(duration.count());
 
         PressureData pd;
         pd.pressures.reserve(data.size()); // prepara o vetor de cada ponto de pressão
@@ -108,16 +115,9 @@ void PressureNode::publish_pressure_data()
     auto duration_total = std::chrono::duration_cast<std::chrono::microseconds>(end_total - start_total);
     // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-    // ========= GRAVA TODOS OS TEMPO =========
-    if (loop_idx >= 5) return;
-    
-    timing_log_ << (loop_idx + 1) << "\t";
-    for (auto t_us : pressure_times)
-        timing_log_ << t_us << "\t";
-    timing_log_ << duration_total.count() << "\n";
-    
-    loop_idx++;
-    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    // publica os tempos individuais + tempo total
+    time_msg.total_time = duration_total.count();
+    time_publisher_->publish(time_msg);
 
 }
 
