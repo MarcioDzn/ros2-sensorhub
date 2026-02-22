@@ -5,12 +5,10 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# encontra as dependencias do ROS2
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(interfaces REQUIRED)  # pacote com a mensagem Time
+find_package(interfaces REQUIRED) 
 
-# encontra Python3 (matplotlib-cpp precisa)
 find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
 
 include_directories(
@@ -18,20 +16,18 @@ include_directories(
   ${Python3_INCLUDE_DIRS}
 )
 
-# ===== NÓS =====
-add_executable(pressure_time_node src/pressure_time_node.cpp)
+add_executable(pressure_time_node src/pressure_time_node.cpp src/csv_writer.cpp)
 ament_target_dependencies(pressure_time_node rclcpp interfaces)
 target_link_libraries(pressure_time_node ${Python3_LIBRARIES})
 
-add_executable(actuator_time_node src/actuator_time_node.cpp)
+add_executable(actuator_time_node src/actuator_time_node.cpp src/csv_writer.cpp)
 ament_target_dependencies(actuator_time_node rclcpp interfaces)
 target_link_libraries(actuator_time_node ${Python3_LIBRARIES})
 
-add_executable(imu_time_node src/imu_time_node.cpp)
+add_executable(imu_time_node src/imu_time_node.cpp src/csv_writer.cpp)
 ament_target_dependencies(imu_time_node rclcpp interfaces)
 target_link_libraries(imu_time_node ${Python3_LIBRARIES})
 
-# ===== Instalação =====
 install(TARGETS
   pressure_time_node
   actuator_time_node
