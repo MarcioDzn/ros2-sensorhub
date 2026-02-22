@@ -11,6 +11,7 @@
 #include "interfaces/msg/imu_data.hpp"
 #include "interfaces/msg/imu_state.hpp"
 #include "sensor_msgs/msg/imu.hpp"
+#include "interfaces/msg/time.hpp"
 
 
 struct LoopTiming {
@@ -29,6 +30,7 @@ struct ImuConfig {
 
 using IMUData = interfaces::msg::IMUData;
 using IMUState = interfaces::msg::IMUState;
+using Time = interfaces::msg::Time;
 
 class IMUNode : public rclcpp::Node
 {
@@ -40,6 +42,7 @@ class IMUNode : public rclcpp::Node
         void state_callback();
 		
         rclcpp::Publisher<IMUState>::SharedPtr publisher_;
+        rclcpp::Publisher<Time>::SharedPtr time_publisher_;
 
         std::shared_ptr<ParameterManager> parameter_manager_;
         std::shared_ptr<IMUManager> manager_;

@@ -19,8 +19,13 @@ IMUNode::IMUNode(const rclcpp::NodeOptions & options) : Node("imu_node", options
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .best_effort()
         .durability_volatile();
+
     publisher_ = this->create_publisher<IMUState>(
         "imu/state", qos);
+
+    // envia dados de tempo
+    time_publisher_ = this->create_publisher<Time>(
+        "imu/time", qos);
     
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
@@ -29,12 +34,10 @@ IMUNode::IMUNode(const rclcpp::NodeOptions & options) : Node("imu_node", options
 
 void IMUNode::state_callback()
 {
-    std::vector<long> imu_times;
-    static int loop_idx = 0;
-
-    const auto& imus = manager_->get_imus();
+    Time time_msg;  
     auto msg = IMUState();
 
+    const auto& imus = manager_->get_imus();
     const auto& ids = parameter_manager_->get_ids();
     
     // ======= COMEÇO DA CONTAGEM TOTAL =======
@@ -54,8 +57,11 @@ void IMUNode::state_callback()
         // ====== FIM DA CONTAGEM INDIVIDUAL ======
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        imu_times.push_back(duration.count());
         // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+        // guarda o tempo individual (mesmo com falha)
+        time_msg.names.push_back(parameter_manager_->get_name(id));
+        time_msg.times.push_back(duration.count());
         
         IMUData data;
         data.name = parameter_manager_->get_name(id);
@@ -77,16 +83,9 @@ void IMUNode::state_callback()
     auto duration_total = std::chrono::duration_cast<std::chrono::microseconds>(end_total - start_total);
     // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-    // ======== GRAVA TODOS OS TEMPOS ========
-    if (loop_idx >= 5) return;
-    
-    timing_log_ << (loop_idx + 1) << "\t";
-    for (auto t_us : imu_times)
-        timing_log_ << t_us << "\t";
-    timing_log_ << duration_total.count() << "\n";
-    
-    loop_idx++;
-    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    // publica os tempos individuais + tempo total
+    time_msg.total_time = duration_total.count();
+    time_publisher_->publish(time_msg);
 }
 
 IMUNode::~IMUNode() = default;
