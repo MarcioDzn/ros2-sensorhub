@@ -8,7 +8,8 @@ IMUNode::IMUNode(const rclcpp::NodeOptions & options) : Node("imu_node", options
     setup_node();
 }
 
-void IMUNode::init_driver() {
+void IMUNode::init_driver() 
+{
     parameter_manager_ = std::make_shared<ParameterManager>(this);
     manager_ = std::make_unique<IMUManager>(parameter_manager_);
 
@@ -20,7 +21,8 @@ void IMUNode::init_driver() {
     }
 }
 
-void IMUNode::setup_node() {
+void IMUNode::setup_node() 
+{
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .best_effort()
         .durability_volatile();
@@ -51,7 +53,7 @@ IMUState IMUNode::read_imu_data(Time& time_data)
             imu->get_quaternions_data(imu_quaternions_data);
         });
 
-        // TODO: adicionar nomes
+        time_data.names.push_back(parameter_manager_->get_name(id));
         time_data.times.push_back(duration);
 
         // monta msg com dados do imu
@@ -71,7 +73,8 @@ IMUState IMUNode::read_imu_data(Time& time_data)
     return state_data;
 }
 
-void IMUNode::publish_imu_state() {
+void IMUNode::publish_imu_state() 
+{
     Time time_msg;
     IMUState state_msg;
 
