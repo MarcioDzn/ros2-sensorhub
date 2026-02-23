@@ -50,8 +50,8 @@ ament_target_dependencies(imu_control
 )
 
 add_library(imu_node_lib SHARED
-  src/imu_node.cpp 
-  src/imu_manager.cpp
+  src/node/imu_node.cpp 
+  src/node/imu_manager.cpp
 )
 
 target_link_libraries(imu_node_lib
