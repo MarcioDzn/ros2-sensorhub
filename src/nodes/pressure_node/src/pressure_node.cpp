@@ -43,7 +43,9 @@ PressureNode::PressureNode(const rclcpp::NodeOptions& options)
 
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
-        std::bind(&PressureNode::publish_pressure_data, this));
+        [this]() {
+            publish_pressure_state();
+        });
 }
 
 PressureState PressureNode::read_pressure_data(Time& time_data)
@@ -107,81 +109,6 @@ void PressureNode::publish_pressure_state()
 
     time_msg.total_time = duration;
     time_publisher_->publish(time_msg);
-}
-
-void PressureNode::publish_pressure_data()
-{
-    Time time_msg;
-    auto msg = PressureState();
-
-    auto ids = parameter_manager_->get_ids();
-    auto names = parameter_manager_->get_names();
-    
-    // evita segfault
-    size_t min_size = std::min(ids.size(), names.size());
-    msg.names.reserve(min_size);
-    msg.pressures.reserve(min_size);
-
-    // ====== COMEÇO DA CONTAGEM TOTAL =======
-    auto start_total = std::chrono::high_resolution_clock::now();
-    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-    uint8_t error_count = 0;
-    for (size_t idx = 0; idx < min_size; idx++)
-    {   
-        // ==== COMEÇO DA CONTAGEM INDIVIDUAL ====
-        auto start = std::chrono::high_resolution_clock::now(); 
-        // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-        // lê os dados da STM
-        std::vector<uint16_t> data;
-        if (pressure_drivers_[idx]->get_data(data) != 0)
-        {
-            error_count++; continue;
-        }
-        
-        // ====== FIM DA CONTAGEM INDIVIDUAL ======
-        auto end = std::chrono::high_resolution_clock::now(); 
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-        // guarda o tempo individual (mesmo com falha)
-        time_msg.names.push_back(parameter_manager_->get_names()[idx]);
-        time_msg.times.push_back(duration.count());
-
-        PressureData pd;
-        pd.pressures.reserve(data.size()); // prepara o vetor de cada ponto de pressão
-
-        size_t sensor_id = 0;
-        for (auto val : data)
-        {
-            PressureUnitSensor unit_sensor;
-            unit_sensor.id = sensor_id++;
-            unit_sensor.pressure = static_cast<int16_t>(val);
-            pd.pressures.push_back(unit_sensor);
-        }
-
-        msg.pressures.push_back(pd);
-        msg.names.push_back(parameter_manager_->get_names()[idx]);
-        msg.header.stamp = this->get_clock()->now();
-    }
-
-    // se nenhuma palmilha enviou a posição
-    // entao nao publica nada
-    if (error_count < min_size) 
-    {
-        publisher_->publish(msg);
-    }   
-
-    // ======== FIM DA CONTAGEM TOTAL ========
-    auto end_total = std::chrono::high_resolution_clock::now(); 
-    auto duration_total = std::chrono::duration_cast<std::chrono::microseconds>(end_total - start_total);
-    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-    // publica os tempos individuais + tempo total
-    time_msg.total_time = duration_total.count();
-    time_publisher_->publish(time_msg);
-
 }
 
 PressureNode::~PressureNode() = default;
