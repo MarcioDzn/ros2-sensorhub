@@ -22,14 +22,13 @@ IMUNode::IMUNode(const rclcpp::NodeOptions & options) : Node("imu_node", options
 
     publisher_ = this->create_publisher<IMUState>(
         "imu/state", qos);
-
-    // envia dados de tempo
     time_publisher_ = this->create_publisher<Time>(
         "imu/time", qos);
-    
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
-        std::bind(&IMUNode::state_callback, this));
+        [this]() {
+            publish_imu_state();
+        });
 }
 
 void IMUNode::read_imu_data(Time& time_data)
