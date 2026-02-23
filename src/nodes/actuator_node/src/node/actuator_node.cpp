@@ -69,7 +69,13 @@ void ActuatorNode::setup_node() {
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
         [this]() {
-            publish_position_data();
+            Time time_msg;
+            ActuatorState state_msg = get_actuator_data(time_msg)
+            
+            if (state_msg.names.empty()) return;
+
+            state_msg.header.stamp = this->get_clock()->now();
+            state_publisher_->publish(state_msg);
         });
 
     RCLCPP_INFO(this->get_logger(), "Sucesso ao inicializar ActuatorNode.");
@@ -103,6 +109,35 @@ void ActuatorNode::set_torque(
     }
     
     response->success = true;
+}
+
+ActuatorState ActuatorNode::get_actuator_data(Time& time_data)
+{
+    ActuatorState state_data;
+    
+    const auto& ids = parameter_manager_->get_ids();
+    const auto& names = parameter_manager_->get_names();
+
+    {
+        std::lock_guard<std::mutex> lock(driver_mutex_);
+
+        for (size_t idx = 0; idx < ids.size(); idx++)
+        {
+            uint16_t position;
+            auto result = actuator_driver_->get_current_position(ids[idx], position);
+
+            if (result == 0) {
+                state_data.names.push_back(names[idx]);
+                state_data.positions.push_back(static_cast<int16_t>(position));
+
+            } else {
+                RCLCPP_ERROR(this->get_logger(), "Falha na leitura do atuador %s. Erro: %d", 
+                    names[idx].c_str(), static_cast<int>(result));
+            }
+        }
+    }
+
+    return state_data;
 }
 
 void ActuatorNode::publish_position_data()
