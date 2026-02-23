@@ -11,8 +11,15 @@ using namespace std::chrono_literals;
 ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options) 
     : Node("actuator_node", options)
 {   
-    timing_log_.open("tempos_atuadores.txt", std::ios::out | std::ios::trunc);
+    init_driver();
 
+    // TODO: verificar se os ids fornecidos pelo yaml
+    // são de atuadores realmente conectados
+    setup_node();
+
+}
+
+void ActuatorNode::init_driver() {
     parameter_manager_ = std::make_shared<ParameterManager>(this);
     actuator_driver_ = ActuatorFactory::createDynamixel();
 
@@ -28,9 +35,9 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
         throw std::runtime_error("Falha ao inicializar ActuatorNode");
     }
 
-    // TODO: verificar se os ids fornecidos pelo yaml
-    // são de atuadores realmente conectados
+}
 
+void ActuatorNode::setup_node() {
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .reliable()
         .durability_volatile();
@@ -65,7 +72,7 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
             publish_position_data();
         });
 
-    RCLCPP_INFO(this->get_logger(), "Nó ActuatorNode iniciado com sucesso.");
+    RCLCPP_INFO(this->get_logger(), "Sucesso ao inicializar ActuatorNode.");
 }
 
 void ActuatorNode::set_torque(
