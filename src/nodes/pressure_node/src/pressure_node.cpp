@@ -46,6 +46,69 @@ PressureNode::PressureNode(const rclcpp::NodeOptions& options)
         std::bind(&PressureNode::publish_pressure_data, this));
 }
 
+PressureState PressureNode::read_pressure_data(Time& time_data)
+{
+    PressureState state_data;
+
+    auto ids = parameter_manager_->get_ids();
+    auto names = parameter_manager_->get_names();
+
+    size_t min_size = std::min(ids.size(), names.size());
+
+    for (size_t idx = 0; idx < min_size; idx++)
+    {
+        std::vector<uint16_t> data;
+        int result;
+        // pega os dados da palmilha
+        
+        auto duration = measure_micros([&]() {
+            result = pressure_drivers_[idx]->get_data(data);
+        });
+
+        time_data.names.push_back(names[idx]);
+        time_data.times.push_back(duration);
+
+        if (result != 0)
+            continue; // se não conseguir os dados não cria a msg
+
+        // cria a mensagem
+        PressureData pressure_data;
+        pressure_data.pressures.reserve(data.size());
+
+        size_t sensor_id = 0;
+        for (auto value : data)
+        {
+            PressureUnitSensor unit_sensor_data;
+            unit_sensor_data.id = sensor_id++;
+            unit_sensor_data.pressure = static_cast<int16_t>(value);
+            pressure_data.pressures.push_back(unit_sensor_data);
+        }
+
+        state_data.pressures.push_back(pressure_data);
+        state_data.names.push_back(parameter_manager_->get_names()[idx]);
+    }
+
+    return state_data;
+}
+
+void PressureNode::publish_pressure_state()
+{
+    Time time_msg;
+    PressureState state_msg;
+
+    auto duration = measure_micros([&]() {
+        state_msg = read_pressure_data(time_msg);
+    });
+    
+    if (state_msg.names.empty()) return;
+
+    state_msg.header.stamp = this->get_clock()->now();
+    publisher_->publish(state_msg);
+
+    time_msg.total_time = duration;
+    time_publisher_->publish(time_msg);
+}
+
 void PressureNode::publish_pressure_data()
 {
     Time time_msg;
