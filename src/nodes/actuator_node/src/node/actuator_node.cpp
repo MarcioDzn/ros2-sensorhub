@@ -119,6 +119,7 @@ ActuatorState ActuatorNode::read_actuator_data(Time& time_data)
                 result = actuator_driver_->get_current_position(ids[idx], position);
             });
             
+            time_data.names.push_back(names[idx]);
             time_data.times.push_back(duration);
             
             if (result == 0) {
