@@ -31,8 +31,10 @@ class ActuatorNode : public rclcpp::Node
 
     private:
         void set_goal_position(const ActuatorCommand::SharedPtr msg);
+        
         ActuatorState read_actuator_data(Time& time_data);
-        void publish_position_data();
+        void publish_actuator_state();
+
         void set_torque(
             const std::shared_ptr<SetTorque::Request> request,
             std::shared_ptr<SetTorque::Response> response);

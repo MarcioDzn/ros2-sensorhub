@@ -69,21 +69,7 @@ void ActuatorNode::setup_node() {
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
         [this]() {
-            Time time_msg;
-            ActuatorState state_msg;
-
-            auto duration = measure_micros([&]() {
-                state_msg = read_actuator_data(time_msg);
-            });
-            
-            if (state_msg.names.empty()) return;
-
-            state_msg.header.stamp = this->get_clock()->now();
-            state_publisher_->publish(state_msg);
-
-            time_msg.total_time = duration;
-            time_publisher_->publish(time_msg);
-
+            publish_actuator_state();
         });
 
     RCLCPP_INFO(this->get_logger(), "Sucesso ao inicializar ActuatorNode.");
@@ -154,71 +140,21 @@ ActuatorState ActuatorNode::read_actuator_data(Time& time_data)
     return state_data;
 }
 
-void ActuatorNode::publish_position_data()
+void ActuatorNode::publish_actuator_state()
 {
     Time time_msg;
-    ActuatorState msg;
+    ActuatorState state_msg;
 
-    const auto& ids = parameter_manager_->get_ids();
-    const auto& names = parameter_manager_->get_names();
+    auto duration = measure_micros([&]() {
+        state_msg = read_actuator_data(time_msg);
+    });
+    
+    if (state_msg.names.empty()) return;
 
-    std::vector<std::string> successful_names;
-    std::vector<int16_t> successful_positions;
+    state_msg.header.stamp = this->get_clock()->now();
+    state_publisher_->publish(state_msg);
 
-    // ====== COMEÇO DA CONTAGEM TOTAL =======
-    auto start_total = std::chrono::high_resolution_clock::now();
-    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-    {
-        std::lock_guard<std::mutex> lock(driver_mutex_);
-
-        for (size_t idx = 0; idx < ids.size(); idx++)
-        {            
-            // ==== COMEÇO DA CONTAGEM INDIVIDUAL ====
-            auto start = std::chrono::high_resolution_clock::now();
-            // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-            
-            uint16_t temp_pos;
-            auto result = actuator_driver_->get_current_position(ids[idx], temp_pos);
-            
-            // ====== FIM DA CONTAGEM INDIVIDUAL ======
-            auto end = std::chrono::high_resolution_clock::now(); // finaliza contagem de tempo
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-            // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-            
-            // guarda o tempo individual (mesmo com falha)
-            time_msg.names.push_back(names[idx]);
-            time_msg.times.push_back(duration.count());
-
-            // guarda infos de atuadores que enviaram posição
-            if (result == 0) {
-                successful_names.push_back(names[idx]);
-                successful_positions.push_back(static_cast<int16_t>(temp_pos));
-            } else {
-                RCLCPP_ERROR(this->get_logger(), "Falha na leitura do atuador %s. Erro: %d", 
-                    names[idx].c_str(), static_cast<int>(result));
-            }
-        }
-    }
-
-    // só publica se pelo menos um atuador
-    // tiver enviado dados
-    if (!successful_names.empty()) {
-        msg.names = successful_names;
-        msg.positions = successful_positions;
-        msg.header.stamp = this->get_clock()->now();
-        state_publisher_->publish(msg);
-    } else {
-        RCLCPP_WARN(this->get_logger(), "Nenhum atuador foi lido com sucesso. Publicação cancelada.");
-    }
-
-    // ======== FIM DA CONTAGEM TOTAL ========
-    auto end_total = std::chrono::high_resolution_clock::now(); // fim do loop total
-    auto duration_total = std::chrono::duration_cast<std::chrono::microseconds>(end_total - start_total);
-    // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-    // publica os tempos individuais + tempo total
-    time_msg.total_time = duration_total.count();
+    time_msg.total_time = duration;
     time_publisher_->publish(time_msg);
 }
 
