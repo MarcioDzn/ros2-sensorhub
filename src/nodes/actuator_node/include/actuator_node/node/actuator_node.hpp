@@ -14,7 +14,6 @@
 #include "interfaces/msg/actuator_state.hpp"
 #include "interfaces/msg/time.hpp"
 
-class NodeManager;
 class ParameterManager;
 
 using SetTorque = interfaces::srv::SetTorque;
@@ -26,7 +25,7 @@ struct ActuatorData {
     int8_t id;
     std::string name;
     int16_t position;
-}
+};
 
 class ActuatorNode : public rclcpp::Node
 {
@@ -35,14 +34,18 @@ class ActuatorNode : public rclcpp::Node
         virtual ~ActuatorNode();
 
     private:
-        void set_goal_position(const ActuatorCommand::SharedPtr msg);
-
-        ActuatorState read_actuator_data(Time& time_data);
-        void publish_actuator_state();
+        void init_driver();
+        void setup_node();
 
         void set_torque(
             const std::shared_ptr<SetTorque::Request> request,
             std::shared_ptr<SetTorque::Response> response);
+
+        ActuatorState read_actuator_data(Time& time_data);
+        void set_goal_position(const std::vector<ActuatorData>& actuator_data);
+
+        std::vector<ActuatorData> read_goal_position_msg(const ActuatorCommand::SharedPtr msg);
+        void publish_actuator_state();
 
         template <typename Func>
         inline double measure_micros(Func&& func) {
@@ -65,8 +68,6 @@ class ActuatorNode : public rclcpp::Node
         rclcpp::Service<SetTorque>::SharedPtr set_torque_service_;
         
         rclcpp::TimerBase::SharedPtr timer_;
-
-        std::ofstream timing_log_;
 };
 
 #endif // ACTUATOR_NODE_HPP
