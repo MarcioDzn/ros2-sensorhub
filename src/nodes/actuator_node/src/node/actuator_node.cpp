@@ -16,7 +16,6 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
     // TODO: verificar se os ids fornecidos pelo yaml
     // são de atuadores realmente conectados
     setup_node();
-
 }
 
 void ActuatorNode::init_driver() {
@@ -136,24 +135,6 @@ ActuatorState ActuatorNode::read_actuator_data(Time& time_data)
     return state_data;
 }
 
-void ActuatorNode::publish_actuator_state()
-{
-    Time time_msg;
-    ActuatorState state_msg;
-
-    auto duration = measure_micros([&]() {
-        state_msg = read_actuator_data(time_msg);
-    });
-    
-    if (state_msg.names.empty()) return;
-
-    state_msg.header.stamp = this->get_clock()->now();
-    state_publisher_->publish(state_msg);
-
-    time_msg.total_time = duration;
-    time_publisher_->publish(time_msg);
-}
-
 void ActuatorNode::set_goal_position(const std::vector<ActuatorData>& actuator_data)
 {
     std::lock_guard<std::mutex> lock(driver_mutex_);
@@ -192,8 +173,23 @@ std::vector<ActuatorData> ActuatorNode::read_goal_position_msg(const ActuatorCom
     return actuator_data_list;
 }
 
+void ActuatorNode::publish_actuator_state()
+{
+    Time time_msg;
+    ActuatorState state_msg;
+
+    auto duration = measure_micros([&]() {
+        state_msg = read_actuator_data(time_msg);
+    });
+    
+    if (state_msg.names.empty()) return;
+
+    state_msg.header.stamp = this->get_clock()->now();
+    state_publisher_->publish(state_msg);
+
+    time_msg.total_time = duration;
+    time_publisher_->publish(time_msg);
+}
+
 ActuatorNode::~ActuatorNode() {
-    if (timing_log_.is_open()) {
-        timing_log_.close();
-    }
 };
