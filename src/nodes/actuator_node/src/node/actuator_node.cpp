@@ -192,4 +192,12 @@ void ActuatorNode::publish_actuator_state()
 }
 
 ActuatorNode::~ActuatorNode() {
+    RCLCPP_INFO(this->get_logger(), "Encerrando ActuatorNode e limpando recursos...");
+
+    // para o timer
+    if (timer_) {
+        timer_->cancel();
+    }
+
+    // TODO: parar o torque de todos os motores
 };
