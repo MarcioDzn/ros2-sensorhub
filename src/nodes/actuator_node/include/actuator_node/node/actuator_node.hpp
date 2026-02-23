@@ -22,11 +22,6 @@ using ActuatorCommand = interfaces::msg::Command;
 using ActuatorState = interfaces::msg::ActuatorState;
 using Time = interfaces::msg::Time;
 
-struct LoopTiming {
-    long start = 0;
-    long end = 0;
-    long total = 0;
-};
 
 class ActuatorNode : public rclcpp::Node
 {
@@ -36,10 +31,21 @@ class ActuatorNode : public rclcpp::Node
 
     private:
         void set_goal_position(const ActuatorCommand::SharedPtr msg);
+        ActuatorState read_actuator_data(Time& time_data);
         void publish_position_data();
         void set_torque(
             const std::shared_ptr<SetTorque::Request> request,
             std::shared_ptr<SetTorque::Response> response);
+
+        template <typename Func>
+        inline double measure_micros(Func&& func) {
+            auto start = std::chrono::high_resolution_clock::now();
+            func();
+            auto end = std::chrono::high_resolution_clock::now();
+            return static_cast<double>(
+                std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+            );
+        }
 
         std::mutex driver_mutex_;
 

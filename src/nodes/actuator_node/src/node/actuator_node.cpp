@@ -70,12 +70,20 @@ void ActuatorNode::setup_node() {
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
         [this]() {
             Time time_msg;
-            ActuatorState state_msg = get_actuator_data(time_msg)
+            ActuatorState state_msg;
+
+            auto duration = measure_micros([&]() {
+                state_msg = read_actuator_data(time_msg);
+            });
             
             if (state_msg.names.empty()) return;
 
             state_msg.header.stamp = this->get_clock()->now();
             state_publisher_->publish(state_msg);
+
+            time_msg.total_time = duration;
+            time_publisher_->publish(time_msg);
+
         });
 
     RCLCPP_INFO(this->get_logger(), "Sucesso ao inicializar ActuatorNode.");
@@ -111,7 +119,7 @@ void ActuatorNode::set_torque(
     response->success = true;
 }
 
-ActuatorState ActuatorNode::get_actuator_data(Time& time_data)
+ActuatorState ActuatorNode::read_actuator_data(Time& time_data)
 {
     ActuatorState state_data;
     
@@ -124,8 +132,14 @@ ActuatorState ActuatorNode::get_actuator_data(Time& time_data)
         for (size_t idx = 0; idx < ids.size(); idx++)
         {
             uint16_t position;
-            auto result = actuator_driver_->get_current_position(ids[idx], position);
+            int result;
 
+            auto duration = measure_micros([&]() {
+                result = actuator_driver_->get_current_position(ids[idx], position);
+            });
+            
+            time_data.times.push_back(duration);
+            
             if (result == 0) {
                 state_data.names.push_back(names[idx]);
                 state_data.positions.push_back(static_cast<int16_t>(position));
