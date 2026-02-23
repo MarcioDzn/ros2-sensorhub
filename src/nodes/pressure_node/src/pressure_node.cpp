@@ -9,8 +9,12 @@ using namespace std::chrono_literals;
 PressureNode::PressureNode(const rclcpp::NodeOptions& options) 
     : Node("pressure_node", options)
 {
-    timing_log_.open("tempos_pressure.txt", std::ios::out | std::ios::trunc);
+    init_driver();
+    setup_node();
+}
 
+void PressureNode::init_driver() 
+{
     parameter_manager_ = std::make_shared<ParameterManager>(this);
     pressure_drivers_.resize(parameter_manager_->get_ids().size());
 
@@ -21,7 +25,6 @@ PressureNode::PressureNode(const rclcpp::NodeOptions& options)
         auto init_response = pressure_drivers_[idx]->init(
             parameter_manager_->get_usb_ports()[idx], 
             parameter_manager_->get_baudrate());
-
         if (init_response < 0) {
             RCLCPP_FATAL(this->get_logger(), 
                 "Falha na inicialização do hardware serial na porta %s.", 
@@ -29,23 +32,25 @@ PressureNode::PressureNode(const rclcpp::NodeOptions& options)
             throw std::runtime_error("Falha ao inicializar PressureNode"); 
         }
     }
-    
+}
+
+void PressureNode::setup_node() 
+{
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .best_effort()
         .durability_volatile();
 
     publisher_ = this->create_publisher<PressureState>(
         "pressure/state", qos);
-
-    // envia dados de tempo
     time_publisher_ = this->create_publisher<Time>(
         "pressure/time", qos);
-
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
         [this]() {
             publish_pressure_state();
         });
+
+    RCLCPP_INFO(this->get_logger(), "Sucesso ao inicializar PressureNode.");
 }
 
 PressureState PressureNode::read_pressure_data(Time& time_data)
