@@ -46,8 +46,7 @@ void ActuatorNode::setup_node() {
     actuator_subscriber_ = this->create_subscription<ActuatorCommand>(
          "actuator/command", qos, 
         [this](const ActuatorCommand::SharedPtr msg) {
-            
-            this->set_goal_position(msg);
+            this->set_goal_position(this->read_goal_position_msg(msg));
         });
     
     // recebe dados de comando pontual. Ex: habilitar/desabilitar torque
@@ -58,14 +57,11 @@ void ActuatorNode::setup_node() {
             this->set_torque(req, res);
         });
 
-    // envia dados de estado. Ex: posição atual
+
     state_publisher_ = this->create_publisher<ActuatorState>(
          "actuator/state", qos);
-
-    // envia dados de tempo
     time_publisher_ = this->create_publisher<Time>(
          "actuator/time", qos);
-
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
         [this]() {
@@ -158,45 +154,42 @@ void ActuatorNode::publish_actuator_state()
     time_publisher_->publish(time_msg);
 }
 
-void ActuatorNode::set_goal_position(const ActuatorCommand::SharedPtr msg)
+void ActuatorNode::set_goal_position(const std::vector<ActuatorData>& actuator_data)
 {
-    if (msg->names.empty() || msg->goals.empty()) return;
-
-    std::vector<uint8_t> ids;
-    std::vector<std::string> valid_names;
-
-    // busca e salva o id correspondente ao respectivo nome
-    for (const auto& name : msg->names)
-    {
-        auto id = parameter_manager_->get_id_by_name(name);
-        if (id != -1)
-        {
-            ids.push_back(static_cast<uint8_t>(id));
-            valid_names.push_back(name);
-        }
-    }
-
-    // se nenhum nome bater, retorna
-    if (valid_names.empty())
-    {
-        RCLCPP_WARN(this->get_logger(), "Nenhum atuador válido nos nomes recebidos.");
-        return;
-    }
-
-    // evita segfault
-    size_t n = std::min(ids.size(), msg->goals.size()); 
-
     std::lock_guard<std::mutex> lock(driver_mutex_);
     
     // define o goal position para cada atuador
-    for (size_t idx = 0; idx < n; idx++)
+    for (size_t idx = 0; idx < actuator_data.size(); idx++)
     {
-        auto result = actuator_driver_->set_goal_position(ids[idx], msg->goals[idx]);
+        auto result = actuator_driver_->set_goal_position(
+            actuator_data[idx].id, actuator_data[idx].position);
         if (result != 0) {
             RCLCPP_ERROR(this->get_logger(), "Falha no envio de Goal Position para o atuador %s. Erro: %d", 
-            valid_names[idx].c_str(), static_cast<int>(result));
+            actuator_data[idx].name.c_str(), static_cast<int>(result));
         }
     }
+}
+
+std::vector<ActuatorData> ActuatorNode::read_goal_position_msg(const ActuatorCommand::SharedPtr msg) {
+    if (msg->names.empty() || msg->goals.empty()) return {};
+
+    std::vector<ActuatorData> actuator_data_list;
+
+    size_t n = std::min(msg->names.size(), msg->goals.size()); 
+    for (size_t idx = 0; idx < n; idx++)
+    {
+        auto id = parameter_manager_->get_id_by_name(msg->names[idx]);
+        if (id == -1) continue;
+
+        ActuatorData actuator_data;
+        actuator_data.id = static_cast<uint8_t>(id);
+        actuator_data.name = msg->names[idx];
+        actuator_data.position = msg->goals[idx];
+
+        actuator_data_list.push_back(actuator_data);
+    }
+
+    return actuator_data_list;
 }
 
 ActuatorNode::~ActuatorNode() {

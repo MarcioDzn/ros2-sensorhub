@@ -22,6 +22,11 @@ using ActuatorCommand = interfaces::msg::Command;
 using ActuatorState = interfaces::msg::ActuatorState;
 using Time = interfaces::msg::Time;
 
+struct ActuatorData {
+    int8_t id;
+    std::string name;
+    int16_t position;
+}
 
 class ActuatorNode : public rclcpp::Node
 {
@@ -31,7 +36,7 @@ class ActuatorNode : public rclcpp::Node
 
     private:
         void set_goal_position(const ActuatorCommand::SharedPtr msg);
-        
+
         ActuatorState read_actuator_data(Time& time_data);
         void publish_actuator_state();
 
