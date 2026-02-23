@@ -32,6 +32,57 @@ IMUNode::IMUNode(const rclcpp::NodeOptions & options) : Node("imu_node", options
         std::bind(&IMUNode::state_callback, this));
 }
 
+void IMUNode::read_imu_data(Time& time_data)
+{ 
+    IMUState state_data;
+
+    const auto& imus = manager_->get_imus();
+    const auto& ids = parameter_manager_->get_ids();
+    
+    for (const auto& [id, imu] : imus)
+    {
+        std::vector<float> imu_quaternions_data;
+
+        auto duration = measure_micros([&]() {
+            imu->get_quaternions_data(imu_quaternions_data);
+        });
+
+        // TODO: adicionar nomes
+        time_data.times.push_back(duration);
+
+        // monta msg com dados do imu
+        IMUData imu_data;
+        imu_data.name = parameter_manager_->get_name(id);
+
+        imu_data.q_w = imu_quaternions_data[0];
+        imu_data.q_x = imu_quaternions_data[1];
+        imu_data.q_y = imu_quaternions_data[2];
+        imu_data.q_z = imu_quaternions_data[3];
+        
+        state_data.imus.push_back(imu_data);
+    }
+
+    return state_data;
+}
+
+void IMUNode::publish_imu_state() {
+    Time time_msg;
+    IMUState state_msg;
+
+    auto duration = measure_micros([&]() {
+        state_msg = read_imu_data(time_msg);
+    });
+    
+    // TODO: adicionar nomes
+    if (state_msg.imus.empty()) return;
+
+    state_msg.header.stamp = this->get_clock()->now();
+    state_publisher_->publish(state_msg);
+
+    time_msg.total_time = duration;
+    time_publisher_->publish(time_msg);
+}
+
 void IMUNode::state_callback()
 {
     Time time_msg;  
