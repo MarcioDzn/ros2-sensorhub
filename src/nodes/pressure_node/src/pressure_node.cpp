@@ -57,8 +57,8 @@ PressureState PressureNode::read_pressure_data(Time& time_data)
 {
     PressureState state_data;
 
-    auto ids = parameter_manager_->get_ids();
-    auto names = parameter_manager_->get_names();
+    const auto& ids = parameter_manager_->get_ids();
+    const auto& names = parameter_manager_->get_names();
 
     size_t min_size = std::min(ids.size(), names.size());
 
