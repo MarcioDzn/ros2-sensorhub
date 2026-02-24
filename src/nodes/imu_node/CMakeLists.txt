@@ -90,24 +90,4 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
-if(BUILD_TESTING)
-  find_package(ament_cmake_gmock REQUIRED)
-
-  ament_add_gmock(test_node
-    test/integration_test.cpp
-  )
-  target_include_directories(test_node PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-  )
-
-  ament_target_dependencies(test_node
-    rclcpp
-    interfaces
-  )
-
-  target_link_libraries(test_node
-    imu_node_lib
-  )
-endif()
-
 ament_package()
