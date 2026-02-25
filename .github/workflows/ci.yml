@@ -64,7 +64,7 @@ jobs:
           
           colcon build \
             --symlink-install \
-            --packages-up-to pressure_node \
+            --packages-up-to time_node \
             --cmake-args -DCMAKE_BUILD_TYPE=Release
         shell: bash
 
@@ -74,7 +74,7 @@ jobs:
           [ -f install/setup.bash ] && . install/setup.bash
           
           colcon test \
-            --packages-select pressure_node \
+            --packages-select time_node \
             --event-handlers console_direct+
             
           colcon test-result --verbose

@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 #include <fstream>
+#include <chrono>
 
 #include "imu_manager.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -11,24 +12,11 @@
 #include "interfaces/msg/imu_data.hpp"
 #include "interfaces/msg/imu_state.hpp"
 #include "sensor_msgs/msg/imu.hpp"
-
-
-struct LoopTiming {
-    long start = 0;
-    long end = 0;
-    long total = 0;
-};
-
-struct ImuConfig {
-    std::string name;
-    int id;
-    int address;
-    int multiplexer;
-    std::array<int, 3> euler_order;
-};
+#include "interfaces/msg/time.hpp"
 
 using IMUData = interfaces::msg::IMUData;
 using IMUState = interfaces::msg::IMUState;
+using Time = interfaces::msg::Time;
 
 class IMUNode : public rclcpp::Node
 {
@@ -37,16 +25,29 @@ class IMUNode : public rclcpp::Node
         virtual ~IMUNode();
 
     private:
-        void state_callback();
-		
+        void init_driver();
+        void setup_node();
+
+        IMUState read_imu_data(Time& time_data);
+        void publish_imu_state(); 
+
+        template <typename Func>
+        inline double measure_micros(Func&& func) {
+            auto start = std::chrono::high_resolution_clock::now();
+            func();
+            auto end = std::chrono::high_resolution_clock::now();
+            return static_cast<double>(
+                std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+            );
+        }
+
         rclcpp::Publisher<IMUState>::SharedPtr publisher_;
+        rclcpp::Publisher<Time>::SharedPtr time_publisher_;
 
         std::shared_ptr<ParameterManager> parameter_manager_;
         std::shared_ptr<IMUManager> manager_;
 
         rclcpp::TimerBase::SharedPtr timer_;
-
-        std::ofstream timing_log_;
 };
 
 #endif // IMU_NODE_HPP
