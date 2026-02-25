@@ -14,6 +14,7 @@ find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
 include_directories(
   include/time_node
   ${Python3_INCLUDE_DIRS}
+  ${Python3_NumPy_INCLUDE_DIRS}
 )
 
 add_executable(pressure_time_node src/pressure_time_node.cpp src/csv_writer.cpp)
