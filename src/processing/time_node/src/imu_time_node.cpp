@@ -2,8 +2,11 @@
 
 IMUTimeNode::IMUTimeNode() : Node("imu_time_node")
 {
+    auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
+          .best_effort()
+          .durability_volatile();
     sub_ = this->create_subscription<interfaces::msg::Time>(
-        "/imu/time", 10,
+        "/imu/time", qos,
         std::bind(&IMUTimeNode::time_callback, this, std::placeholders::_1)
     );
     RCLCPP_INFO(this->get_logger(), "IMUTimeNode iniciado");

@@ -2,8 +2,11 @@
 
 PressureTimeNode::PressureTimeNode() : Node("pressure_time_node")
 {
+    auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
+          .best_effort()
+          .durability_volatile();
     sub_ = this->create_subscription<interfaces::msg::Time>(
-        "/pressure/time", 10,
+        "/pressure/time", qos,
         std::bind(&PressureTimeNode::time_callback, this, std::placeholders::_1)
     );
     RCLCPP_INFO(this->get_logger(), "PressureTimeNode iniciado");
@@ -23,7 +26,7 @@ void PressureTimeNode::time_callback(const interfaces::msg::Time::SharedPtr msg)
         plotter_.add_data("pressure_time_" + msg->names[idx], msg_counter_, static_cast<double>(msg->times[idx]));
     // tempo esperado (update_rate)
     // TODO: enviar pela msg
-    plotter_.add_data("pressure_update_rate", msg_counter_, static_cast<double>(15000.0)); // 15ms
+    //plotter_.add_data("pressure_update_rate", msg_counter_, static_cast<double>(15000.0)); // 15ms
     plotter_.plot();
 
     // --- CSV ---
