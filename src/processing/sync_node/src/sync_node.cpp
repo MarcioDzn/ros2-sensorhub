@@ -11,7 +11,7 @@ SyncNode::SyncNode() : Node("sync_node")
 	
 	imu_sub_.subscribe(this, "imu/state", qos.get_rmw_qos_profile());
 	pressure_sub_.subscribe(this, "pressure/state", qos.get_rmw_qos_profile());
-	actuator_sub_.subscribe(this, "dxl/state", qos.get_rmw_qos_profile());
+	actuator_sub_.subscribe(this, "actuator/state", qos.get_rmw_qos_profile());
 
     uint32_t queue_size = 50;
     sync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy>>(
