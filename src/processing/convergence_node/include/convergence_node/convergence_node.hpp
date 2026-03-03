@@ -17,6 +17,8 @@ class ConvergenceNode : public rclcpp::Node
 
         CsvWriter csv_writer_;
         Plotter plotter_;
+        
+        int msg_counter_ = 0; // eixo X do gráfico
 };
 
 #endif //CONVERGENCE_NODE_HPP

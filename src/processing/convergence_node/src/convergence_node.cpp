@@ -12,14 +12,16 @@ ConvergenceNode::ConvergenceNode() : Node("convergence_node")
     RCLCPP_INFO(this->get_logger(), "ConvergenceNode iniciado");
 }
 
-void IMUTimeNode::time_callback(const interfaces::msg::SyncedSensorData::SharedPtr msg)
+void ConvergenceNode::time_callback(const interfaces::msg::SyncedSensorData::SharedPtr msg)
 {
     // tempo total
-    plotter_.add_data("convergence", msg_counter_, static_cast<double>(msg->total_time));
+    plotter_.add_data("joint_1", msg_counter_, static_cast<double>(msg->actuator_data.positions[0]));
+    plotter_.add_data("joint_2", msg_counter_, static_cast<double>(msg->actuator_data.positions[1]));
+    plotter_.add_data("joint_3", msg_counter_, static_cast<double>(msg->actuator_data.positions[2]));
 
     // tempos individuais
-    for (size_t idx = 0; idx < msg->times.size(); idx++) 
-        plotter_.add_data("imu_time_" + msg->names[idx], msg_counter_, static_cast<double>(msg->times[idx]));
+    //for (size_t idx = 0; idx < msg->times.size(); idx++) 
+        //plotter_.add_data("imu_time_" + msg->names[idx], msg_counter_, static_cast<double>(msg->times[idx]));
 
     // tempo esperado (update_rate)
     // TODO: enviar pela msg
@@ -28,6 +30,7 @@ void IMUTimeNode::time_callback(const interfaces::msg::SyncedSensorData::SharedP
     plotter_.plot();
 
     // --- CSV ---
+    /*
     CsvRow row;
     for (double t : msg->times)
         row.values.push_back(static_cast<double>(t));
@@ -41,14 +44,14 @@ void IMUTimeNode::time_callback(const interfaces::msg::SyncedSensorData::SharedP
     header.push_back("TotalTime");
 
     csv_writer_.save("imu_times.csv", header);
-
+    */
     msg_counter_++;
 }
 
 int main(int argc, char * argv[])
 {
     rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<IMUTimeNode>());
+    rclcpp::spin(std::make_shared<ConvergenceNode>());
     rclcpp::shutdown();
     return 0;
 }
