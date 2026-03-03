@@ -48,6 +48,11 @@ void ConvergenceNode::time_callback(const interfaces::msg::SyncedSensorData::Sha
     msg_counter_++;
 }
 
+ConvergenceNode::~ConvergenceNode()
+{
+    plotter_.show(); // exibe o gráfico após o fim da execução
+}
+
 int main(int argc, char * argv[])
 {
     rclcpp::init(argc, argv);

@@ -10,6 +10,7 @@ class ConvergenceNode : public rclcpp::Node
 {
     public:
         ConvergenceNode();
+        ~ConvergenceNode();
 
     private:
         void time_callback(const interfaces::msg::SyncedSensorData::SharedPtr msg);

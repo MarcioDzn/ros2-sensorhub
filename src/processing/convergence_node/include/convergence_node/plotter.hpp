@@ -33,6 +33,11 @@ public:
         plt::ylabel("Tempo do tópico (us)");
         plt::pause(0.01); // atualização em tempo quase real
     }
+    
+    void show()
+    {
+        plt::show(); // Exibe o gráfico final
+    }
 
 private:
     std::map<std::string, std::vector<double>> xs_;
