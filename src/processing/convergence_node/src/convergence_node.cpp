@@ -28,6 +28,12 @@ void ConvergenceNode::time_callback(const interfaces::msg::SyncedSensorData::Sha
     plotter_.add_data(1, "joint_2", relative_time_ms, static_cast<double>(msg->actuator_data.positions[1]));
     plotter_.add_data(1, "joint_3", relative_time_ms, static_cast<double>(msg->actuator_data.positions[2]));
 
+
+    plotter_.add_data(2, "q_x", relative_time_ms, static_cast<double>(msg->imu_data.imus[0].q_x));
+    plotter_.add_data(2, "q_y", relative_time_ms, static_cast<double>(msg->imu_data.imus[0].q_y));
+    plotter_.add_data(2, "q_z", relative_time_ms, static_cast<double>(msg->imu_data.imus[0].q_z));
+    plotter_.add_data(2, "q_w", relative_time_ms, static_cast<double>(msg->imu_data.imus[0].q_w));
+
     // tempos individuais
     //for (size_t idx = 0; idx < msg->times.size(); idx++) 
         //plotter_.add_data("imu_time_" + msg->names[idx], msg_counter_, static_cast<double>(msg->times[idx]));
