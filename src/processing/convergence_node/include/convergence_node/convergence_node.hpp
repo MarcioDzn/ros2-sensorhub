@@ -17,9 +17,9 @@ class ConvergenceNode : public rclcpp::Node
         rclcpp::Subscription<interfaces::msg::SyncedSensorData>::SharedPtr sub_;
 
         CsvWriter csv_writer_;
-        Plotter plotter_;
+        Plotter plotter_{2, 1};
 
-        uint64_t start_time_us_ = 0;
+        uint64_t start_time_ms_ = 0;
 };
 
 #endif //CONVERGENCE_NODE_HPP

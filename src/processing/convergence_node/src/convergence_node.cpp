@@ -21,12 +21,12 @@ void ConvergenceNode::time_callback(const interfaces::msg::SyncedSensorData::Sha
     if (start_time_ms_ == 0)
         start_time_ms_ = current_time_ms;
 
-    uint64_t relative_time_ms = current_time_ms - start_time_ms_;;
+    uint64_t relative_time_ms = current_time_ms - start_time_ms_;
 
     // tempo total
-    plotter_.add_data("joint_1", relative_time_ms, static_cast<double>(msg->actuator_data.positions[0]));
-    plotter_.add_data("joint_2", relative_time_ms, static_cast<double>(msg->actuator_data.positions[1]));
-    plotter_.add_data("joint_3", relative_time_ms, static_cast<double>(msg->actuator_data.positions[2]));
+    plotter_.add_data(1, "joint_1", relative_time_ms, static_cast<double>(msg->actuator_data.positions[0]));
+    plotter_.add_data(1, "joint_2", relative_time_ms, static_cast<double>(msg->actuator_data.positions[1]));
+    plotter_.add_data(1, "joint_3", relative_time_ms, static_cast<double>(msg->actuator_data.positions[2]));
 
     // tempos individuais
     //for (size_t idx = 0; idx < msg->times.size(); idx++) 
