@@ -14,10 +14,19 @@ ConvergenceNode::ConvergenceNode() : Node("convergence_node")
 
 void ConvergenceNode::time_callback(const interfaces::msg::SyncedSensorData::SharedPtr msg)
 {
+    // TODO: botar header geral da msg de sync
+    uint64_t current_time_ms =
+        rclcpp::Time(msg->header.stamp).nanoseconds() / 1000000ULL;
+
+    if (start_time_ms_ == 0)
+        start_time_ms_ = current_time_ms;
+
+    uint64_t relative_time_ms = current_time_ms - start_time_ms_;;
+
     // tempo total
-    plotter_.add_data("joint_1", msg_counter_, static_cast<double>(msg->actuator_data.positions[0]));
-    plotter_.add_data("joint_2", msg_counter_, static_cast<double>(msg->actuator_data.positions[1]));
-    plotter_.add_data("joint_3", msg_counter_, static_cast<double>(msg->actuator_data.positions[2]));
+    plotter_.add_data("joint_1", relative_time_ms, static_cast<double>(msg->actuator_data.positions[0]));
+    plotter_.add_data("joint_2", relative_time_ms, static_cast<double>(msg->actuator_data.positions[1]));
+    plotter_.add_data("joint_3", relative_time_ms, static_cast<double>(msg->actuator_data.positions[2]));
 
     // tempos individuais
     //for (size_t idx = 0; idx < msg->times.size(); idx++) 
@@ -45,7 +54,6 @@ void ConvergenceNode::time_callback(const interfaces::msg::SyncedSensorData::Sha
 
     csv_writer_.save("imu_times.csv", header);
     */
-    msg_counter_++;
 }
 
 ConvergenceNode::~ConvergenceNode()
