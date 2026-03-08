@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <iostream>
 #include <matplotlibcpp.h>
 
 namespace plt = matplotlibcpp;
@@ -11,57 +12,45 @@ namespace plt = matplotlibcpp;
 class Plotter
 {
 public:
-    Plotter(int rows = 1, int cols = 1)
-        : rows_(rows), cols_(cols)
-    {
-        plt::ion(); // modo interativo
+    Plotter() {
+        // Nada aqui, conforme solicitado.
     }
 
-    // Adiciona dado a um subplot específico
-    void add_data(int subplot_index,
-                  const std::string& series_name,
-                  double x,
-                  double y)
-    {
-        data_[subplot_index][series_name].x.push_back(x);
-        data_[subplot_index][series_name].y.push_back(y);
+    void add_data(int window_id, const std::string& series_name, double x, double y) {
+        data_[window_id][series_name].x.push_back(x);
+        data_[window_id][series_name].y.push_back(y);
     }
 
-    void plot()
-    {
-        plt::clf();
+    void plot() {
+        plt::ion(); 
 
-        for (auto& [subplot_index, series_map] : data_)
-        {
-            plt::subplot(rows_, cols_, subplot_index);
+        for (auto& [window_id, series_map] : data_) {
+            plt::figure(window_id);
+            plt::clf(); 
 
-            for (auto& [name, series] : series_map)
-            {
+            for (auto& [name, series] : series_map) {
                 plt::named_plot(name, series.x, series.y);
             }
-
             plt::legend();
+            plt::title("Window " + std::to_string(window_id));
+            
+            // O draw() força a atualização da janela específica
+            plt::draw();
         }
-
-        plt::pause(0.01);
+        
+        // A pausa é o que permite que o X11 processe os eventos da janela
+        plt::pause(0.001);
     }
 
-    void show()
-    {
+    void show() {
         plt::show();
     }
 
 private:
-    struct Series
-    {
+    struct Series {
         std::vector<double> x;
         std::vector<double> y;
     };
-
-    int rows_;
-    int cols_;
-
-    // subplot -> (series_name -> data)
     std::map<int, std::map<std::string, Series>> data_;
 };
 
