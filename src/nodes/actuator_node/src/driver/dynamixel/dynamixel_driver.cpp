@@ -25,8 +25,13 @@ int DynamixelDriver::set_torque(uint8_t id, uint8_t enable_torque)
     std::vector<uint8_t> packet = get_packet(id, WRITE_INSTR, params);
 
     if (transport_->writeData(packet.data(), packet.size()) < 0) 
-		return -1;
+	return -1;
 
+    // le o status pra evitar erros
+    StatusPacket status;
+    if (read_status(id, status) < 0)
+        return -1;
+	
     return 0;
 }
 
@@ -39,8 +44,13 @@ int DynamixelDriver::set_goal_position(uint8_t id, uint16_t goal_position)
     std::vector<uint8_t> packet = get_packet(id, WRITE_INSTR, params);
 
     if (transport_->writeData(packet.data(), packet.size()) < 0) 
-		return -1;
+	return -1;
 
+    // le o status pra evitar erros
+    StatusPacket status;
+    if (read_status(id, status) < 0)
+        return -1;
+    
     return 0;
 }
 

@@ -1,6 +1,6 @@
 actuator_node:
   ros__parameters:
-    update_rate_ms: 15
+    update_rate_ms: 60
     usb_port: "/dev/ttyUSB0"
     baudrate: 2000000
     names: ["joint_1", "joint_2", "joint_3"]
