@@ -22,6 +22,8 @@ SyncNode::SyncNode() : Node("sync_node")
             std::placeholders::_1,
             std::placeholders::_2,
             std::placeholders::_3));
+            
+    RCLCPP_INFO(this->get_logger(), "Sucesso ao inicializar SyncNode");
 }
 
 void SyncNode::synced_callback(
@@ -31,6 +33,7 @@ void SyncNode::synced_callback(
 {
     auto synced_msg = std::make_unique<SyncedSensorData>();
 
+    synced_msg->header.stamp = this->get_clock()->now();
     synced_msg->imu_data = *imu_msg;
     synced_msg->pressure_data = *pressure_msg;
     synced_msg->actuator_data = *actuator_msg;
