@@ -91,13 +91,6 @@ void IMU::read_quaternions(float quaternion[4])
     quaternion[1] = (float)((int16_t)(buf[2] | (buf[3] << 8))) / 16384.0f;
     quaternion[2] = (float)((int16_t)(buf[4] | (buf[5] << 8))) / 16384.0f;
     quaternion[3] = (float)((int16_t)(buf[6] | (buf[7] << 8))) / 16384.0f;
-
-    // normalização
-    float n = sqrt(quaternion[0]*quaternion[0] + quaternion[1]*quaternion[1] + 
-                   quaternion[2]*quaternion[2] + quaternion[3]*quaternion[3]);
-    if (n > 0.0001f) {
-        quaternion[0] /= n; quaternion[1] /= n; quaternion[2] /= n; quaternion[3] /= n;
-    }
 }
 
 void IMU::read_euler(float euler[3])
