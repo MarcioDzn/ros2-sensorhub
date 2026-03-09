@@ -11,16 +11,22 @@ using namespace std::chrono_literals;
 ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options) 
     : Node("actuator_node", options)
 {   
-    // log
-    timing_log_.open("tempos_atuadores.txt", std::ios::out | std::ios::trunc);
+    init_driver();
 
+    // TODO: verificar se os ids fornecidos pelo yaml
+    // são de atuadores realmente conectados
+    setup_node();
+}
+
+void ActuatorNode::init_driver() {
     parameter_manager_ = std::make_shared<ParameterManager>(this);
     actuator_driver_ = ActuatorFactory::createDynamixel();
 
     // inicializa porta serial inserida nos parâmetros do yaml
-    if (actuator_driver_->init(
+    auto init_response = actuator_driver_->init(
         parameter_manager_->get_usb_port(), 
-        parameter_manager_->get_baudrate()) != 0)
+        parameter_manager_->get_baudrate());
+    if (init_response != 0)
     {
         RCLCPP_FATAL(this->get_logger(), 
             "Falha na inicialização do hardware serial na porta %s.", 
@@ -28,54 +34,50 @@ ActuatorNode::ActuatorNode(const rclcpp::NodeOptions& options)
         throw std::runtime_error("Falha ao inicializar ActuatorNode");
     }
 
-    // TODO: verificar se os ids fornecidos pelo yaml
-    // são de atuadores realmente conectados
+}
 
-    // envio de posições dos atuadores DEVEM chegar (?)
+void ActuatorNode::setup_node() {
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .reliable()
         .durability_volatile();
 
-    // recebe dados de comando contínuo
-    // ex: posição alvo
-    actuator_subscriber_ = this->create_subscription<Command>(
-        parameter_manager_->get_base_name() + "/command", qos, 
-        [this](const Command::SharedPtr msg) {
-            
-            this->goal_position_callback(msg);
+    // recebe dados de comando contínuo. Ex: posição alvo
+    actuator_subscriber_ = this->create_subscription<ActuatorCommand>(
+         "actuator/command", qos, 
+        [this](const ActuatorCommand::SharedPtr msg) {
+            this->set_goal_position(this->read_goal_position_msg(msg));
         });
     
-    // recebe dados de comando pontual
-    // ex: habilitar/desabilitar torque
+    // recebe dados de comando pontual. Ex: habilitar/desabilitar torque
     set_torque_service_ = this->create_service<SetTorque>(
-        parameter_manager_->get_base_name() + "/set_torque", 
+         "actuator/set_torque", 
         [this](const std::shared_ptr<SetTorque::Request> req, 
                 std::shared_ptr<SetTorque::Response> res) {
-            this->set_torque_service_callback(req, res);
+            this->set_torque(req, res);
         });
 
-    // envia dados de estado
-    // ex: posição atual
-    state_publisher_ = this->create_publisher<State>(
-        parameter_manager_->get_base_name() + "/state", qos);
 
+    state_publisher_ = this->create_publisher<ActuatorState>(
+         "actuator/state", qos);
+    time_publisher_ = this->create_publisher<Time>(
+         "actuator/time", qos);
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
         [this]() {
-            state_callback();
+            publish_actuator_state();
         });
 
-    RCLCPP_INFO(this->get_logger(), "Nó ActuatorNode iniciado com sucesso.");
+    RCLCPP_INFO(this->get_logger(), "Sucesso ao inicializar ActuatorNode.");
 }
 
-void ActuatorNode::set_torque_service_callback(
+void ActuatorNode::set_torque(
     const std::shared_ptr<SetTorque::Request> request,
     std::shared_ptr<SetTorque::Response> response)
 {
     std::lock_guard<std::mutex> lock(driver_mutex_);
 
+    // busca o atuador referente ao id
     auto id = parameter_manager_->get_id_by_name(request->name);
-
     if (id == -1){
         RCLCPP_WARN(this->get_logger(), "Atuador %s não encontrado", 
             request->name.c_str());
@@ -83,8 +85,10 @@ void ActuatorNode::set_torque_service_callback(
         return;
     }
 
-    auto result = actuator_driver_->set_torque(static_cast<uint8_t>(id), request->status ? 1 : 0);
-
+    // define o torque
+    auto result = actuator_driver_->set_torque(
+        static_cast<uint8_t>(id), 
+        request->status ? 1 : 0);
     if (result != 0) {
         RCLCPP_WARN(this->get_logger(), 
             "Falha na configuração do torque. Erro: %d", 
@@ -96,44 +100,32 @@ void ActuatorNode::set_torque_service_callback(
     response->success = true;
 }
 
-void ActuatorNode::state_callback()
+ActuatorState ActuatorNode::read_actuator_data(Time& time_data)
 {
-    State msg;
-
+    ActuatorState state_data;
+    
     const auto& ids = parameter_manager_->get_ids();
     const auto& names = parameter_manager_->get_names();
-
-    std::vector<long> actuator_times;
-    static int loop_idx = 0;
-
-    std::vector<std::string> successful_names;
-    std::vector<int16_t> successful_positions;
-
-    // COMEÇO DA CONTAGEM TOTAL
-    auto start_total = std::chrono::high_resolution_clock::now();
 
     {
         std::lock_guard<std::mutex> lock(driver_mutex_);
 
         for (size_t idx = 0; idx < ids.size(); idx++)
         {
-            uint16_t temp_pos;
-            
-            // COMEÇO DA CONTAGEM INDIVIDUAL
-            auto start = std::chrono::high_resolution_clock::now(); // inicia contagem de tempo
-            
-            auto result = actuator_driver_->get_current_position(ids[idx], temp_pos);
-            
-            // FIM DA CONTAGEM INDIVIDUAL
-            auto end = std::chrono::high_resolution_clock::now(); // finaliza contagem de tempo
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+            uint16_t position;
+            int result;
 
-            actuator_times.push_back(duration.count());
-
+            auto duration = measure_micros([&]() {
+                result = actuator_driver_->get_current_position(ids[idx], position);
+            });
+            
+            time_data.names.push_back(names[idx]);
+            time_data.times.push_back(duration);
+            
             if (result == 0) {
-                // adiciona apenas os nomes e posições válidos
-                successful_names.push_back(names[idx]);
-                successful_positions.push_back(static_cast<int16_t>(temp_pos));
+                state_data.names.push_back(names[idx]);
+                state_data.positions.push_back(static_cast<int16_t>(position));
+
             } else {
                 RCLCPP_ERROR(this->get_logger(), "Falha na leitura do atuador %s. Erro: %d", 
                     names[idx].c_str(), static_cast<int>(result));
@@ -141,71 +133,72 @@ void ActuatorNode::state_callback()
         }
     }
 
-    // só publica se houver pelo menos um item válido
-    if (!successful_names.empty()) {
-        msg.names = successful_names;
-        msg.positions = successful_positions;
-        msg.header.stamp = this->get_clock()->now();
-        state_publisher_->publish(msg);
-    } else {
-        RCLCPP_WARN(this->get_logger(), "Nenhum atuador foi lido com sucesso. Publicação cancelada.");
-    }
-
-    // FIM DA CONTAGEM TOTAL
-    auto end_total = std::chrono::high_resolution_clock::now(); // fim do loop total
-    auto duration_total = std::chrono::duration_cast<std::chrono::microseconds>(end_total - start_total);
-
-    // grava todos os tempos
-    if (loop_idx >= 5) return;
-    
-    timing_log_ << (loop_idx + 1) << "\t";
-    for (auto t_us : actuator_times)
-        timing_log_ << t_us << "\t";
-    timing_log_ << duration_total.count() << "\n";
-    
-    loop_idx++;
+    return state_data;
 }
 
-void ActuatorNode::goal_position_callback(const Command::SharedPtr msg)
+void ActuatorNode::set_goal_position(const std::vector<ActuatorData>& actuator_data)
 {
-    if (msg->names.empty() || msg->goals.empty()) return;
-
-    std::vector<uint8_t> ids;
-    std::vector<std::string> valid_names;
-
-    // busca o id correspondente ao nome
-    for (const auto& name : msg->names)
-    {
-        auto id = parameter_manager_->get_id_by_name(name);
-        if (id != -1)
-        {
-            ids.push_back(static_cast<uint8_t>(id));
-            valid_names.push_back(name);
-        }
-    }
-
-    if (valid_names.empty())
-    {
-        RCLCPP_WARN(this->get_logger(), "Nenhum atuador válido nos nomes recebidos.");
-        return;
-    }
-
-    size_t n = std::min(ids.size(), msg->goals.size()); // menor tamanho
-
     std::lock_guard<std::mutex> lock(driver_mutex_);
     
-    for (size_t idx = 0; idx < n; idx++)
+    // define o goal position para cada atuador
+    for (size_t idx = 0; idx < actuator_data.size(); idx++)
     {
-        auto result = actuator_driver_->set_goal_position(ids[idx], msg->goals[idx]);
+        auto result = actuator_driver_->set_goal_position(
+            actuator_data[idx].id, actuator_data[idx].position);
         if (result != 0) {
             RCLCPP_ERROR(this->get_logger(), "Falha no envio de Goal Position para o atuador %s. Erro: %d", 
-            valid_names[idx].c_str(), static_cast<int>(result));
+            actuator_data[idx].name.c_str(), static_cast<int>(result));
         }
     }
+}
+
+std::vector<ActuatorData> ActuatorNode::read_goal_position_msg(const ActuatorCommand::SharedPtr msg) {
+    if (msg->names.empty() || msg->goals.empty()) return {};
+
+    std::vector<ActuatorData> actuator_data_list;
+
+    size_t n = std::min(msg->names.size(), msg->goals.size()); 
+    for (size_t idx = 0; idx < n; idx++)
+    {
+        auto id = parameter_manager_->get_id_by_name(msg->names[idx]);
+        if (id == -1) continue;
+
+        ActuatorData actuator_data;
+        actuator_data.id = static_cast<uint8_t>(id);
+        actuator_data.name = msg->names[idx];
+        actuator_data.position = msg->goals[idx];
+
+        actuator_data_list.push_back(actuator_data);
+    }
+
+    return actuator_data_list;
+}
+
+void ActuatorNode::publish_actuator_state()
+{
+    Time time_msg;
+    ActuatorState state_msg;
+
+    auto duration = measure_micros([&]() {
+        state_msg = read_actuator_data(time_msg);
+    });
+    
+    if (state_msg.names.empty()) return;
+
+    state_msg.header.stamp = this->get_clock()->now();
+    state_publisher_->publish(state_msg);
+
+    time_msg.total_time = duration;
+    time_publisher_->publish(time_msg);
 }
 
 ActuatorNode::~ActuatorNode() {
-    if (timing_log_.is_open()) {
-        timing_log_.close();
+    RCLCPP_INFO(this->get_logger(), "Encerrando ActuatorNode e limpando recursos...");
+
+    // para o timer
+    if (timer_) {
+        timer_->cancel();
     }
+
+    // TODO: parar o torque de todos os motores
 };

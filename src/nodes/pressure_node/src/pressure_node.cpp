@@ -9,114 +9,111 @@ using namespace std::chrono_literals;
 PressureNode::PressureNode(const rclcpp::NodeOptions& options) 
     : Node("pressure_node", options)
 {
-    timing_log_.open("tempos_pressure.txt", std::ios::out | std::ios::trunc);
+    init_driver();
+    setup_node();
+}
+
+void PressureNode::init_driver() 
+{
     parameter_manager_ = std::make_shared<ParameterManager>(this);
     pressure_drivers_.resize(parameter_manager_->get_ids().size());
 
+    // inicializa cada sensor
     for (size_t idx = 0; idx < parameter_manager_->get_ids().size(); idx++)
     {
         pressure_drivers_[idx] = PressureFactory::create_pressure();
-
-        if (pressure_drivers_[idx]->init(
+        auto init_response = pressure_drivers_[idx]->init(
             parameter_manager_->get_usb_ports()[idx], 
-            parameter_manager_->get_baudrate()) < 0) {
-                RCLCPP_FATAL(this->get_logger(), 
-                    "Falha na inicialização do hardware serial na porta %s.", 
-                    parameter_manager_->get_usb_ports()[idx].c_str());
-                throw std::runtime_error("Falha ao inicializar PressureNode"); 
+            parameter_manager_->get_baudrate());
+        if (init_response < 0) {
+            RCLCPP_FATAL(this->get_logger(), 
+                "Falha na inicialização do hardware serial na porta %s.", 
+                parameter_manager_->get_usb_ports()[idx].c_str());
+            throw std::runtime_error("Falha ao inicializar PressureNode"); 
         }
     }
-    
+}
+
+void PressureNode::setup_node() 
+{
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
         .best_effort()
         .durability_volatile();
-    publisher_ = this->create_publisher<PressureState>(
-        parameter_manager_->get_base_name() + "/state", qos);
 
-    // executa o callback a cada <update_rate_ms_> segundos
+    publisher_ = this->create_publisher<PressureState>(
+        "pressure/state", qos);
+    time_publisher_ = this->create_publisher<Time>(
+        "pressure/time", qos);
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
-        std::bind(&PressureNode::state_callback, this));
+        [this]() {
+            publish_pressure_state();
+        });
+
+    RCLCPP_INFO(this->get_logger(), "Sucesso ao inicializar PressureNode.");
 }
 
-void PressureNode::state_callback()
+PressureState PressureNode::read_pressure_data(Time& time_data)
 {
-    auto msg = PressureState();
+    PressureState state_data;
 
-    auto ids = parameter_manager_->get_ids();
-    auto names = parameter_manager_->get_names();
-    
-    std::vector<long> pressure_times;
-    static int loop_idx = 0;
-    
-    // evita segfault
+    const auto& ids = parameter_manager_->get_ids();
+    const auto& names = parameter_manager_->get_names();
+
     size_t min_size = std::min(ids.size(), names.size());
 
-    msg.names.reserve(min_size);
-    msg.pressures.reserve(min_size);
-
-    // COMEÇO DA CONTAGEM TOTAL
-    auto start_total = std::chrono::high_resolution_clock::now();
-
-    uint8_t error_count = 0;
     for (size_t idx = 0; idx < min_size; idx++)
     {
         std::vector<uint16_t> data;
+        int result;
+        // pega os dados da palmilha
         
-        // COMEÇO DA CONTAGEM INDIVIDUAL
-        auto start = std::chrono::high_resolution_clock::now(); 
+        auto duration = measure_micros([&]() {
+            result = pressure_drivers_[idx]->get_data(data);
+        });
 
-        if (pressure_drivers_[idx]->get_data(data) != 0)
-        {
-            error_count++;
-            continue;
-        }
-        
-        // FIM DA CONTAGEM INDIVIDUAL
-        auto end = std::chrono::high_resolution_clock::now(); 
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        
-        pressure_times.push_back(duration.count());
+        time_data.names.push_back(names[idx]);
+        time_data.times.push_back(duration);
 
-        PressureData pd;
-        pd.pressures.reserve(data.size());
+        if (result != 0)
+            continue; // se não conseguir os dados não cria a msg
+
+        // cria a mensagem
+        PressureData pressure_data;
+        pressure_data.pressures.reserve(data.size());
 
         size_t sensor_id = 0;
-        for (auto val : data)
+        for (auto value : data)
         {
-            PressureUnitSensor unit_sensor;
-            unit_sensor.id = sensor_id++;
-            unit_sensor.pressure = static_cast<int16_t>(val);
-
-            pd.pressures.push_back(unit_sensor);
+            PressureUnitSensor unit_sensor_data;
+            unit_sensor_data.id = sensor_id++;
+            unit_sensor_data.pressure = static_cast<int16_t>(value);
+            pressure_data.pressures.push_back(unit_sensor_data);
         }
 
-        msg.pressures.push_back(pd);
-        msg.names.push_back(parameter_manager_->get_names()[idx]);
-        msg.header.stamp = this->get_clock()->now();
+        state_data.pressures.push_back(pressure_data);
+        state_data.names.push_back(parameter_manager_->get_names()[idx]);
     }
 
-    // se nenhuma palmilha enviou a posição
-    // entao nao publica nada
-    if (error_count < min_size) {
-        publisher_->publish(msg);
-        RCLCPP_INFO(this->get_logger(), "Publicado com %zu IDs", msg.names.size());
-    }   
+    return state_data;
+}
 
-    // FIM DA CONTAGEM TOTAL
-    auto end_total = std::chrono::high_resolution_clock::now(); // FIM CONTAGEM LOOP TOTAL
-    auto duration_total = std::chrono::duration_cast<std::chrono::microseconds>(end_total - start_total);
+void PressureNode::publish_pressure_state()
+{
+    Time time_msg;
+    PressureState state_msg;
 
-    // grava todos os tempos
-    if (loop_idx >= 5) return;
+    auto duration = measure_micros([&]() {
+        state_msg = read_pressure_data(time_msg);
+    });
     
-    timing_log_ << (loop_idx + 1) << "\t";
-    for (auto t_us : pressure_times)
-        timing_log_ << t_us << "\t";
-    timing_log_ << duration_total.count() << "\n";
-    
-    loop_idx++;
+    if (state_msg.names.empty()) return;
 
+    state_msg.header.stamp = this->get_clock()->now();
+    publisher_->publish(state_msg);
+
+    time_msg.total_time = duration;
+    time_publisher_->publish(time_msg);
 }
 
 PressureNode::~PressureNode() = default;

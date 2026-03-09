@@ -5,3 +5,7 @@ log/
 Testing/
 
 .vscode/
+
+tempos_atuadores.txt
+tempos_imus.txt
+tempos_pressure.txt

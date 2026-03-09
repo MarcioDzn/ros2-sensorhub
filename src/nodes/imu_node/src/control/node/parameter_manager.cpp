@@ -13,7 +13,6 @@ ParameterManager::ParameterManager(
 
 void ParameterManager::declare_parameters()
 {
-    node_->declare_parameter("base_name", "imu");
     node_->declare_parameter("names", std::vector<std::string>{"bottom", "middle", "top"});
     node_->declare_parameter("ids", std::vector<int64_t>{1, 2, 3});
     node_->declare_parameter("multiplexer", std::vector<int64_t>{0, 1, 0});
@@ -23,7 +22,6 @@ void ParameterManager::declare_parameters()
 
 void ParameterManager::load_parameters()
 {
-    base_name_ = node_->get_parameter("base_name").as_string();
     update_rate_ = node_->get_parameter("update_rate_ms").as_int();
 
     std::vector<std::string> raw_names = node_->get_parameter("names").as_string_array();

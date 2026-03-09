@@ -11,7 +11,7 @@ SyncNode::SyncNode() : Node("sync_node")
 	
 	imu_sub_.subscribe(this, "imu/state", qos.get_rmw_qos_profile());
 	pressure_sub_.subscribe(this, "pressure/state", qos.get_rmw_qos_profile());
-	actuator_sub_.subscribe(this, "dxl/state", qos.get_rmw_qos_profile());
+	actuator_sub_.subscribe(this, "actuator/state", qos.get_rmw_qos_profile());
 
     uint32_t queue_size = 50;
     sync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy>>(
@@ -22,6 +22,8 @@ SyncNode::SyncNode() : Node("sync_node")
             std::placeholders::_1,
             std::placeholders::_2,
             std::placeholders::_3));
+            
+    RCLCPP_INFO(this->get_logger(), "Sucesso ao inicializar SyncNode");
 }
 
 void SyncNode::synced_callback(
@@ -31,6 +33,7 @@ void SyncNode::synced_callback(
 {
     auto synced_msg = std::make_unique<SyncedSensorData>();
 
+    synced_msg->header.stamp = this->get_clock()->now();
     synced_msg->imu_data = *imu_msg;
     synced_msg->pressure_data = *pressure_msg;
     synced_msg->actuator_data = *actuator_msg;
