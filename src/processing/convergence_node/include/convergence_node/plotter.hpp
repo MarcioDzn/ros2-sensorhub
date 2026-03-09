@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <iostream>
 #include <matplotlibcpp.h>
 
 namespace plt = matplotlibcpp;
@@ -11,37 +12,46 @@ namespace plt = matplotlibcpp;
 class Plotter
 {
 public:
-    Plotter() = default;
-
-    // adiciona um ponto à série
-    void add_data(const std::string& series_name, double x, double y)
-    {
-        xs_[series_name].push_back(x);
-        ys_[series_name].push_back(y);
+    Plotter() {
+        // Nada aqui, conforme solicitado.
     }
 
-    // atualiza o gráfico
-    void plot()
-    {
-        plt::clf(); // limpa figura
-        for (auto& [name, x_vec] : xs_)
-        {
-            plt::named_plot(name, xs_[name], ys_[name]);
+    void add_data(int window_id, const std::string& series_name, double x, double y) {
+        data_[window_id][series_name].x.push_back(x);
+        data_[window_id][series_name].y.push_back(y);
+    }
+
+    void plot() {
+        plt::ion(); 
+
+        for (auto& [window_id, series_map] : data_) {
+            plt::figure(window_id);
+            plt::clf(); 
+
+            for (auto& [name, series] : series_map) {
+                plt::named_plot(name, series.x, series.y);
+            }
+            plt::legend();
+            plt::title("Window " + std::to_string(window_id));
+            
+            // O draw() força a atualização da janela específica
+            plt::draw();
         }
-        plt::legend();
-        plt::xlabel("Mensagem #");
-        plt::ylabel("Tempo do tópico (us)");
-        plt::pause(0.01); // atualização em tempo quase real
+        
+        // A pausa é o que permite que o X11 processe os eventos da janela
+        plt::pause(0.001);
     }
-    
-    void show()
-    {
-        plt::show(); // Exibe o gráfico final
+
+    void show() {
+        plt::show();
     }
 
 private:
-    std::map<std::string, std::vector<double>> xs_;
-    std::map<std::string, std::vector<double>> ys_;
+    struct Series {
+        std::vector<double> x;
+        std::vector<double> y;
+    };
+    std::map<int, std::map<std::string, Series>> data_;
 };
 
-#endif // PLOTTER_HPP
+#endif

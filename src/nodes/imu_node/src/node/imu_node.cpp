@@ -6,6 +6,8 @@ IMUNode::IMUNode(const rclcpp::NodeOptions & options) : Node("imu_node", options
 {
     init_driver();
     setup_node();
+    
+    RCLCPP_INFO(this->get_logger(), "Sucesso ao inicializar IMUNode");
 }
 
 void IMUNode::init_driver() 
