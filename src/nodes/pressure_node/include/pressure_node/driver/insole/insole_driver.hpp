@@ -18,6 +18,7 @@ class InsoleDriver : public IPressureDriver
     private:
         std::vector<uint16_t> parse_numbers_from_string(const std::string& input);
         bool read_c_string(char* buffer, size_t max_size);
+        bool sync_start_line();
 
         std::unique_ptr<SerialHandler> transport_;
 };

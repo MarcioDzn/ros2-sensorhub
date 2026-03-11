@@ -36,6 +36,11 @@ int InsoleDriver::get_data(std::vector<uint16_t>& data)
 {
     char buffer[BUFFER_SIZE];
 
+    transport_->clearBuffer();
+    if (!sync_start_line())
+        return -1;
+
+    // lê denovo até até achar \n 
     if (!read_c_string(buffer, BUFFER_SIZE)) 
         return -1; 
 
@@ -44,6 +49,20 @@ int InsoleDriver::get_data(std::vector<uint16_t>& data)
         return -2;
 
     return 0; 
+}
+
+// lê até o \n pra limpar o início 
+// caso os dados estejam incompletos
+bool InsoleDriver::sync_start_line() {
+    char c;
+    while (true)
+    {
+        if (transport_->readData(&c, 1) <= 0)
+            return false;
+
+        if (c == '\n')
+            return true;
+    }
 }
 
 
@@ -60,5 +79,5 @@ bool InsoleDriver::read_c_string(char* buffer, size_t max_size)
         if (c == '\n') break; 
     }
     buffer[i] = '\0';
-    return (i > 0);
+    return (i > 0 && buffer[i-1] == '\n');
 }
