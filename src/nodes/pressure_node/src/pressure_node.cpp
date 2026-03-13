@@ -70,7 +70,6 @@ PressureState PressureNode::read_pressure_data(Time& time_data)
         
         auto duration = measure_micros([&]() {
             result = pressure_drivers_[idx]->get_data(data);
-            
         });
 
         time_data.names.push_back(names[idx]);

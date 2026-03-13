@@ -1,6 +1,6 @@
 #include "driver/insole/insole_driver.hpp"
-
 #include <sstream>
+#include <string>
 
 InsoleDriver::InsoleDriver() {}
 
@@ -21,7 +21,7 @@ std::vector<uint16_t> InsoleDriver::parse_numbers_from_string(
     std::vector<uint16_t> values;
     std::stringstream ss(input);
     std::string token;
-    
+
     while (ss >> token) {
         try {
             values.push_back(static_cast<uint16_t>(std::stoul(token)));
@@ -34,32 +34,32 @@ std::vector<uint16_t> InsoleDriver::parse_numbers_from_string(
 
 int InsoleDriver::get_data(std::vector<uint16_t>& data)
 {
-    char buffer[BUFFER_SIZE];
+    static std::string rx_buffer;
+    char tmp[256];
+    ssize_t n;
 
-    // lê denovo até até achar \n 
-    if (!read_c_string(buffer, BUFFER_SIZE)) 
+    // drena tudo que tiver na UART
+    while ((n = transport_->readData(tmp, sizeof(tmp))) > 0)
+    {
+        rx_buffer.append(tmp, n);
+    }
+
+    // procura todas as linhas completas e mantem a ultima
+    std::string last_line;
+    size_t pos;
+    while ((pos = rx_buffer.find('\n')) != std::string::npos)
+    {
+        last_line = rx_buffer.substr(0, pos);
+        rx_buffer.erase(0, pos + 1);
+    }
+
+    if (last_line.empty())
         return -1; 
 
-    data = parse_numbers_from_string(std::string(buffer));
-    if (data.empty()) 
-        return -2;
+    data = parse_numbers_from_string(last_line);
+
+    if (data.empty())
+        return -2; 
 
     return 0; 
-}
-
-
-bool InsoleDriver::read_c_string(char* buffer, size_t max_size)
-{
-    size_t i = 0;
-    char c;
-    
-    while(i < max_size-1)
-    {
-        ssize_t n = transport_->readData(&c, 1);
-        if (n <= 0) break; 
-        buffer[i++] = c;
-        if (c == '\n') break; 
-    }
-    buffer[i] = '\0';
-    return (i > 0 && buffer[i-1] == '\n');
 }
