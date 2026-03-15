@@ -4,4 +4,4 @@ actuator_node:
     usb_port: "/dev/ttyUSB0"
     baudrate: 2000000
     names: ["joint_1", "joint_2", "joint_3"]
-    actuator_ids: [1, 2, 3]
+    ids: [1, 2, 3]
