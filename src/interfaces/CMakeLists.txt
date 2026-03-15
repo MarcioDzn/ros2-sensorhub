@@ -19,7 +19,7 @@ set(msg_files
   "msg/pressure/PressureData.msg"
   "msg/pressure/PressureState.msg"
 
-  "msg/actuator/Command.msg"
+  "msg/actuator/ActuatorCommand.msg"
   "msg/actuator/ActuatorState.msg"
 
   "msg/sync/SyncedSensorData.msg"

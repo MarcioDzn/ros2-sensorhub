@@ -10,14 +10,14 @@
 #include "driver/actuator_factory.hpp"
 
 #include "interfaces/srv/set_torque.hpp"
-#include "interfaces/msg/command.hpp"
+#include "interfaces/msg/actuator_command.hpp"
 #include "interfaces/msg/actuator_state.hpp"
 #include "interfaces/msg/time.hpp"
 
 class ParameterManager;
 
 using SetTorque = interfaces::srv::SetTorque;
-using ActuatorCommand = interfaces::msg::Command;
+using ActuatorCommand = interfaces::msg::ActuatorCommand;
 using ActuatorState = interfaces::msg::ActuatorState;
 using Time = interfaces::msg::Time;
 
