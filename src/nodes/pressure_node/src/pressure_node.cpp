@@ -81,14 +81,10 @@ PressureState PressureNode::read_pressure_data(Time& time_data)
         // cria a mensagem
         PressureData pressure_data;
         pressure_data.pressures.reserve(data.size());
-
-        size_t sensor_id = 0;
+        
         for (auto value : data)
         {
-            PressureUnitSensor unit_sensor_data;
-            unit_sensor_data.id = sensor_id++;
-            unit_sensor_data.pressure = static_cast<int16_t>(value);
-            pressure_data.pressures.push_back(unit_sensor_data);
+            pressure_data.pressures.push_back(static_cast<int16_t>(value));
         }
 
         state_data.pressures.push_back(pressure_data);
