@@ -18,13 +18,16 @@ void PressureNode::init_driver()
     parameter_manager_ = std::make_shared<ParameterManager>(this);
     pressure_drivers_.resize(parameter_manager_->get_ids().size());
 
-    // inicializa cada sensor
+    // inicializa o sensor de cada porta declarada
     for (size_t idx = 0; idx < parameter_manager_->get_ids().size(); idx++)
     {
         pressure_drivers_[idx] = PressureFactory::create_pressure();
+
         auto init_response = pressure_drivers_[idx]->init(
             parameter_manager_->get_usb_ports()[idx], 
             parameter_manager_->get_baudrate());
+        
+        // se apenas uma porta falhar, o nó não executa
         if (init_response < 0) {
             RCLCPP_FATAL(this->get_logger(), 
                 "Falha na inicialização do hardware serial na porta %s.", 
@@ -42,8 +45,10 @@ void PressureNode::setup_node()
 
     publisher_ = this->create_publisher<PressureState>(
         "pressure/state", qos);
+
     time_publisher_ = this->create_publisher<Time>(
         "pressure/time", qos);
+
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
         [this]() {
@@ -66,8 +71,8 @@ PressureState PressureNode::read_pressure_data(Time& time_data)
     {
         std::vector<uint16_t> data;
         int result;
-        // pega os dados da palmilha
-        
+
+        // pega os dados da palmilha na porta específica
         auto duration = measure_micros([&]() {
             result = pressure_drivers_[idx]->get_data(data);
         });
@@ -78,15 +83,13 @@ PressureState PressureNode::read_pressure_data(Time& time_data)
         if (result != 0)
             continue; // se não conseguir os dados não cria a msg
 
-        // cria a mensagem
+        // cria a mensagem do sensor em específico
         PressureData pressure_data;
         pressure_data.pressures.reserve(data.size());
-        
         for (auto value : data)
-        {
             pressure_data.pressures.push_back(static_cast<int16_t>(value));
-        }
 
+        // adiciona dados do sensor específico na mensagem "geral"
         state_data.pressures.push_back(pressure_data);
         state_data.names.push_back(parameter_manager_->get_names()[idx]);
     }
@@ -99,15 +102,20 @@ void PressureNode::publish_pressure_state()
     Time time_msg;
     PressureState state_msg;
 
+    // pega a mensagem criada
     auto duration = measure_micros([&]() {
         state_msg = read_pressure_data(time_msg);
     });
     
+    // se nenhum sensor tiver funcionado 
+    // (se não criou nenhuma mensagem)
+    // não publica nada
     if (state_msg.names.empty()) return;
 
     state_msg.header.stamp = this->get_clock()->now();
     publisher_->publish(state_msg);
 
+    // publica mensagem de tempo
     time_msg.total_time = duration;
     time_publisher_->publish(time_msg);
 }
