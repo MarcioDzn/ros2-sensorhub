@@ -44,7 +44,7 @@ int IMUManager::setup_imus()
     for (const auto& [_, imu] : imus_) imu->setup();
     std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 1ms
 
-    for (const auto& [_, imu] : imus_) imu->calibrate_euler();
+    for (const auto& [_, imu] : imus_) imu->calibrate_quaternions();
     std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // 1s;
 
     return 0;
