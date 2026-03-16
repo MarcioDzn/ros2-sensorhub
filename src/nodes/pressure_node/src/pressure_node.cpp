@@ -86,8 +86,15 @@ PressureState PressureNode::read_pressure_data(Time& time_data)
         // cria a mensagem do sensor em específico
         PressureData pressure_data;
         pressure_data.pressures.reserve(data.size());
-        for (auto value : data)
-            pressure_data.pressures.push_back(static_cast<int16_t>(value));
+            
+        size_t id_counter = 0;
+        for (auto value: data) {
+            PressureUnitSensor pressure_unit;
+            pressure_unit.id = ++id_counter;
+            pressure_unit.pressure = static_cast<int16_t>(value);
+            
+            pressure_data.pressures.push_back(pressure_unit);
+        }
 
         // adiciona dados do sensor específico na mensagem "geral"
         state_data.pressures.push_back(pressure_data);
