@@ -6,7 +6,7 @@ ConvergenceNode::ConvergenceNode() : Node("convergence_node")
           .best_effort()
           .durability_volatile();
     sub_ = this->create_subscription<interfaces::msg::SyncedSensorData>(
-        "/synced_data", qos,
+        "/sync/data", qos,
         std::bind(&ConvergenceNode::time_callback, this, std::placeholders::_1)
     );
     RCLCPP_INFO(this->get_logger(), "ConvergenceNode iniciado");
