@@ -7,7 +7,7 @@ SyncNode::SyncNode() : Node("sync_node")
         .best_effort()
         .durability_volatile();
         
-	publisher_ = this->create_publisher<SyncedSensorData>("synced_data", qos);
+	publisher_ = this->create_publisher<SyncedSensorData>("/sync/data", qos);
 	
 	imu_sub_.subscribe(this, "imu/state", qos.get_rmw_qos_profile());
 	pressure_sub_.subscribe(this, "pressure/state", qos.get_rmw_qos_profile());
