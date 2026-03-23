@@ -10,21 +10,18 @@ find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 
 set(msg_files
-  "msg/imu/IMUData.msg"
-  "msg/imu/IMUState.msg"
-  
-  "msg/pressure/PressureUnitSensor.msg"
-  "msg/pressure/PressureData.msg"
-  "msg/pressure/PressureState.msg"
-
-  "msg/actuator/ActuatorCommand.msg"
-  "msg/actuator/ActuatorState.msg"
-
-  "msg/sync/SyncedSensorData.msg"
-
-  "msg/time/Time.msg"
+  "msg/IMUData.msg"
+  "msg/IMUState.msg"
+  "msg/PressureUnitSensor.msg"
+  "msg/PressureData.msg"
+  "msg/PressureState.msg"
+  "msg/ActuatorCommand.msg"
+  "msg/ActuatorState.msg"
+  "msg/SyncedSensorData.msg"
+  "msg/Time.msg"
 )
 
 set(srv_files
@@ -34,7 +31,7 @@ set(srv_files
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${msg_files}
   ${srv_files}
-  DEPENDENCIES builtin_interfaces sensor_msgs
+  DEPENDENCIES builtin_interfaces sensor_msgs std_msgs
 )
 
 ament_export_dependencies(rosidl_default_runtime)
