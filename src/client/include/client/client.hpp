@@ -1,57 +1,32 @@
-#ifndef SYNC_NODE_HPP
-#define SYNC_NODE_HPP
-
-#include <memory>
-#include <chrono>
+#ifndef CLIENT_HPP
+#define CLIENT_HPP
 
 #include "rclcpp/rclcpp.hpp"
-#include "message_filters/subscriber.h"
-#include "message_filters/synchronizer.h"
-#include "message_filters/sync_policies/approximate_time.h"
 
-// Interfaces
 #include "interfaces/msg/actuator_state.hpp"
+
 #include "interfaces/msg/pressure_state.hpp"
+#include "interfaces/msg/pressure_data.hpp"
+#include "interfaces/msg/pressure_unit_sensor.hpp"
+
+#include "interfaces/msg/imu_data.hpp"
 #include "interfaces/msg/imu_state.hpp"
+
 #include "interfaces/msg/synced_sensor_data.hpp"
 
-using namespace interfaces::msg;
-using std::placeholders::_1;
-using std::placeholders::_2;
-using std::placeholders::_3;
-
-class SyncNode : public rclcpp::Node
+class ClientNode : public rclcpp::Node
 {
-public:
-    SyncNode();
-    virtual ~SyncNode();
-
-private:
-    void synced_callback(
-        const IMUState::ConstSharedPtr& imu_msg,
-        const PressureState::ConstSharedPtr& pressure_msg,
-        const ActuatorState::ConstSharedPtr& actuator_msg);
-
-    void watchdog_callback();
-
-    typedef message_filters::sync_policies::ApproximateTime<
-        IMUState, PressureState, ActuatorState> SyncPolicy;
-
-    std::shared_ptr<message_filters::Synchronizer<SyncPolicy>> sync_;
-    message_filters::Subscriber<IMUState> imu_sub_;
-    message_filters::Subscriber<PressureState> pressure_sub_;
-    message_filters::Subscriber<ActuatorState> actuator_sub_;
-
-    rclcpp::Publisher<SyncedSensorData>::SharedPtr publisher_;
-
-    rclcpp::TimerBase::SharedPtr watchdog_timer_;
-    rclcpp::Time last_imu_time_{0, 0, RCL_ROS_TIME};
-    rclcpp::Time last_pressure_time_{0, 0, RCL_ROS_TIME};
-    rclcpp::Time last_actuator_time_{0, 0, RCL_ROS_TIME};
-
-    // limite de tempo pra considerar que um sensor
-    // parou de enviar dados
-    const rclcpp::Duration timeout_threshold_ = rclcpp::Duration::from_seconds(0.2);
+    public:
+        explicit ClientNode(const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
+        virtual ~ClientNode();
+                
+        void run(int argc, char **argv);
+        void execute_path(); 
+        
+    private:
+        rclcpp::Publisher<interfaces::msg::ActuatorState>::SharedPtr actuator_publisher_;
+        rclcpp::Publisher<interfaces::msg::PressureState>::SharedPtr pressure_publisher_;
+        rclcpp::Publisher<interfaces::msg::IMUState>::SharedPtr imu_publisher_;
 };
 
-#endif // SYNC_NODE_HPP
+#endif // CLIENT_HPP

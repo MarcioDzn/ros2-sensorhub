@@ -1,5 +1,9 @@
 #include "sync_node.hpp"
 
+using std::placeholders::_1;
+using std::placeholders::_2;
+using std::placeholders::_3;
+
 SyncNode::SyncNode() : Node("sync_node")
 {
     auto qos = rclcpp::QoS(rclcpp::KeepLast(10)).best_effort();
@@ -10,14 +14,17 @@ SyncNode::SyncNode() : Node("sync_node")
     pressure_sub_.subscribe(this, "pressure/state", qos.get_rmw_qos_profile());
     actuator_sub_.subscribe(this, "actuator/state", qos.get_rmw_qos_profile());
 
-    imu_sub_.registerCallback([this](const IMUState::ConstSharedPtr&) { 
+    imu_sub_.registerCallback([this](const IMUState::ConstSharedPtr& msg) { 
         last_imu_time_ = this->now(); 
+        last_imu_msg_ = msg;
     });
-    pressure_sub_.registerCallback([this](const PressureState::ConstSharedPtr&) { 
+    pressure_sub_.registerCallback([this](const PressureState::ConstSharedPtr& msg) { 
         last_pressure_time_ = this->now(); 
+        last_pressure_msg_ = msg;
     });
-    actuator_sub_.registerCallback([this](const ActuatorState::ConstSharedPtr&) { 
+    actuator_sub_.registerCallback([this](const ActuatorState::ConstSharedPtr& msg) { 
         last_actuator_time_ = this->now(); 
+        last_actuator_msg_ = msg;
     });
 
     sync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy>>(
@@ -25,34 +32,37 @@ SyncNode::SyncNode() : Node("sync_node")
 
     sync_->registerCallback(std::bind(&SyncNode::synced_callback, this, _1, _2, _3));
 
-    // timer de watchdog (roda a 20Hz para checar timeouts)
     watchdog_timer_ = this->create_wall_timer(
         std::chrono::milliseconds(50), std::bind(&SyncNode::watchdog_callback, this));
 
-    RCLCPP_INFO(this->get_logger(), "SyncNode inicializado");
+    RCLCPP_INFO(this->get_logger(), "SyncNode inicializado com cache de dados.");
 }
 
 void SyncNode::watchdog_callback()
 {
     auto now = this->now();
 
-    // se IMU falhar injeta dummy
+    // IMU
     if ((now - last_imu_time_) > timeout_threshold_) {
-        auto dummy = std::make_shared<IMUState>();
+        // copia a mensagem real (se tiver) ou cria uma nova
+        auto dummy = last_imu_msg_ ? std::make_shared<IMUState>(*last_imu_msg_) 
+                                   : std::make_shared<IMUState>();
         dummy->header.stamp = now;
         sync_->add<0>(dummy); 
     }
 
-    // se pressure falhar injeta dummy
+    // pressure
     if ((now - last_pressure_time_) > timeout_threshold_) {
-        auto dummy = std::make_shared<PressureState>();
+        auto dummy = last_pressure_msg_ ? std::make_shared<PressureState>(*last_pressure_msg_) 
+                                         : std::make_shared<PressureState>();
         dummy->header.stamp = now;
         sync_->add<1>(dummy);
     }
 
-    // se actuator falhar injeta dummy
+    // actuator
     if ((now - last_actuator_time_) > timeout_threshold_) {
-        auto dummy = std::make_shared<ActuatorState>();
+        auto dummy = last_actuator_msg_ ? std::make_shared<ActuatorState>(*last_actuator_msg_) 
+                                         : std::make_shared<ActuatorState>();
         dummy->header.stamp = now;
         sync_->add<2>(dummy);
     }
@@ -67,13 +77,11 @@ void SyncNode::synced_callback(
 
     synced_msg->header.stamp = this->now();
     
-    // se forem mensagens dummy, estarão com campos zerados/padrão.
     synced_msg->imu_data = *imu_msg;
     synced_msg->pressure_data = *pressure_msg;
     synced_msg->actuator_data = *actuator_msg;
 
     publisher_->publish(std::move(synced_msg));
-    RCLCPP_DEBUG(this->get_logger(), "Publicado pacote sincronizado (Resiliente)");
 }
 
 SyncNode::~SyncNode() = default;
