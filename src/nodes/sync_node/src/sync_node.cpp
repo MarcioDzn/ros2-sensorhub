@@ -42,28 +42,39 @@ void SyncNode::watchdog_callback()
 {
     auto now = this->now();
 
+    // verifica se nenhum sensor está publicando
+    bool imu_stale = (now - last_imu_time_) > timeout_threshold_;
+    bool pressure_stale = (now - last_pressure_time_) > timeout_threshold_;
+    bool actuator_stale = (now - last_actuator_time_) > timeout_threshold_;
+
+    if (imu_stale && pressure_stale && actuator_stale) {
+        return; 
+    }
+    
     // IMU
-    if ((now - last_imu_time_) > timeout_threshold_) {
-        // copia a mensagem real (se tiver) ou cria uma nova
+    if (imu_stale) {
         auto dummy = last_imu_msg_ ? std::make_shared<IMUState>(*last_imu_msg_) 
                                    : std::make_shared<IMUState>();
         dummy->header.stamp = now;
+        dummy->header.frame_id = "stale"; // Marcamos como dado "congelado"
         sync_->add<0>(dummy); 
     }
 
-    // pressure
-    if ((now - last_pressure_time_) > timeout_threshold_) {
+    // Pressure
+    if (pressure_stale) {
         auto dummy = last_pressure_msg_ ? std::make_shared<PressureState>(*last_pressure_msg_) 
                                          : std::make_shared<PressureState>();
         dummy->header.stamp = now;
+        dummy->header.frame_id = "stale";
         sync_->add<1>(dummy);
     }
 
-    // actuator
-    if ((now - last_actuator_time_) > timeout_threshold_) {
+    // Actuator
+    if (actuator_stale) {
         auto dummy = last_actuator_msg_ ? std::make_shared<ActuatorState>(*last_actuator_msg_) 
                                          : std::make_shared<ActuatorState>();
         dummy->header.stamp = now;
+        dummy->header.frame_id = "stale";
         sync_->add<2>(dummy);
     }
 }
