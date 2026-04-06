@@ -24,7 +24,9 @@ class ClientNode : public rclcpp::Node
         void execute_path(); 
         
     private:
-        rclcpp::Publisher<interfaces::msg::SyncedSensorData>::SharedPtr synced_data_publisher_;
+        rclcpp::Publisher<interfaces::msg::ActuatorState>::SharedPtr actuator_publisher_;
+        rclcpp::Publisher<interfaces::msg::PressureState>::SharedPtr pressure_publisher_;
+        rclcpp::Publisher<interfaces::msg::IMUState>::SharedPtr imu_publisher_;
 };
 
 #endif // CLIENT_HPP
