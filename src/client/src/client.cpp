@@ -50,20 +50,20 @@ void ClientNode::execute_path()
         rclcpp::sleep_for(std::chrono::milliseconds(delays_ms[0]));
 
         // --- Pressure ---
-        interfaces::msg::PressureUnitSensor pressure_unit;
-        pressure_unit.id = 1;
-        pressure_unit.pressure = 1000;
+        // interfaces::msg::PressureUnitSensor pressure_unit;
+        // pressure_unit.id = 1;
+        // pressure_unit.pressure = 1000;
 
-        interfaces::msg::PressureData pressure_data;
-        pressure_data.pressures.push_back(pressure_unit);
+        // interfaces::msg::PressureData pressure_data;
+        // pressure_data.pressures.push_back(pressure_unit);
 
-        interfaces::msg::PressureState pressure_msg;
-        pressure_msg.header.stamp = this->get_clock()->now();
-        pressure_msg.names.push_back("insole_1");
-        pressure_msg.pressures.push_back(pressure_data);
-        pressure_publisher_->publish(pressure_msg);
+        // interfaces::msg::PressureState pressure_msg;
+        // pressure_msg.header.stamp = this->get_clock()->now();
+        // pressure_msg.names.push_back("insole_1");
+        // pressure_msg.pressures.push_back(pressure_data);
+        // pressure_publisher_->publish(pressure_msg);
 
-        rclcpp::sleep_for(std::chrono::milliseconds(delays_ms[1]));
+        // rclcpp::sleep_for(std::chrono::milliseconds(delays_ms[1]));
 
         // --- IMU ---
         interfaces::msg::IMUData imu_data;
@@ -82,10 +82,10 @@ void ClientNode::execute_path()
 
         // --- Print de debug ---
         RCLCPP_INFO(this->get_logger(),
-            "Loop %zu | Actuator: %s | Pressure: %s | IMU: %s",
+            "Loop %zu | Actuator: %s | IMU: %s",
             idx,
             ts_to_string(actuator_msg.header.stamp).c_str(),
-            ts_to_string(pressure_msg.header.stamp).c_str(),
+            //ts_to_string(pressure_msg.header.stamp).c_str(),
             ts_to_string(imu_msg.header.stamp).c_str());
     }
 }
