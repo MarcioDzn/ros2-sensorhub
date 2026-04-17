@@ -21,6 +21,7 @@ include_directories(
 
 add_library(actuator_driver SHARED
   src/driver/dynamixel/dynamixel_driver.cpp
+  src/driver/mg8008e/mg8008e_driver.cpp
   src/driver/actuator_factory.cpp
 )
 target_include_directories(actuator_driver PUBLIC include)
