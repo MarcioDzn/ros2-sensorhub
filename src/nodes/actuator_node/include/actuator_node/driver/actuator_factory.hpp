@@ -11,6 +11,9 @@ class ActuatorFactory
     public:
         static std::unique_ptr<IActuatorDriver> 
         createDynamixel();
+
+        static std::unique_ptr<IActuatorDriver> 
+        createMG8008E();
 };
 
 #endif // ACTUATOR_FACTORY_HPP
