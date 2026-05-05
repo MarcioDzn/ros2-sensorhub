@@ -16,9 +16,8 @@
 
 class ParameterManager;
 
-using SetTorque = interfaces::srv::SetTorque;
-using ActuatorCommand = interfaces::msg::ActuatorCommand;
-using ActuatorState = interfaces::msg::ActuatorState;
+using MG8008ECommand = interfaces::msg::MG8008ECommand;
+using MG8008EState = interfaces::msg::MG8008EState;
 using Time = interfaces::msg::Time;
 
 struct ActuatorData {
@@ -41,10 +40,10 @@ class ActuatorNode : public rclcpp::Node
             const std::shared_ptr<SetTorque::Request> request,
             std::shared_ptr<SetTorque::Response> response);
 
-        ActuatorState read_actuator_data(Time& time_data);
-        void set_goal_position(const std::vector<ActuatorData>& actuator_data);
+        MG8008EState read_actuator_data(Time& time_data);
+        void set_angle(const std::vector<ActuatorData>& actuator_data);
 
-        std::vector<ActuatorData> read_goal_position_msg(const ActuatorCommand::SharedPtr msg);
+        std::vector<ActuatorData> read_angle_msg(const MG8008ECommand::SharedPtr msg);
         void publish_actuator_state();
 
         template <typename Func>
@@ -62,10 +61,9 @@ class ActuatorNode : public rclcpp::Node
         std::shared_ptr<IActuatorDriver> actuator_driver_;
         std::shared_ptr<ParameterManager> parameter_manager_;
         
-        rclcpp::Subscription<ActuatorCommand>::SharedPtr actuator_subscriber_;
-        rclcpp::Publisher<ActuatorState>::SharedPtr state_publisher_;
+        rclcpp::Subscription<MG8008ECommand>::SharedPtr actuator_subscriber_;
+        rclcpp::Publisher<MG8008EState>::SharedPtr state_publisher_;
         rclcpp::Publisher<Time>::SharedPtr time_publisher_;
-        rclcpp::Service<SetTorque>::SharedPtr set_torque_service_;
         
         rclcpp::TimerBase::SharedPtr timer_;
 };
