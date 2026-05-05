@@ -55,6 +55,9 @@ class MG8008EDriver : public IActuatorDriver
         struct StatusPacket
         {
             uint8_t id;
+            uint8_t command;
+            uint8_t length;
+            uint8_t frame_type;
             uint8_t error;
             std::array<uint8_t, RXPACKET_MAX_LEN> params;
         };

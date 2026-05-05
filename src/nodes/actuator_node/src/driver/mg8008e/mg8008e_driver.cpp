@@ -123,8 +123,10 @@ std::vector<uint8_t> MG8008EDriver::get_packet(
 int MG8008EDriver::read_packet(std::array<uint8_t, RXPACKET_MAX_LEN>& packet)
 {
 	size_t read_size = 0;
-	size_t wait_length = 6; // tamanho minimo (HEADER COMMAND ID LENGTH FRAME_TYPE CHKSUM)
-
+	
+	// todos os RX tem frame type
+	// tamanho minimo (HEADER COMMAND ID LENGTH FRAME_TYPE CHKSUM)
+	size_t wait_length = 6;
 	auto start = std::chrono::steady_clock::now();
 	constexpr auto TIMEOUT = std::chrono::milliseconds(20);
 
@@ -223,7 +225,7 @@ int MG8008EDriver::read_packet(std::array<uint8_t, RXPACKET_MAX_LEN>& packet)
 	}
 }
 
-// Monta um status packet com valores úteis
+// monta um status packet com valores úteis
 // advindos do pacote montado por read_packet()
 int MG8008EDriver::read_status(uint8_t id, StatusPacket& out)
 {
@@ -233,18 +235,14 @@ int MG8008EDriver::read_status(uint8_t id, StatusPacket& out)
 	if (id != rxbuffer[ID_POS]) return -1;
 
 	uint8_t length = rxbuffer[LENGTH_POS];
-	uint8_t error = rxbuffer[ERROR_POS];
-
+	out.length = length;
+	out.command = rxbuffer[COMMAND_POS];
 	out.id = rxbuffer[ID_POS];
-	out.error = error;
-
-	if (error != 0) return -1; 
+	out.frame_type = rxbuffer[FRAME_TYPE_POS];
 
     // adiciona os parâmetros
-	for (uint8_t i = 0; i < length-2; i++)
-	{
-		out.params[i] = rxbuffer[PARAMETER_POS+i];
-	}
+	for (uint8_t i = 0; i < length; i++)
+		out.params[i] = rxbuffer[PAYLOAD_START_POS+i];
 
 	return 0;
 }
