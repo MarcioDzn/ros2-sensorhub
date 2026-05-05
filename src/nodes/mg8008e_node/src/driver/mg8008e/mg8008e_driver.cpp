@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <cstring>
+#include "rclcpp/rclcpp.hpp"
 
 MG8008EDriver::MG8008EDriver() {}
 
@@ -50,6 +51,23 @@ int MG8008EDriver::set_angle(uint8_t id, int32_t angle, int32_t speed)
     std::vector<uint8_t> packet = get_packet(
 		id, MULTI_LOOP_2, MULTI_LOOP_2_TYPE, params);
 
+	std::string debug;
+    for (auto b : packet)
+    {
+        char buf[4];
+        snprintf(buf, sizeof(buf), "%02X ", b);
+        debug += buf;
+    }
+
+    RCLCPP_INFO(
+        rclcpp::get_logger("mg8008e_driver"),
+        "MG8008E TX PACKET: %s",
+        debug.c_str()
+    );
+
+
+	// comentado para debug
+	/*
     if (transport_->writeData(packet.data(), packet.size()) < 0) 
 		return -1;
 
@@ -59,6 +77,7 @@ int MG8008EDriver::set_angle(uint8_t id, int32_t angle, int32_t speed)
         return -1;
     
     return 0;
+	*/
 }
 
 int MG8008EDriver::get_angle(uint8_t id, double& angle)
@@ -111,14 +130,21 @@ std::vector<uint8_t> MG8008EDriver::get_packet(
     }
 
     // calculo do checksum
-    uint8_t checksum = 0;
-	for (size_t i = 0; i < packet.size() - 1; i++) {
-		checksum += packet[i];
-	}
+	uint8_t checksum = 0;
+
+    if (params.empty()) {
+        // Se não tem dados, soma os 4 bytes do cabeçalho (3E, CMD, ID, LEN)
+        checksum = packet[0] + packet[1] + packet[2] + packet[3];
+    } else {
+        // Se tem dados, soma APENAS os bytes que estão dentro do vetor params
+        for (uint8_t p : params) {
+            checksum += p;
+        }
+    }
 
 	packet[packet.size() - 1] = checksum;
 
-    return packet;
+	return packet;
 }
 
 // monta pacote de dados que é enviado pelo mg8008e

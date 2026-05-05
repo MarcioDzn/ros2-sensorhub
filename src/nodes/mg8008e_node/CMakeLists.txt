@@ -27,6 +27,7 @@ target_include_directories(actuator_driver PUBLIC include)
 
 ament_target_dependencies(actuator_driver
   common_serial
+  rclcpp
 )
 
 add_library(actuator_control SHARED
