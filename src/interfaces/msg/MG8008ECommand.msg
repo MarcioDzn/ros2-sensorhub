@@ -1,2 +1,3 @@
 string[] names
-int16[] goals 
+int32[] angles
+int32[] speeds

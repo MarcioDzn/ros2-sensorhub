@@ -1,3 +1,3 @@
 std_msgs/Header header
 string[] names
-int16[] positions
+int32[] angles
