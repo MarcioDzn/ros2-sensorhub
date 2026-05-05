@@ -19,6 +19,47 @@ int MG8008EDriver::init(std::string device, int baudrate)
     return 0;
 }
 
+int MG8008EDriver::setup_driver(int id)
+{
+    StatusPacket status;
+
+	std::vector<uint8_t> packet = {0x3E, 0x1F, 0x01, 0x00, 0x5E};
+	if (transport_->writeData(packet.data(), packet.size()) < 0)
+		return -1;
+	if (read_status(id, status) < 0)
+		return -1;
+	std::chrono::milliseconds(20);
+
+    packet = {0x3E, 0x12, 0x01, 0x00, 0x51};
+	if (transport_->writeData(packet.data(), packet.size()) < 0)
+		return -1;
+	if (read_status(id, status) < 0)
+		return -1;
+	std::chrono::milliseconds(20);
+
+	packet = {0x3E, 0x16, 0x01, 0x00, 0x55};
+	if (transport_->writeData(packet.data(), packet.size()) < 0)
+		return -1;
+	if (read_status(id, status) < 0)
+		return -1;
+	std::chrono::milliseconds(20);
+
+	packet = {0x3E, 0x14, 0x01, 0x00, 0x53};
+	if (transport_->writeData(packet.data(), packet.size()) < 0)
+		return -1;
+	if (read_status(id, status) < 0)
+		return -1;
+	std::chrono::milliseconds(20);
+
+	packet = {0x3E, 0x10, 0x01, 0x00, 0x4F};
+	if (transport_->writeData(packet.data(), packet.size()) < 0)
+		return -1;
+	if (read_status(id, status) < 0)
+		return -1;
+
+    return 0;
+}
+
 std::vector<uint8_t> MG8008EDriver::get4bytes(int32_t value) {
 	uint8_t b1 = (value >> 24) 	& 0xFF;
 	uint8_t b2 = (value >> 16) 	& 0xFF;
