@@ -27,18 +27,18 @@ std::vector<uint8_t> get4bytes(uint32_t value) {
 	return {b4, b3, b2, b1};
 }
 
-int MG8008EDriver::set_goal_position(uint8_t id, int32_t goal_position, int32_t speed)
+int MG8008EDriver::set_angle(uint8_t id, int32_t angle, int32_t speed)
 {
 	// valores de posição
-	int32_t scaled_goal_pos = goal_position * 100;
-	std::vector<uint8_t> b_goal = get4bytes((uint32_t)scaled_goal_pos);
+	int32_t scaled_angle = angle * 100;
+	std::vector<uint8_t> b_goal = get4bytes((uint32_t)scaled_angle);
 
 	// valores de velocidade
 	int32_t scaled_speed = speed * 100;
 	std::vector<uint8_t> b_speed = get4bytes((uint32_t)scaled_speed);
 	
 	// verifica se o valor é negativo e adiciona o padding correspondente
-	uint8_t sig = (goal_position < 0) ? 0xFF : 0x00;
+	uint8_t sig = (angle < 0) ? 0xFF : 0x00;
 
 	// constrói os parâmetros
 	std::vector<uint8_t> params = {
