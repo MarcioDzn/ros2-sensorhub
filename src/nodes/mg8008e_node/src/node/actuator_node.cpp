@@ -42,17 +42,17 @@ void ActuatorNode::setup_node() {
         .durability_volatile();
 
     // recebe dados de comando contínuo. Ex: posição alvo
-    actuator_subscriber_ = this->create_subscription<ActuatorCommand>(
+    actuator_subscriber_ = this->create_subscription<MG8008ECommand>(
          "actuator/command", qos, 
-        [this](const ActuatorCommand::SharedPtr msg) {
+        [this](const MG8008ECommand::SharedPtr msg) {
             this->set_angle(this->read_angle_msg(msg));
         });
 
-
-    state_publisher_ = this->create_publisher<ActuatorState>(
+    state_publisher_ = this->create_publisher<MG8008EState>(
          "actuator/state", qos);
     time_publisher_ = this->create_publisher<Time>(
          "actuator/time", qos);
+
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
         [this]() {
@@ -62,9 +62,9 @@ void ActuatorNode::setup_node() {
     RCLCPP_INFO(this->get_logger(), "Sucesso ao inicializar ActuatorNode.");
 }
 
-ActuatorState ActuatorNode::read_actuator_data(Time& time_data)
+MG8008EState ActuatorNode::read_actuator_data(Time& time_data)
 {
-    ActuatorState state_data;
+    MG8008EState state_data;
     
     const auto& ids = parameter_manager_->get_ids();
     const auto& names = parameter_manager_->get_names();
@@ -74,11 +74,11 @@ ActuatorState ActuatorNode::read_actuator_data(Time& time_data)
 
         for (size_t idx = 0; idx < ids.size(); idx++)
         {
-            uint16_t position;
+            double angle;
             int result;
 
             auto duration = measure_micros([&]() {
-                result = actuator_driver_->get_current_position(ids[idx], position);
+                result = actuator_driver_->get_angle(ids[idx], angle);
             });
             
             time_data.names.push_back(names[idx]);
@@ -86,7 +86,7 @@ ActuatorState ActuatorNode::read_actuator_data(Time& time_data)
             
             if (result == 0) {
                 state_data.names.push_back(names[idx]);
-                state_data.positions.push_back(static_cast<int16_t>(position));
+                state_data.angles.push_back(static_cast<int32_t>(angle));
 
             } else {
                 RCLCPP_ERROR(this->get_logger(), "Falha na leitura do atuador %s. Erro: %d", 
@@ -102,13 +102,14 @@ void ActuatorNode::set_angle(const std::vector<ActuatorData>& actuator_data)
 {
     std::lock_guard<std::mutex> lock(driver_mutex_);
     
-    // define o goal position para cada atuador
+    // define o angulo para cada atuador
     for (size_t idx = 0; idx < actuator_data.size(); idx++)
     {
         auto result = actuator_driver_->set_angle(
             actuator_data[idx].id, 
-            actuator_data[idx].position,
+            actuator_data[idx].angle,
             actuator_data[idx].speed);
+
         if (result != 0) {
             RCLCPP_ERROR(this->get_logger(), "Falha no envio de Goal Position para o atuador %s. Erro: %d", 
             actuator_data[idx].name.c_str(), static_cast<int>(result));
@@ -116,12 +117,12 @@ void ActuatorNode::set_angle(const std::vector<ActuatorData>& actuator_data)
     }
 }
 
-std::vector<ActuatorData> ActuatorNode::read_angle_msg(const ActuatorCommand::SharedPtr msg) {
-    if (msg->names.empty() || msg->goals.empty()) return {};
+std::vector<ActuatorData> ActuatorNode::read_angle_msg(const MG8008ECommand::SharedPtr msg) {
+    if (msg->names.empty() || msg->angles.empty()) return {};
 
     std::vector<ActuatorData> actuator_data_list;
 
-    size_t n = std::min(msg->names.size(), msg->goals.size()); 
+    size_t n = std::min(msg->names.size(), msg->angles.size()); 
     for (size_t idx = 0; idx < n; idx++)
     {
         auto id = parameter_manager_->get_id_by_name(msg->names[idx]);
@@ -130,7 +131,7 @@ std::vector<ActuatorData> ActuatorNode::read_angle_msg(const ActuatorCommand::Sh
         ActuatorData actuator_data;
         actuator_data.id = static_cast<uint8_t>(id);
         actuator_data.name = msg->names[idx];
-        actuator_data.angles = msg->angles[idx];
+        actuator_data.angle = msg->angles[idx];
 
         actuator_data_list.push_back(actuator_data);
     }
@@ -141,7 +142,7 @@ std::vector<ActuatorData> ActuatorNode::read_angle_msg(const ActuatorCommand::Sh
 void ActuatorNode::publish_actuator_state()
 {
     Time time_msg;
-    ActuatorState state_msg;
+    MG8008EState state_msg;
 
     auto duration = measure_micros([&]() {
         state_msg = read_actuator_data(time_msg);

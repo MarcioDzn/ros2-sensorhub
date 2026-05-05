@@ -41,7 +41,6 @@ class MG8008EDriver : public IActuatorDriver
         virtual ~MG8008EDriver() = default;
 
         int init(std::string device, int baudrate) override;
-        int set_torque(uint8_t id, uint8_t enable_torque) override;
         int set_angle(uint8_t id, int32_t angle, int32_t speed) override;
         int get_angle(uint8_t id, double& angle) override;
     

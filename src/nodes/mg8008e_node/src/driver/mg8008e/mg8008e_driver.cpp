@@ -18,7 +18,7 @@ int MG8008EDriver::init(std::string device, int baudrate)
     return 0;
 }
 
-std::vector<uint8_t> get4bytes(int32_t value) {
+std::vector<uint8_t> MG8008EDriver::get4bytes(int32_t value) {
 	uint8_t b1 = (value >> 24) 	& 0xFF;
 	uint8_t b2 = (value >> 16) 	& 0xFF;
 	uint8_t b3 = (value >> 8) 	& 0xFF;

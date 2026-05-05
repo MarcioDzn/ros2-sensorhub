@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(actuator_node)
+project(mg8008e_node)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -20,7 +20,6 @@ include_directories(
 )
 
 add_library(actuator_driver SHARED
-  src/driver/dynamixel/dynamixel_driver.cpp
   src/driver/mg8008e/mg8008e_driver.cpp
   src/driver/actuator_factory.cpp
 )

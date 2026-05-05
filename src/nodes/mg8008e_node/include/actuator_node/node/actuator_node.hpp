@@ -9,9 +9,8 @@
 
 #include "driver/actuator_factory.hpp"
 
-#include "interfaces/srv/set_torque.hpp"
-#include "interfaces/msg/actuator_command.hpp"
-#include "interfaces/msg/actuator_state.hpp"
+#include "interfaces/msg/mg8008_e_command.hpp"
+#include "interfaces/msg/mg8008_e_state.hpp"
 #include "interfaces/msg/time.hpp"
 
 class ParameterManager;
@@ -23,7 +22,8 @@ using Time = interfaces::msg::Time;
 struct ActuatorData {
     int8_t id;
     std::string name;
-    int16_t position;
+    int32_t angle;
+    int32_t speed;
 };
 
 class ActuatorNode : public rclcpp::Node
@@ -35,10 +35,6 @@ class ActuatorNode : public rclcpp::Node
     private:
         void init_driver();
         void setup_node();
-
-        void set_torque(
-            const std::shared_ptr<SetTorque::Request> request,
-            std::shared_ptr<SetTorque::Response> response);
 
         MG8008EState read_actuator_data(Time& time_data);
         void set_angle(const std::vector<ActuatorData>& actuator_data);
