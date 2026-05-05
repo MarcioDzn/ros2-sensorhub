@@ -18,33 +18,40 @@ int MG8008EDriver::init(std::string device, int baudrate)
     return 0;
 }
 
-int MG8008EDriver::set_torque(uint8_t id, uint8_t enable_torque)
-{
-    std::vector<uint8_t> params = {TORQUE_ADDR, enable_torque};
+std::vector<uint8_t> get4bytes(uint32_t value) {
+	uint8_t b1 = (value >> 24) 	& 0xFF;
+	uint8_t b2 = (value >> 16) 	& 0xFF;
+	uint8_t b3 = (value >> 8) 	& 0xFF;
+	uint8_t b4 = value 			& 0xFF;
 
-    std::vector<uint8_t> packet = get_packet(id, WRITE_INSTR, params);
-
-    if (transport_->writeData(packet.data(), packet.size()) < 0) 
-	return -1;
-
-    // le o status pra evitar erros
-    StatusPacket status;
-    if (read_status(id, status) < 0)
-        return -1;
-	
-    return 0;
+	return {b4, b3, b2, b1};
 }
 
-int MG8008EDriver::set_goal_position(uint8_t id, uint16_t goal_position)
+int MG8008EDriver::set_goal_position(uint8_t id, int32_t goal_position, int32_t speed)
 {
-    uint8_t goal_pos_lsb = goal_position & 0xFF;
-    uint8_t goal_pos_msb = (goal_position >> 8) & 0xFF;
-    std::vector<uint8_t> params = {GOAL_POS_ADDR, goal_pos_lsb, goal_pos_msb};
+	// valores de posição
+	int32_t scaled_goal_pos = goal_position * 100;
+	std::vector<uint8_t> b_goal = get4bytes((uint32_t)scaled_goal_pos);
 
-    std::vector<uint8_t> packet = get_packet(id, WRITE_INSTR, params);
+	// valores de velocidade
+	int32_t scaled_speed = speed * 100;
+	std::vector<uint8_t> b_speed = get4bytes((uint32_t)scaled_speed);
+	
+	// verifica se o valor é negativo e adiciona o padding correspondente
+	uint8_t sig = (goal_position < 0) ? 0xFF : 0x00;
+
+	// constrói os parâmetros
+	std::vector<uint8_t> params = {
+		b_goal[0], b_goal[1], b_goal[2], b_goal[3],
+		sig, 		sig, 		sig, 		sig,
+		b_speed[0], b_speed[1], b_speed[2], b_speed[3]
+	};
+
+    std::vector<uint8_t> packet = get_packet(
+		id, MULTI_LOOP_2, MULTI_LOOP_2_TYPE, params);
 
     if (transport_->writeData(packet.data(), packet.size()) < 0) 
-	return -1;
+		return -1;
 
     // le o status pra evitar erros
     StatusPacket status;
@@ -56,10 +63,8 @@ int MG8008EDriver::set_goal_position(uint8_t id, uint16_t goal_position)
 
 int MG8008EDriver::get_current_position(uint8_t id, uint16_t& current_position)
 {
-    std::vector<uint8_t> params = {CURRENT_POS_ADDR, 2};
-
-
-    std::vector<uint8_t> packet = get_packet(id, READ_INSTR, params);
+    std::vector<uint8_t> packet = get_packet(
+		id, READ_MULTI_LOOP_2, 0x00, {});
 
     if (transport_->writeData(packet.data(), packet.size()) < 0) 
 		return -1;
@@ -68,6 +73,9 @@ int MG8008EDriver::get_current_position(uint8_t id, uint16_t& current_position)
     if (read_status(id, status) < 0)
         return -1;
 
+	// TODO: Consertar aqui
+	// Mudar tipo
+	// verificar se pega o dado assim msm
     current_position = static_cast<uint16_t>(status.params[0]) |
                    (static_cast<uint16_t>(status.params[1]) << 8);
 
@@ -75,25 +83,38 @@ int MG8008EDriver::get_current_position(uint8_t id, uint16_t& current_position)
 }
 
 std::vector<uint8_t> MG8008EDriver::get_packet(
-    uint8_t id, uint8_t instr, const std::vector<uint8_t>& params)
+    const uint8_t id, 
+	const uint16_t command, 
+	const uint16_t frame_type,
+	const std::vector<uint8_t>& params)
 {
-    std::vector<uint8_t> packet(PARAMETER_POS+params.size()+1);
+	size_t base_size = 5 + params.size(); 
+    if (frame_type != 0x00) base_size++;
 
-    packet[PREAMBLE_POS]            = 0xFF;
-	packet[PREAMBLE_POS+1]          = 0xFF;
+    std::vector<uint8_t> packet(base_size);
+
+    packet[HEADER_POS]            	= 0x3E;
+	packet[COMMAND_POS]         	= command;
     packet[ID_POS]                  = id;
-    packet[INSTRUCTION_POS]         = instr;
+    packet[LENGTH_POS]         		= params.size();
+    
+	uint8_t offset = 4;
+    if (frame_type != 0x00) 
+    {
+        packet[offset++] = 0xEF; // FRAME_TYPE_POS
+    }
 
-    // adição de parâmetros no pacote
-	for (int i = 0; i<params.size(); i++)
-		packet[PARAMETER_POS+i]     = params[i];
-    packet[LENGTH_POS]              = params.size() + 2;
+	for (size_t i = 0; i < params.size(); i++) {
+        packet[offset + i] = params[i];
+    }
 
     // calculo do checksum
-    uint16_t sum = 0;
-	for (uint8_t i = ID_POS; i < packet.size()-1; i++)
-		sum += packet[i];
-	packet[packet.size()-1]         = ~(sum & 0xFF);
+    uint8_t checksum = 0;
+	for (size_t i = 0; i < packet.size() - 1; i++) {
+		checksum += packet[i];
+	}
+
+	packet[packet.size() - 1] = checksum;
 
     return packet;
 }
