@@ -61,7 +61,7 @@ int MG8008EDriver::set_goal_position(uint8_t id, int32_t goal_position, int32_t 
     return 0;
 }
 
-int MG8008EDriver::get_current_position(uint8_t id, uint16_t& current_position)
+int MG8008EDriver::get_angle(uint8_t id, double& angle)
 {
     std::vector<uint8_t> packet = get_packet(
 		id, READ_MULTI_LOOP_2, 0x00, {});
@@ -73,11 +73,13 @@ int MG8008EDriver::get_current_position(uint8_t id, uint16_t& current_position)
     if (read_status(id, status) < 0)
         return -1;
 
-	// TODO: Consertar aqui
-	// Mudar tipo
-	// verificar se pega o dado assim msm
-    current_position = static_cast<uint16_t>(status.params[0]) |
-                   (static_cast<uint16_t>(status.params[1]) << 8);
+	// converte hexadecimal em posição
+	int64_t angle_raw = 0;
+	std::memcpy(
+		&angle_raw,
+		status.params.data(),
+		sizeof(int64_t));
+	angle = angle_raw / 100.0;
 
     return 0;
 }
