@@ -22,12 +22,10 @@ void ActuatorNode::init_driver() {
     parameter_manager_ = std::make_shared<ParameterManager>(this);
     actuator_driver_ = ActuatorFactory::createMG8008E();
 
-    /*
     // inicializa porta serial inserida nos parâmetros do yaml
     auto init_response = actuator_driver_->init(
         parameter_manager_->get_usb_port(), 
         parameter_manager_->get_baudrate());
-
     
     if (init_response != 0)
     {
@@ -36,7 +34,26 @@ void ActuatorNode::init_driver() {
             parameter_manager_->get_usb_port().c_str());
         throw std::runtime_error("Falha ao inicializar ActuatorNode");
     }
-    */
+
+    // inicializando cada atuador
+    auto ids = parameter_manager_->get_ids();
+    size_t init_counter = ids.size();
+    for (size_t idx = 0; idx < ids.size(); idx++) {
+		if (actuator_driver_->setup_driver(ids[idx]) != 0)
+        {
+			RCLCPP_ERROR(this->get_logger(), "Falha na configuração do atuador %s.", 
+                parameter_manager_->get_names()[idx].c_str());            
+            init_counter--;
+        }
+	}
+    
+    // se nenhum atuador foi inicializado não executa o nó
+    if (init_counter == 0)
+    {
+        RCLCPP_FATAL(this->get_logger(), "Falha na inicialização dos atuadores.");
+        throw std::runtime_error("Falha ao inicializar ActuatorNode");
+    }
+
 }
 
 void ActuatorNode::setup_node() {
