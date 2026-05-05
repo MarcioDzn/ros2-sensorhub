@@ -26,7 +26,9 @@ class MG8008EDriver : public IActuatorDriver
             ID_POS                  = 2,
             LENGTH_POS              = 3,
             FRAME_TYPE_POS          = 4,
-            PAYLOAD_START_POS       = 5
+            PAYLOAD_START_POS       = 5,
+
+            RXPACKET_MAX_LEN        = (250)
         } mg8008e_packet;
 
 

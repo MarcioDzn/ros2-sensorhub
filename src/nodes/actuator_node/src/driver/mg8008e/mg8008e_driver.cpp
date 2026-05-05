@@ -119,11 +119,11 @@ std::vector<uint8_t> MG8008EDriver::get_packet(
     return packet;
 }
 
-// Monta pacote de dados que é enviado pelo dynamixel
+// monta pacote de dados que é enviado pelo mg8008e
 int MG8008EDriver::read_packet(std::array<uint8_t, RXPACKET_MAX_LEN>& packet)
 {
 	size_t read_size = 0;
-	size_t wait_length = 6; // tamanho minimo (HEADER0 HEADER1 ID LENGTH ERROR CHKSUM)
+	size_t wait_length = 6; // tamanho minimo (HEADER COMMAND ID LENGTH FRAME_TYPE CHKSUM)
 
 	auto start = std::chrono::steady_clock::now();
 	constexpr auto TIMEOUT = std::chrono::milliseconds(20);
@@ -133,65 +133,93 @@ int MG8008EDriver::read_packet(std::array<uint8_t, RXPACKET_MAX_LEN>& packet)
 		if (std::chrono::steady_clock::now() - start > TIMEOUT)
 			return -2;
 
-		ssize_t n = transport_->readData(packet.data() + read_size,
+		ssize_t n = transport_->readData(
+			packet.data() + read_size,
 			wait_length - read_size);
 
 		if (n > 0)
 			read_size += static_cast<size_t>(n);
 
-		// se ainda não foi lido 6 bytes, volta a ler
+		// se ainda não foi recebido o mínimo, 
+		// volta a ler
 		if (read_size < wait_length)
 			continue;
 
 		// encontra a posição do header no pacote
-		uint8_t idx = 0;
-		for (idx = 0; idx < (read_size - 1); idx++)
+		size_t idx = 0;
+		bool found_header = false;
+		for (idx = 0; idx < read_size; idx++)
 		{
-			if (packet[idx] == 0xFF && packet[idx + 1] == 0xFF)
+			if (packet[idx] == 0x3E)
+			{
+				found_header = true;
 				break;
-		}
-		
-		// se o header estiver no inicio
-		if (idx == 0)
-		{
-			if (packet[2] > 0xFD ||
-				packet[3] > RXPACKET_MAX_LEN ||
-				packet[4] > 0x7F)
-			{
-				std::memmove(packet.data(), packet.data() + 1, read_size - 1);
-				read_size -= 1;
-				wait_length = 6; // reseta para busca de header
-				continue;
 			}
-
-			// recalcula o tamanho real do pacote
-			// para comportar os parâmetros
-			size_t total_expected = packet[3] + 4;
-
-			if (wait_length != total_expected)
-			{
-				wait_length = total_expected;
-				// volta para o loop pra ler o resto dos parâmetros
-				continue; 
-			}
-
-			// verifica o checksum
-			uint8_t checksum = 0;
-			for (size_t i = 2; i < wait_length - 1; i++)
-				checksum += packet[i];
-			checksum = ~checksum;
-
-			// verifica se o checksum bate
-			if (packet[wait_length - 1] == checksum)
-				return 0;
-			else	
-				return -1;
-		} else 
-		{
-			// move os dados, fazendo o header ficar no inicio
-			std::memmove(packet.data(), packet.data() + idx, read_size - idx);
-			read_size -= idx;
 		}
+
+		// não encontrou header
+        if (!found_header)
+        {
+            read_size = 0;
+            wait_length = 6;
+            continue;
+        }
+
+		// move o header para o início
+		if (idx != 0)
+        {
+            std::memmove(
+                packet.data(),
+                packet.data() + idx,
+                read_size - idx);
+
+            read_size -= idx;
+        }
+
+		// ainda não tem bytes suficientes
+        // após mover o header
+        if (read_size < 6)
+            continue;
+
+		// tamanho total esperado do pacote
+		// tamanho do payload + encapsulamento
+		size_t total_expected = packet[3] + 6;
+
+		// tamanho inválido
+		if (total_expected > RXPACKET_MAX_LEN)
+        {
+            // descarta header inválido
+            std::memmove(
+                packet.data(),
+                packet.data() + 1,
+                read_size - 1);
+
+            read_size -= 1;
+            wait_length = 6;
+
+            continue;
+        }
+
+		wait_length = total_expected;
+
+        // ainda falta receber bytes
+        if (read_size < wait_length)
+            continue;
+
+		// calculo do checksum
+		uint8_t checksum = 0;
+
+        for (size_t i = 0; i < wait_length - 1; i++)
+        {
+            checksum += packet[i];
+        }
+
+        // checksum OK
+        if (packet[wait_length - 1] == checksum)
+            return 0;
+
+        // checksum inválido
+        return -1;
 	}
 }
 
