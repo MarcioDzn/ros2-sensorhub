@@ -22,10 +22,13 @@ void ActuatorNode::init_driver() {
     parameter_manager_ = std::make_shared<ParameterManager>(this);
     actuator_driver_ = ActuatorFactory::createMG8008E();
 
+    /*
     // inicializa porta serial inserida nos parâmetros do yaml
     auto init_response = actuator_driver_->init(
         parameter_manager_->get_usb_port(), 
         parameter_manager_->get_baudrate());
+
+    
     if (init_response != 0)
     {
         RCLCPP_FATAL(this->get_logger(), 
@@ -33,7 +36,7 @@ void ActuatorNode::init_driver() {
             parameter_manager_->get_usb_port().c_str());
         throw std::runtime_error("Falha ao inicializar ActuatorNode");
     }
-
+    */
 }
 
 void ActuatorNode::setup_node() {
@@ -53,12 +56,13 @@ void ActuatorNode::setup_node() {
     time_publisher_ = this->create_publisher<Time>(
          "actuator/time", qos);
 
+    /*
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
         [this]() {
             publish_actuator_state();
         });
-
+        */
     RCLCPP_INFO(this->get_logger(), "Sucesso ao inicializar ActuatorNode.");
 }
 
@@ -105,6 +109,8 @@ void ActuatorNode::set_angle(const std::vector<ActuatorData>& actuator_data)
     // define o angulo para cada atuador
     for (size_t idx = 0; idx < actuator_data.size(); idx++)
     {
+        RCLCPP_INFO(this->get_logger(), "\nID: %d\nAngle: %d\nSpeed: %d", 
+        actuator_data[idx].id, actuator_data[idx].angle, actuator_data[idx].speed);
         auto result = actuator_driver_->set_angle(
             actuator_data[idx].id, 
             actuator_data[idx].angle,
@@ -132,6 +138,7 @@ std::vector<ActuatorData> ActuatorNode::read_angle_msg(const MG8008ECommand::Sha
         actuator_data.id = static_cast<uint8_t>(id);
         actuator_data.name = msg->names[idx];
         actuator_data.angle = msg->angles[idx];
+        actuator_data.speed = msg->speeds[idx];
 
         actuator_data_list.push_back(actuator_data);
     }
