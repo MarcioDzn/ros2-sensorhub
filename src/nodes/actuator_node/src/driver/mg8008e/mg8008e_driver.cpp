@@ -103,7 +103,7 @@ std::vector<uint8_t> MG8008EDriver::get_packet(
 	uint8_t offset = 4;
     if (frame_type != 0x00) 
     {
-        packet[offset++] = 0xEF; // FRAME_TYPE_POS
+        packet[offset++] = frame_type; // FRAME_TYPE_POS
     }
 
 	for (size_t i = 0; i < params.size(); i++) {
