@@ -12,9 +12,9 @@ ParameterManager::ParameterManager(
 void ParameterManager::declare_parameters()
 {
     node_->declare_parameter("usb_port", "/dev/ttyUSB0");
-    node_->declare_parameter("baudrate", 2000000);
-    node_->declare_parameter("ids", std::vector<int64_t>{1, 2, 3});
-    node_->declare_parameter("names", std::vector<std::string>{"joint_1", "joint_2", "joint_3"});
+    node_->declare_parameter("baudrate", 115200);
+    node_->declare_parameter("ids", std::vector<int64_t>{1});
+    node_->declare_parameter("names", std::vector<std::string>{"joint_1"});
     node_->declare_parameter("update_rate_ms", 15);
 }
 
