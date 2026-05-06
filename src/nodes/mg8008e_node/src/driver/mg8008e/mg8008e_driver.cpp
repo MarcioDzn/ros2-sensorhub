@@ -21,37 +21,49 @@ int MG8008EDriver::init(std::string device, int baudrate)
 
 int MG8008EDriver::setup_driver(int id)
 {
+	RCLCPP_INFO(rclcpp::get_logger("mg8008e_driver"), "A");
     StatusPacket status;
+	
+	std::vector<uint8_t> packet = {0x3E, 0x1F, (uint8_t)id, 0x00, (uint8_t)(0x3E + 0x1F + id + 0x00)};
+	RCLCPP_INFO(rclcpp::get_logger("mg8008e_driver"), "B");
+	if (transport_->writeData(packet.data(), packet.size()) < 0)
+	{
+		RCLCPP_INFO(rclcpp::get_logger("mg8008e_driver"), "C");
+		return -1;
+	}
+		
+	if (read_status(id, status) < 0)
+	{
+		RCLCPP_INFO(rclcpp::get_logger("mg8008e_driver"), "D");
+		return -1;
+	}
 
-	std::vector<uint8_t> packet = {0x3E, 0x1F, 0x01, 0x00, 0x5E};
+	std::chrono::milliseconds(20);
+	
+	RCLCPP_INFO(rclcpp::get_logger("mg8008e_driver"), "E");
+
+    packet = {0x3E, 0x12, (uint8_t)id, 0x00, (uint8_t)(0x3E + 0x12 + id + 0x00)};
 	if (transport_->writeData(packet.data(), packet.size()) < 0)
 		return -1;
 	if (read_status(id, status) < 0)
 		return -1;
 	std::chrono::milliseconds(20);
 
-    packet = {0x3E, 0x12, 0x01, 0x00, 0x51};
+	packet = {0x3E, 0x16, (uint8_t)id, 0x00, (uint8_t)(0x3E + 0x16 + id + 0x00)};
 	if (transport_->writeData(packet.data(), packet.size()) < 0)
 		return -1;
 	if (read_status(id, status) < 0)
 		return -1;
 	std::chrono::milliseconds(20);
 
-	packet = {0x3E, 0x16, 0x01, 0x00, 0x55};
+	packet = {0x3E, 0x14, (uint8_t)id, 0x00, (uint8_t)(0x3E + 0x14 + id + 0x00)};
 	if (transport_->writeData(packet.data(), packet.size()) < 0)
 		return -1;
 	if (read_status(id, status) < 0)
 		return -1;
 	std::chrono::milliseconds(20);
 
-	packet = {0x3E, 0x14, 0x01, 0x00, 0x53};
-	if (transport_->writeData(packet.data(), packet.size()) < 0)
-		return -1;
-	if (read_status(id, status) < 0)
-		return -1;
-	std::chrono::milliseconds(20);
-
-	packet = {0x3E, 0x10, 0x01, 0x00, 0x4F};
+	packet = {0x3E, 0x10, (uint8_t)id, 0x00, (uint8_t)(0x3E + 0x10 + id + 0x00)};
 	if (transport_->writeData(packet.data(), packet.size()) < 0)
 		return -1;
 	if (read_status(id, status) < 0)
@@ -92,7 +104,7 @@ int MG8008EDriver::set_angle(uint8_t id, int32_t angle, int32_t speed)
     std::vector<uint8_t> packet = get_packet(
 		id, MULTI_LOOP_2, MULTI_LOOP_2_TYPE, params);
 
-	std::string debug;
+    std::string debug;
     for (auto b : packet)
     {
         char buf[4];
@@ -202,7 +214,11 @@ int MG8008EDriver::read_packet(std::array<uint8_t, RXPACKET_MAX_LEN>& packet)
 	while (true)
 	{
 		if (std::chrono::steady_clock::now() - start > TIMEOUT)
+		{
+			RCLCPP_INFO(rclcpp::get_logger("mg8008e_driver"), "D11");
 			return -2;
+		}
+
 
 		ssize_t n = transport_->readData(
 			packet.data() + read_size,
@@ -229,68 +245,88 @@ int MG8008EDriver::read_packet(std::array<uint8_t, RXPACKET_MAX_LEN>& packet)
 		}
 
 		// não encontrou header
-        if (!found_header)
-        {
-            read_size = 0;
-            wait_length = 6;
-            continue;
-        }
+		if (!found_header)
+		{
+		    read_size = 0;
+		    wait_length = 6;
+		    continue;
+		}
 
 		// move o header para o início
 		if (idx != 0)
-        {
-            std::memmove(
-                packet.data(),
-                packet.data() + idx,
-                read_size - idx);
+		{
+		    std::memmove(
+			packet.data(),
+			packet.data() + idx,
+			read_size - idx);
 
-            read_size -= idx;
-        }
+		    read_size -= idx;
+		}
 
 		// ainda não tem bytes suficientes
-        // após mover o header
-        if (read_size < 6)
-            continue;
+		// após mover o header
+		if (read_size < 6)
+		    continue;
 
 		// tamanho total esperado do pacote
 		// tamanho do payload + encapsulamento
 		size_t total_expected = packet[3] + 6;
-
+		
+		// se o len for igual a 0 entao n tem payload
+		// e tbm n tem frame type
+		if (packet[3] == 0)
+		{
+			total_expected = 5;
+		}
+		
 		// tamanho inválido
 		if (total_expected > RXPACKET_MAX_LEN)
-        {
-            // descarta header inválido
-            std::memmove(
-                packet.data(),
-                packet.data() + 1,
-                read_size - 1);
+		{
+		    // descarta header inválido
+		    std::memmove(
+			packet.data(),
+			packet.data() + 1,
+			read_size - 1);
 
-            read_size -= 1;
-            wait_length = 6;
+		    read_size -= 1;
+		    wait_length = 6;
 
-            continue;
-        }
+		    continue;
+		}
 
 		wait_length = total_expected;
 
-        // ainda falta receber bytes
-        if (read_size < wait_length)
-            continue;
-
+		// ainda falta receber bytes
+		if (read_size < wait_length)
+		    continue;
+		    
 		// calculo do checksum
+		// se tem payload soma apenas o payload
+		// se no tem soma o header
 		uint8_t checksum = 0;
-
-        for (size_t i = 0; i < wait_length - 1; i++)
-        {
-            checksum += packet[i];
-        }
-
-        // checksum OK
-        if (packet[wait_length - 1] == checksum)
-            return 0;
-
-        // checksum inválido
-        return -1;
+		if (packet[3] == 0)
+		{
+		    // sem payload
+		    for (size_t i = 0; i < wait_length - 1; i++)
+		    {
+			checksum += packet[i];
+		    }
+		}
+		else
+		{
+		    for (size_t i = 5; i < wait_length - 1; i++)
+		    {
+			checksum += packet[i];
+		    }
+		}
+		
+		RCLCPP_INFO(rclcpp::get_logger("mg8008e_driver"), "\nCHECKSUM CALCULADO: %d\nCHECKSUM RECEBIDO: %d", checksum, packet[wait_length - 1]);
+		
+		// checksum OK
+		if (packet[wait_length - 1] == checksum)
+		    return 0;
+		
+		return -1;
 	}
 }
 
@@ -301,8 +337,11 @@ int MG8008EDriver::read_status(uint8_t id, StatusPacket& out)
 	std::array<uint8_t, RXPACKET_MAX_LEN> rxbuffer;
 
 	if (read_packet(rxbuffer) != 0) return -1;
+	RCLCPP_INFO(rclcpp::get_logger("mg8008e_driver"), "D1");
 	if (id != rxbuffer[ID_POS]) return -1;
-
+	RCLCPP_INFO(rclcpp::get_logger("mg8008e_driver"), "D2");
+	
+    
 	uint8_t length = rxbuffer[LENGTH_POS];
 	out.length = length;
 	out.command = rxbuffer[COMMAND_POS];

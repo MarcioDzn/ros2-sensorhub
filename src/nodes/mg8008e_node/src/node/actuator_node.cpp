@@ -34,6 +34,8 @@ void ActuatorNode::init_driver() {
             parameter_manager_->get_usb_port().c_str());
         throw std::runtime_error("Falha ao inicializar ActuatorNode");
     }
+    RCLCPP_INFO(this->get_logger(), "Inicializaço do hardware na porta %s realizada com sucesso",
+        parameter_manager_->get_usb_port().c_str());
 
     // inicializando cada atuador
     auto ids = parameter_manager_->get_ids();
