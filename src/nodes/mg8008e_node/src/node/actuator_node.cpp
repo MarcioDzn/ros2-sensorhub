@@ -75,13 +75,13 @@ void ActuatorNode::setup_node() {
     time_publisher_ = this->create_publisher<Time>(
          "actuator/time", qos);
 
-    /*
+    
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
         [this]() {
             publish_actuator_state();
         });
-        */
+        
     RCLCPP_INFO(this->get_logger(), "Sucesso ao inicializar ActuatorNode.");
 }
 
@@ -94,7 +94,7 @@ MG8008EState ActuatorNode::read_actuator_data(Time& time_data)
 
     {
         std::lock_guard<std::mutex> lock(driver_mutex_);
-
+        
         for (size_t idx = 0; idx < ids.size(); idx++)
         {
             double angle;

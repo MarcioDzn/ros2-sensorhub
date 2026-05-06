@@ -99,7 +99,7 @@ int MG8008EDriver::set_angle(uint8_t id, int32_t angle, int32_t speed)
 	// verifica se o valor é negativo e adiciona o padding correspondente
 	uint8_t sig = (angle < 0) ? 0xFF : 0x00;
 
-	// constrói os parâmetros
+	// constrOi os parâmetros
 	std::vector<uint8_t> params = {
 		b_goal[0], b_goal[1], b_goal[2], b_goal[3],
 		sig, 		sig, 		sig, 		sig,
@@ -128,16 +128,14 @@ int MG8008EDriver::set_angle(uint8_t id, int32_t angle, int32_t speed)
     if (transport_->writeData(packet.data(), packet.size()) < 0) 
 		return -1;
 
-	// comentado para debug
-	/*	
-    // le o status pra evitar erros
-    StatusPacket status;
-    if (read_status(id, status) < 0)
+   // comentado para debug
+   /*	
+   // le o status pra evitar erros
+   StatusPacket status;
+   if (read_status(id, status) < 0)
         return -1;
-    
-    
-	*/
-	return 0;
+   */
+   return 0;
 }
 
 int MG8008EDriver::get_angle(uint8_t id, double& angle)
@@ -175,22 +173,22 @@ std::vector<uint8_t> MG8008EDriver::get_packet(
     std::vector<uint8_t> packet(base_size);
 
     packet[HEADER_POS]            	= 0x3E;
-	packet[COMMAND_POS]         	= command;
-    packet[ID_POS]                  = id;
+    packet[COMMAND_POS]         	= command;
+    packet[ID_POS]                      = id;
     packet[LENGTH_POS]         		= params.size();
     
-	uint8_t offset = 4;
+    uint8_t offset = 4;
     if (frame_type != 0x00) 
     {
         packet[offset++] = frame_type; // FRAME_TYPE_POS
     }
 
-	for (size_t i = 0; i < params.size(); i++) {
+    for (size_t i = 0; i < params.size(); i++) {
         packet[offset + i] = params[i];
     }
 
     // calculo do checksum
-	uint8_t checksum = 0;
+    uint8_t checksum = 0;
 
     if (params.empty()) {
         // Se não tem dados, soma os 4 bytes do cabeçalho (3E, CMD, ID, LEN)
@@ -202,9 +200,9 @@ std::vector<uint8_t> MG8008EDriver::get_packet(
         }
     }
 
-	packet[packet.size() - 1] = checksum;
+    packet[packet.size() - 1] = checksum;
 
-	return packet;
+    return packet;
 }
 
 // monta pacote de dados que é enviado pelo mg8008e
@@ -355,7 +353,7 @@ int MG8008EDriver::read_status(uint8_t id, StatusPacket& out)
 	out.id = rxbuffer[ID_POS];
 	out.frame_type = rxbuffer[FRAME_TYPE_POS];
 
-    // adiciona os parâmetros
+        // adiciona os parâmetros
 	for (uint8_t i = 0; i < length; i++)
 		out.params[i] = rxbuffer[PAYLOAD_START_POS+i];
 
