@@ -66,9 +66,14 @@ int MG8008EDriver::setup_driver(int id)
 	packet = {0x3E, 0x10, (uint8_t)id, 0x00, (uint8_t)(0x3E + 0x10 + id + 0x00)};
 	if (transport_->writeData(packet.data(), packet.size()) < 0)
 		return -1;
+		
+	// ignorando por enquanto
+	// TODO: Resolver bug de leitura de pacotes sem o FRAME TYPE
+	/*
 	if (read_status(id, status) < 0)
 		return -1;
-
+	*/
+	
     return 0;
 }
 
@@ -119,18 +124,20 @@ int MG8008EDriver::set_angle(uint8_t id, int32_t angle, int32_t speed)
     );
 
 
-	// comentado para debug
-	/*
+
     if (transport_->writeData(packet.data(), packet.size()) < 0) 
 		return -1;
 
+	// comentado para debug
+	/*	
     // le o status pra evitar erros
     StatusPacket status;
     if (read_status(id, status) < 0)
         return -1;
     
-    return 0;
+    
 	*/
+	return 0;
 }
 
 int MG8008EDriver::get_angle(uint8_t id, double& angle)
