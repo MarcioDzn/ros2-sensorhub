@@ -75,13 +75,12 @@ void ActuatorNode::setup_node() {
     time_publisher_ = this->create_publisher<Time>(
          "actuator/time", qos);
 
-    
     timer_ = this->create_wall_timer(
         std::chrono::milliseconds(parameter_manager_->get_update_rate()), 
         [this]() {
             publish_actuator_state();
         });
-        
+    
     RCLCPP_INFO(this->get_logger(), "Sucesso ao inicializar ActuatorNode.");
 }
 

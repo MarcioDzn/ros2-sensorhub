@@ -21,26 +21,20 @@ int MG8008EDriver::init(std::string device, int baudrate)
 
 int MG8008EDriver::setup_driver(int id)
 {
-	RCLCPP_INFO(rclcpp::get_logger("mg8008e_driver"), "A");
-    StatusPacket status;
+	StatusPacket status;
 	
 	std::vector<uint8_t> packet = {0x3E, 0x1F, (uint8_t)id, 0x00, (uint8_t)(0x3E + 0x1F + id + 0x00)};
-	RCLCPP_INFO(rclcpp::get_logger("mg8008e_driver"), "B");
 	if (transport_->writeData(packet.data(), packet.size()) < 0)
 	{
-		RCLCPP_INFO(rclcpp::get_logger("mg8008e_driver"), "C");
 		return -1;
 	}
 		
 	if (read_status(id, status) < 0)
 	{
-		RCLCPP_INFO(rclcpp::get_logger("mg8008e_driver"), "D");
 		return -1;
 	}
 
 	std::chrono::milliseconds(20);
-	
-	RCLCPP_INFO(rclcpp::get_logger("mg8008e_driver"), "E");
 
     packet = {0x3E, 0x12, (uint8_t)id, 0x00, (uint8_t)(0x3E + 0x12 + id + 0x00)};
 	if (transport_->writeData(packet.data(), packet.size()) < 0)
@@ -69,10 +63,10 @@ int MG8008EDriver::setup_driver(int id)
 		
 	// ignorando por enquanto
 	// TODO: Resolver bug de leitura de pacotes sem o FRAME TYPE
-	/*
+	
 	if (read_status(id, status) < 0)
 		return -1;
-	*/
+	
 	
     return 0;
 }
@@ -129,12 +123,10 @@ int MG8008EDriver::set_angle(uint8_t id, int32_t angle, int32_t speed)
 		return -1;
 
    // comentado para debug
-   /*	
    // le o status pra evitar erros
    StatusPacket status;
    if (read_status(id, status) < 0)
         return -1;
-   */
    return 0;
 }
 
@@ -211,8 +203,8 @@ int MG8008EDriver::read_packet(std::array<uint8_t, RXPACKET_MAX_LEN>& packet)
 	size_t read_size = 0;
 	
 	// todos os RX tem frame type
-	// tamanho minimo (HEADER COMMAND ID LENGTH FRAME_TYPE CHKSUM)
-	size_t wait_length = 6;
+	// tamanho minimo (HEADER COMMAND ID LENGTH CHKSUM)
+	size_t wait_length = 5;
 	auto start = std::chrono::steady_clock::now();
 	constexpr auto TIMEOUT = std::chrono::milliseconds(20);
 
@@ -253,7 +245,7 @@ int MG8008EDriver::read_packet(std::array<uint8_t, RXPACKET_MAX_LEN>& packet)
 		if (!found_header)
 		{
 		    read_size = 0;
-		    wait_length = 6;
+		    wait_length = 5;
 		    continue;
 		}
 
@@ -270,19 +262,18 @@ int MG8008EDriver::read_packet(std::array<uint8_t, RXPACKET_MAX_LEN>& packet)
 
 		// ainda não tem bytes suficientes
 		// após mover o header
-		if (read_size < 6)
+		if (read_size < 5)
 		    continue;
-
-		// tamanho total esperado do pacote
-		// tamanho do payload + encapsulamento
-		size_t total_expected = packet[3] + 6;
 		
-		// se o len for igual a 0 entao n tem payload
-		// e tbm n tem frame type
-		if (packet[3] == 0)
-		{
-			total_expected = 5;
-		}
+		// tamanho total esperado do pacote
+		
+		// se o tamanho for == 0, tamanho  5, sem frame_type
+		// payload 1 byte 00
+		size_t total_expected = 5;
+		
+		// se o tamanho for > 0, frame_type + payload
+		if (packet[3] > 0)
+			total_expected = packet[3] + 6;
 		
 		// tamanho inválido
 		if (total_expected > RXPACKET_MAX_LEN)
@@ -325,7 +316,6 @@ int MG8008EDriver::read_packet(std::array<uint8_t, RXPACKET_MAX_LEN>& packet)
 		    }
 		}
 		
-		RCLCPP_INFO(rclcpp::get_logger("mg8008e_driver"), "\nCHECKSUM CALCULADO: %d\nCHECKSUM RECEBIDO: %d", checksum, packet[wait_length - 1]);
 		
 		// checksum OK
 		if (packet[wait_length - 1] == checksum)
@@ -342,9 +332,7 @@ int MG8008EDriver::read_status(uint8_t id, StatusPacket& out)
 	std::array<uint8_t, RXPACKET_MAX_LEN> rxbuffer;
 
 	if (read_packet(rxbuffer) != 0) return -1;
-	RCLCPP_INFO(rclcpp::get_logger("mg8008e_driver"), "D1");
 	if (id != rxbuffer[ID_POS]) return -1;
-	RCLCPP_INFO(rclcpp::get_logger("mg8008e_driver"), "D2");
 	
     
 	uint8_t length = rxbuffer[LENGTH_POS];
