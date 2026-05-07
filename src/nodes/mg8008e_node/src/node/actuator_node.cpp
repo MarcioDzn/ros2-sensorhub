@@ -127,6 +127,12 @@ void ActuatorNode::set_angle(const std::vector<ActuatorData>& actuator_data)
     // define o angulo para cada atuador
     for (size_t idx = 0; idx < actuator_data.size(); idx++)
     {
+        if (actuator_data[idx].speed <= 0) {
+            RCLCPP_ERROR(this->get_logger(), "Falha no envio de Goal Position para o atuador %s. 
+                A velocidade deve ser um valor positivo", actuator_data[idx].name.c_str());
+            continue;
+        }
+
         RCLCPP_INFO(this->get_logger(), "\nID: %d\nAngle: %d\nSpeed: %d", 
         actuator_data[idx].id, actuator_data[idx].angle, actuator_data[idx].speed);
         auto result = actuator_driver_->set_angle(

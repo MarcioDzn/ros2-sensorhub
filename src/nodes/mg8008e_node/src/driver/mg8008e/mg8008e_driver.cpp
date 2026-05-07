@@ -299,14 +299,14 @@ int MG8008EDriver::read_packet(std::array<uint8_t, RXPACKET_MAX_LEN>& packet)
 		    // sem payload
 		    for (size_t i = 0; i < wait_length - 1; i++)
 		    {
-			checksum += packet[i];
+				checksum += packet[i];
 		    }
 		}
 		else
 		{
 		    for (size_t i = 5; i < wait_length - 1; i++)
 		    {
-			checksum += packet[i];
+				checksum += packet[i];
 		    }
 		}
 		
