@@ -25,15 +25,9 @@ int MG8008EDriver::setup_driver(int id)
 	
 	std::vector<uint8_t> packet = {0x3E, 0x1F, (uint8_t)id, 0x00, (uint8_t)(0x3E + 0x1F + id + 0x00)};
 	if (transport_->writeData(packet.data(), packet.size()) < 0)
-	{
 		return -1;
-	}
-		
 	if (read_status(id, status) < 0)
-	{
 		return -1;
-	}
-
 	std::chrono::milliseconds(20);
 
     packet = {0x3E, 0x12, (uint8_t)id, 0x00, (uint8_t)(0x3E + 0x12 + id + 0x00)};
