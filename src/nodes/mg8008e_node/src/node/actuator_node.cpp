@@ -190,5 +190,8 @@ ActuatorNode::~ActuatorNode() {
         timer_->cancel();
     }
 
-    // TODO: parar o torque de todos os motores
+    // TODO: desconectar todos os motores
+    auto ids = parameter_manager_->get_ids();
+    for (size_t idx = 0; idx < ids.size(); idx++)
+        actuator_driver_->disconnect(ids[idx]);
 };

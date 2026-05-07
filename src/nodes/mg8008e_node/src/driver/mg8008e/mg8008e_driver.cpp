@@ -103,21 +103,6 @@ int MG8008EDriver::set_angle(uint8_t id, int32_t angle, int32_t speed)
     std::vector<uint8_t> packet = get_packet(
 		id, MULTI_LOOP_2, MULTI_LOOP_2_TYPE, params);
 
-    std::string debug;
-    for (auto b : packet)
-    {
-        char buf[4];
-        snprintf(buf, sizeof(buf), "%02X ", b);
-        debug += buf;
-    }
-
-    RCLCPP_INFO(
-        rclcpp::get_logger("mg8008e_driver"),
-        "MG8008E TX PACKET: %s",
-        debug.c_str()
-    );
-
-
 
     if (transport_->writeData(packet.data(), packet.size()) < 0) 
 		return -1;
@@ -153,8 +138,23 @@ int MG8008EDriver::get_angle(uint8_t id, double& angle)
     return 0;
 }
 
+int MG8008EDriver::disconnect(uint8_t id) 
+{
+	std::vector<uint8_t> packet = get_packet(
+		id, DISCONNECT, 0x00, {});
+	
+	if (transport_->writeData(packet.data(), packet.size()) < 0) 
+		return -1;
+	
+	StatusPacket status;
+	if (read_status(id, status) < 0)
+		return -1;
+			
+	return 0;
+}
+
 std::vector<uint8_t> MG8008EDriver::get_packet(
-    const uint8_t id, 
+	const uint8_t id, 
 	const uint16_t command, 
 	const uint16_t frame_type,
 	const std::vector<uint8_t>& params)
@@ -334,7 +334,6 @@ int MG8008EDriver::read_status(uint8_t id, StatusPacket& out)
 	if (read_packet(rxbuffer) != 0) return -1;
 	if (id != rxbuffer[ID_POS]) return -1;
 	
-    
 	uint8_t length = rxbuffer[LENGTH_POS];
 	out.length = length;
 	out.command = rxbuffer[COMMAND_POS];

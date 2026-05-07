@@ -15,8 +15,9 @@ class MG8008EDriver : public IActuatorDriver
     public:
         typedef enum 
         {
-            MULTI_LOOP_2            = 0XA4,
-            READ_MULTI_LOOP_2       = 0X92,
+            MULTI_LOOP_2            = 0xA4,
+            READ_MULTI_LOOP_2       = 0x92,
+            DISCONNECT              = 0x11,
         } mg8008e_modes;
 
         typedef enum
@@ -46,6 +47,7 @@ class MG8008EDriver : public IActuatorDriver
         int setup_driver(int id) override;
         int set_angle(uint8_t id, int32_t angle, int32_t speed) override;
         int get_angle(uint8_t id, double& angle) override;
+        int disconnect(uint8_t id) override; 
     
     private:
         struct StatusPacket
