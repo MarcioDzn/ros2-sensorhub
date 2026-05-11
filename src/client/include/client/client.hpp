@@ -5,14 +5,8 @@
 
 #include "interfaces/msg/actuator_state.hpp"
 
-#include "interfaces/msg/pressure_state.hpp"
-#include "interfaces/msg/pressure_data.hpp"
-#include "interfaces/msg/pressure_unit_sensor.hpp"
-
-#include "interfaces/msg/imu_data.hpp"
-#include "interfaces/msg/imu_state.hpp"
-
-#include "interfaces/msg/synced_sensor_data.hpp"
+#include "interfaces/msg/mg8008_e_command.hpp"
+#include "interfaces/msg/mg8008_e_state.hpp"
 
 class ClientNode : public rclcpp::Node
 {
@@ -24,9 +18,8 @@ class ClientNode : public rclcpp::Node
         void execute_path(); 
         
     private:
-        rclcpp::Publisher<interfaces::msg::ActuatorState>::SharedPtr actuator_publisher_;
-        rclcpp::Publisher<interfaces::msg::PressureState>::SharedPtr pressure_publisher_;
-        rclcpp::Publisher<interfaces::msg::IMUState>::SharedPtr imu_publisher_;
+        rclcpp::Publisher<interfaces::msg::MG8008ECommand>::SharedPtr actuator_publisher_;
+        rclcpp::Subscription<interfaces::msg::MG8008EState>::SharedPtr actuator_subscriber_;
 };
 
 #endif // CLIENT_HPP
