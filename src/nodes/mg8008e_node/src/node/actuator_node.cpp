@@ -128,8 +128,9 @@ void ActuatorNode::set_angle(const std::vector<ActuatorData>& actuator_data)
     for (size_t idx = 0; idx < actuator_data.size(); idx++)
     {
         if (actuator_data[idx].speed <= 0) {
-            RCLCPP_ERROR(this->get_logger(), "Falha no envio de Goal Position para o atuador %s. 
-                A velocidade deve ser um valor positivo", actuator_data[idx].name.c_str());
+            RCLCPP_ERROR(this->get_logger(), 
+                "Falha no envio de Goal Position para o atuador %s. A velocidade deve ser um valor positivo", 
+                actuator_data[idx].name.c_str());
             continue;
         }
 
