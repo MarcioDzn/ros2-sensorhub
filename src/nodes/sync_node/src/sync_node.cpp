@@ -22,7 +22,7 @@ SyncNode::SyncNode() : Node("sync_node")
         last_pressure_time_ = this->now(); 
         last_pressure_msg_ = msg;
     });
-    actuator_sub_.registerCallback([this](const ActuatorState::ConstSharedPtr& msg) { 
+    actuator_sub_.registerCallback([this](const MG8008EState::ConstSharedPtr& msg) { 
         last_actuator_time_ = this->now(); 
         last_actuator_msg_ = msg;
     });
@@ -71,8 +71,8 @@ void SyncNode::watchdog_callback()
 
     // Actuator
     if (actuator_stale) {
-        auto dummy = last_actuator_msg_ ? std::make_shared<ActuatorState>(*last_actuator_msg_) 
-                                         : std::make_shared<ActuatorState>();
+        auto dummy = last_actuator_msg_ ? std::make_shared<MG8008EState>(*last_actuator_msg_) 
+                                         : std::make_shared<MG8008EState>();
         dummy->header.stamp = now;
         dummy->header.frame_id = "stale";
         sync_->add<2>(dummy);
@@ -82,7 +82,7 @@ void SyncNode::watchdog_callback()
 void SyncNode::synced_callback(
     const IMUState::ConstSharedPtr& imu_msg,
     const PressureState::ConstSharedPtr& pressure_msg,
-    const ActuatorState::ConstSharedPtr& actuator_msg)
+    const MG8008EState::ConstSharedPtr& actuator_msg)
 {
     auto synced_msg = std::make_unique<SyncedSensorData>();
 
