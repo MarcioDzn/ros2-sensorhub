@@ -22,24 +22,26 @@ void ClientNode::run(int argc, char **argv)
     execute_path();
 }
 
+void ClientNode::send_angle(std::string name, int32_t angle, int32_t speed) {
+    interfaces::msg::MG8008ECommand actuator_msg;
+    actuator_msg.names.push_back(name);
+    actuator_msg.angles.push_back(angle);
+    actuator_msg.speeds.push_back(speed);
+    actuator_publisher_->publish(actuator_msg);
+}
 
 // Função principal de execução
 void ClientNode::execute_path()
 {
-    int intervals = 40;
+    int intervals = 100;
     std::vector<int32_t> angle_path = {-100, 900, -100, 900, -100};
     
     // mandando pra posiço inicial
     if (angle_path.size() > 0)
     {
         RCLCPP_INFO(this->get_logger(), "Enviando posicao %d.", (int)angle_path[0]);
-        interfaces::msg::MG8008ECommand actuator_msg;
-        actuator_msg.names.push_back("joint_1");
-        actuator_msg.angles.push_back(angle_path[0]);
-        actuator_msg.speeds.push_back(360);
-        actuator_publisher_->publish(actuator_msg);
+        send_angle("joint_1", angle_path[0], 360);
     }
-
     rclcpp::sleep_for(std::chrono::milliseconds(1000)); 
             
     for (size_t i = 0; i < angle_path.size()-1; i++)
@@ -54,13 +56,9 @@ void ClientNode::execute_path()
         {
             curr_angle += step; 
             RCLCPP_INFO(this->get_logger(), "Enviando posicao %d.", (int)curr_angle);
-            interfaces::msg::MG8008ECommand actuator_msg;
-            actuator_msg.names.push_back("joint_1");
-            actuator_msg.angles.push_back(curr_angle);
-            actuator_msg.speeds.push_back(360);
-            actuator_publisher_->publish(actuator_msg);
+            send_angle("joint_1", curr_angle, 360);
             
-            rclcpp::sleep_for(std::chrono::milliseconds(20)); 
+            rclcpp::sleep_for(std::chrono::milliseconds(100)); 
         }
     }
     
