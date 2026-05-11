@@ -33,7 +33,9 @@ void ClientNode::send_angle(std::string name, int32_t angle, int32_t speed) {
 // Função principal de execução
 void ClientNode::execute_path()
 {
-    int intervals = 100;
+    int intervals = 20;
+    int time_per_goal = 50; // ms
+    int time_step = time_per_goal / intervals; // tempo por intervalo
     std::vector<int32_t> angle_path = {-100, 900, -100, 900, -100};
     
     // mandando pra posiço inicial
@@ -58,7 +60,7 @@ void ClientNode::execute_path()
             RCLCPP_INFO(this->get_logger(), "Enviando posicao %d.", (int)curr_angle);
             send_angle("joint_1", curr_angle, 360);
             
-            rclcpp::sleep_for(std::chrono::milliseconds(100)); 
+            rclcpp::sleep_for(std::chrono::milliseconds(time_step)); 
         }
     }
     
