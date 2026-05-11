@@ -4,6 +4,7 @@
 #include <chrono>
 #include <iomanip>
 #include <sstream>
+#include <cmath>
 
 using namespace std::chrono_literals;
 
@@ -11,6 +12,7 @@ ClientNode::ClientNode(const rclcpp::NodeOptions& options)
     : Node("client_node", options)
 {
     actuator_publisher_ = this->create_publisher<interfaces::msg::MG8008ECommand>("/actuator/command", 10);
+    //actuator_subscriber_ = this->create_subscription<interfaces::msg::MG8008EState>("/actuator/state", 10);
 
     RCLCPP_INFO(this->get_logger(), "Nó ClientNode iniciado com sucesso.");
 }
@@ -24,18 +26,42 @@ void ClientNode::run(int argc, char **argv)
 // Função principal de execução
 void ClientNode::execute_path()
 {
+    int intervals = 40;
     std::vector<int32_t> angle_path = {-100, 900, -100, 900, -100};
-    for (size_t i = 0; i < angle_path.size(); i++)
+    
+    // mandando pra posiço inicial
+    if (angle_path.size() > 0)
     {
-        RCLCPP_INFO(this->get_logger(), "Enviando posicao.");
+        RCLCPP_INFO(this->get_logger(), "Enviando posicao %d.", (int)angle_path[0]);
         interfaces::msg::MG8008ECommand actuator_msg;
         actuator_msg.names.push_back("joint_1");
-        actuator_msg.angles.push_back(angle_path[i]);
+        actuator_msg.angles.push_back(angle_path[0]);
         actuator_msg.speeds.push_back(360);
         actuator_publisher_->publish(actuator_msg);
-        RCLCPP_INFO(this->get_logger(), "Posicao enviada.");
+    }
+
+    rclcpp::sleep_for(std::chrono::milliseconds(1000)); 
+            
+    for (size_t i = 0; i < angle_path.size()-1; i++)
+    {
+        int32_t curr_angle = angle_path[i];
+        int32_t next_angle = angle_path[i+1];
+        int32_t step = (int32_t) ((next_angle-curr_angle)/intervals);
         
-        rclcpp::sleep_for(std::chrono::seconds(2));
+        RCLCPP_INFO(this->get_logger(), "\nAngulo alvo: %d\nPasso: %d\n", (int)next_angle, (int)step);
+
+        for (size_t j = 0; j < intervals; j++)
+        {
+            curr_angle += step; 
+            RCLCPP_INFO(this->get_logger(), "Enviando posicao %d.", (int)curr_angle);
+            interfaces::msg::MG8008ECommand actuator_msg;
+            actuator_msg.names.push_back("joint_1");
+            actuator_msg.angles.push_back(curr_angle);
+            actuator_msg.speeds.push_back(360);
+            actuator_publisher_->publish(actuator_msg);
+            
+            rclcpp::sleep_for(std::chrono::milliseconds(20)); 
+        }
     }
     
     RCLCPP_INFO(this->get_logger(), "Trajetoria concluida");
