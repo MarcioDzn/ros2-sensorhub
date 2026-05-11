@@ -33,8 +33,8 @@ void ClientNode::send_angle(std::string name, int32_t angle, int32_t speed) {
 // Função principal de execução
 void ClientNode::execute_path()
 {
-    int intervals = 20;
-    int time_per_goal = 50; // ms
+    int intervals = 1;
+    int time_per_goal = 5000; // ms
     int time_step = time_per_goal / intervals; // tempo por intervalo
     std::vector<int32_t> angle_path = {-100, 900, -100, 900, -100};
     
