@@ -38,7 +38,7 @@ def generate_launch_description():
         ),
         
         Node(
-            package='actuator_node',
+            package='mg8008e_node',
             executable='actuator_node',
             output='screen',
             parameters=[actuator_params]

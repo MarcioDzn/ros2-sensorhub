@@ -206,7 +206,6 @@ int MG8008EDriver::read_packet(std::array<uint8_t, RXPACKET_MAX_LEN>& packet)
 	{
 		if (std::chrono::steady_clock::now() - start > TIMEOUT)
 		{
-			RCLCPP_INFO(rclcpp::get_logger("mg8008e_driver"), "D11");
 			return -2;
 		}
 
