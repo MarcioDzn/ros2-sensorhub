@@ -28,7 +28,10 @@ ClientNode::ClientNode(const rclcpp::NodeOptions& options)
         angle_path_.push_back(static_cast<int32_t>(angle));
     
     actuator_publisher_ = this->create_publisher<interfaces::msg::MG8008ECommand>("/actuator/command", 10);
-    //actuator_subscriber_ = this->create_subscription<interfaces::msg::MG8008EState>("/actuator/state", 10);
+    actuator_subscriber_ = this->create_subscription<interfaces::msg::MG8008EState>(
+        "/actuator/state", 
+        10, 
+        std::bind(&ClientNode::get_angle, this, std::placeholders::_1));
 
     RCLCPP_INFO(this->get_logger(), "Nó ClientNode iniciado com sucesso.");
 }
@@ -36,6 +39,11 @@ ClientNode::ClientNode(const rclcpp::NodeOptions& options)
 void ClientNode::run(int argc, char **argv)
 {
     execute_path();
+}
+
+void ClientNode::get_angle(const interfaces::msg::MG8008EState::SharedPtr msg)
+{
+        RCLCPP_INFO(this->get_logger(), "Angulo atuador %s: %d", msg->names[0].c_str(), msg->angles[0]);
 }
 
 void ClientNode::send_angle(std::string name, int32_t angle, int32_t speed) {
@@ -77,7 +85,12 @@ void ClientNode::execute_path()
             send_angle("joint_1", curr_angle, speed_);
             
             rclcpp::sleep_for(std::chrono::milliseconds(time_step)); 
+            
+            // pega o angulo do atuador depois do tempo passar
+            rclcpp::spin_some(this->get_node_base_interface());  
         }
+        
+   
     }
     
     RCLCPP_INFO(this->get_logger(), "Trajetoria concluida");

@@ -22,6 +22,7 @@ class ClientNode : public rclcpp::Node
         
     private:
         void send_angle(std::string name, int32_t angle, int32_t speed);
+        void get_angle(const interfaces::msg::MG8008EState::SharedPtr msg);
     
         rclcpp::Publisher<interfaces::msg::MG8008ECommand>::SharedPtr actuator_publisher_;
         rclcpp::Subscription<interfaces::msg::MG8008EState>::SharedPtr actuator_subscriber_;
