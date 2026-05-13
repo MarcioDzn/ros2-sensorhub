@@ -30,7 +30,7 @@ ClientNode::ClientNode(const rclcpp::NodeOptions& options)
     actuator_publisher_ = this->create_publisher<interfaces::msg::MG8008ECommand>("/actuator/command", 10);
     actuator_subscriber_ = this->create_subscription<interfaces::msg::MG8008EState>(
         "/actuator/state", 
-        10, 
+        1, 
         std::bind(&ClientNode::get_angle, this, std::placeholders::_1));
 
     RCLCPP_INFO(this->get_logger(), "Nó ClientNode iniciado com sucesso.");
@@ -89,10 +89,8 @@ void ClientNode::execute_path()
             // pega o angulo do atuador depois do tempo passar
             rclcpp::spin_some(this->get_node_base_interface());  
         }
-        
-   
     }
-    
+    rclcpp::spin_some(this->get_node_base_interface());
     RCLCPP_INFO(this->get_logger(), "Trajetoria concluida");
 
 }
