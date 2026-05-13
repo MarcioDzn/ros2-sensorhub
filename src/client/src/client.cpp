@@ -11,6 +11,22 @@ using namespace std::chrono_literals;
 ClientNode::ClientNode(const rclcpp::NodeOptions& options)
     : Node("client_node", options)
 {
+    
+    this->declare_parameter("intervals", 100);
+    this->declare_parameter("time_per_goal", 1000);
+    this->declare_parameter("speed", 360);
+    this->declare_parameter("angle_path", std::vector<int32_t>{-100, 900, -100, 900, -100});
+    
+    intervals_ = this->get_parameter("intervals").as_int();
+    time_per_goal_ = this->get_parameter("time_per_goal").as_int();
+    speed_ = this->get_parameter("speed").as_int();
+    std::vector<long> angle_path_raw = this->get_parameter("angle_path").as_integer_array();
+    
+    angle_path_.clear();
+    angle_path_.reserve(angle_path_raw.size());
+    for (long angle : angle_path_raw)
+        angle_path_.push_back(static_cast<int32_t>(angle));
+    
     actuator_publisher_ = this->create_publisher<interfaces::msg::MG8008ECommand>("/actuator/command", 10);
     //actuator_subscriber_ = this->create_subscription<interfaces::msg::MG8008EState>("/actuator/state", 10);
 
@@ -33,16 +49,16 @@ void ClientNode::send_angle(std::string name, int32_t angle, int32_t speed) {
 // Função principal de execução
 void ClientNode::execute_path()
 {
-    int intervals = 1;
-    int time_per_goal = 5000; // ms
+    int intervals = intervals_;
+    int time_per_goal = time_per_goal_; // ms
     int time_step = time_per_goal / intervals; // tempo por intervalo
-    std::vector<int32_t> angle_path = {-100, 900, -100, 900, -100};
+    std::vector<int32_t> angle_path = angle_path_;
     
     // mandando pra posiço inicial
     if (angle_path.size() > 0)
     {
         RCLCPP_INFO(this->get_logger(), "Enviando posicao %d.", (int)angle_path[0]);
-        send_angle("joint_1", angle_path[0], 360);
+        send_angle("joint_1", angle_path[0], speed_);
     }
     rclcpp::sleep_for(std::chrono::milliseconds(1000)); 
             
@@ -58,7 +74,7 @@ void ClientNode::execute_path()
         {
             curr_angle += step; 
             RCLCPP_INFO(this->get_logger(), "Enviando posicao %d.", (int)curr_angle);
-            send_angle("joint_1", curr_angle, 360);
+            send_angle("joint_1", curr_angle, speed_);
             
             rclcpp::sleep_for(std::chrono::milliseconds(time_step)); 
         }

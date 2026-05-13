@@ -2,6 +2,7 @@
 #define CLIENT_HPP
 
 #include <string>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -24,6 +25,11 @@ class ClientNode : public rclcpp::Node
     
         rclcpp::Publisher<interfaces::msg::MG8008ECommand>::SharedPtr actuator_publisher_;
         rclcpp::Subscription<interfaces::msg::MG8008EState>::SharedPtr actuator_subscriber_;
+        
+        int32_t intervals_;
+        int32_t time_per_goal_;
+        int32_t speed_;
+        std::vector<int32_t> angle_path_;
 };
 
 #endif // CLIENT_HPP
