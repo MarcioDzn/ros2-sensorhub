@@ -23,14 +23,17 @@ class ClientNode : public rclcpp::Node
     private:
         void send_angle(std::string name, int32_t angle, int32_t speed);
         void get_angle(const interfaces::msg::MG8008EState::SharedPtr msg);
-    
+        double seno(int amplitude, int period, int offset, double phase, double t);
+        
         rclcpp::Publisher<interfaces::msg::MG8008ECommand>::SharedPtr actuator_publisher_;
         rclcpp::Subscription<interfaces::msg::MG8008EState>::SharedPtr actuator_subscriber_;
         
-        int32_t intervals_;
-        int32_t time_per_goal_;
+        int32_t amplitude_;
+        int32_t period_;
+        int32_t offset_;
+        double phase_;
+        int32_t samples_;
         int32_t speed_;
-        std::vector<int32_t> angle_path_;
 };
 
 #endif // CLIENT_HPP
