@@ -75,7 +75,7 @@ void ClientNode::execute_path()
 
     rclcpp::sleep_for(std::chrono::milliseconds(1000)); 
             
-    for (size_t i = 1; i < samples_; i++)
+    for (size_t i = 1; i <= samples_; i++)
     {
         t = i * interval;
         send_angle(
