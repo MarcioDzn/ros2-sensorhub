@@ -11,7 +11,6 @@ using namespace std::chrono_literals;
 ClientNode::ClientNode(const rclcpp::NodeOptions& options)
     : Node("client_node", options)
 {
-    
     this->declare_parameter("amplitude", 500);
     this->declare_parameter("period", 5);
     this->declare_parameter("offset", 400);
@@ -19,6 +18,7 @@ ClientNode::ClientNode(const rclcpp::NodeOptions& options)
     this->declare_parameter("samples", 50);
     this->declare_parameter("speed", 360);
     this->declare_parameter("loops", 2);
+    this->declare_parameter("read_samples", 40);
     
     amplitude_ = this->get_parameter("amplitude").as_int();
     period_ = this->get_parameter("period").as_int();
@@ -27,12 +27,25 @@ ClientNode::ClientNode(const rclcpp::NodeOptions& options)
     samples_ = this->get_parameter("samples").as_int();
     speed_ = this->get_parameter("speed").as_int();
     loops_ = this->get_parameter("loops").as_int();
+    read_samples_ = this->get_parameter("read_samples").as_int();
+    
+    if (samples_ <= 0 || read_samples_ <= 0)
+    {
+        RCLCPP_ERROR(
+            this->get_logger(),
+            "samples deve ser > 0");
+
+        return;
+    }
     
     actuator_publisher_ = this->create_publisher<interfaces::msg::MG8008ECommand>("/actuator/command", 10);
     actuator_subscriber_ = this->create_subscription<interfaces::msg::MG8008EState>(
         "/actuator/state", 
         1, 
         std::bind(&ClientNode::get_angle, this, std::placeholders::_1));
+        
+    file_.open("angles.csv");
+    file_ << "t,desired,real\n";
 
     RCLCPP_INFO(this->get_logger(), "Nó ClientNode iniciado com sucesso.");
 }
@@ -51,6 +64,7 @@ double ClientNode::seno(int amplitude, int period, int offset, double phase, dou
 void ClientNode::get_angle(const interfaces::msg::MG8008EState::SharedPtr msg)
 {
         RCLCPP_INFO(this->get_logger(), "Angulo atuador %s: %d", msg->names[0].c_str(), msg->angles[0]);
+        real_angle_ = msg->angles[0];
 }
 
 void ClientNode::send_angle(std::string name, int32_t angle, int32_t speed) {
@@ -63,37 +77,47 @@ void ClientNode::send_angle(std::string name, int32_t angle, int32_t speed) {
 
 // Função principal de execução
 void ClientNode::execute_path()
-{   
-    double t = 0;
+{  
+    current_t_ = 0;
     double interval = (double)period_ / samples_; // m
 
     // mandando pra posiço inicial
-    int angle = static_cast<int32_t>(seno(amplitude_, period_, offset_, phase_, t)); 
-    RCLCPP_INFO(this->get_logger(), "Enviando angulo %d.", angle);
-    send_angle(
-        "joint_1", 
-        angle, 
-        speed_
-    );
-
-    rclcpp::sleep_for(std::chrono::milliseconds(1000)); 
-            
-    for (size_t i = 1; i <= samples_*loops_; i++)
+    for (size_t i = 0; i <= samples_*loops_; i++)
     {
-        t = i * interval;
-        angle = static_cast<int32_t>(seno(amplitude_, period_, offset_, phase_, t));
+        current_t_ = i * interval;
+        desired_angle_ = static_cast<int32_t>(seno(amplitude_, period_, offset_, phase_, current_t_));
         
-        RCLCPP_INFO(this->get_logger(), "Enviando angulo %d.", angle);
+        RCLCPP_INFO(this->get_logger(), "Enviando angulo %d.", desired_angle_);
+        
         send_angle(
             "joint_1", 
-            angle, 
+            desired_angle_, 
             speed_
         );
-
-        rclcpp::sleep_for(std::chrono::milliseconds((int(interval*1000)))); 
+        
+        double read_interval = interval / read_samples_;
+        for (size_t j = 0; j < read_samples_; j++)
+        {
+            current_read_t_ = current_t_ + j * read_interval;
+            rclcpp::sleep_for(
+                std::chrono::milliseconds(
+                    static_cast<int>(read_interval * 1000)
+                )
+            );
+            
+            file_ << current_read_t_
+              << ","
+              << desired_angle_
+              << ","
+              << real_angle_
+              << "\n";
+        }
     }
-    rclcpp::spin_some(this->get_node_base_interface());
     RCLCPP_INFO(this->get_logger(), "Trajetoria concluida");
 }
 
-ClientNode::~ClientNode() {}
+ClientNode::~ClientNode()
+{
+    if (file_.is_open())
+        file_.close();
+}

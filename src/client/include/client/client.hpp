@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <fstream>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -35,6 +36,14 @@ class ClientNode : public rclcpp::Node
         int32_t samples_;
         int32_t speed_;
         int32_t loops_;
+        int32_t read_samples_;
+        
+        std::ofstream file_;
+        double current_t_;
+        double current_read_t_;
+        int32_t desired_angle_;
+        
+        std::atomic<int32_t> real_angle_{0};
 };
 
 #endif // CLIENT_HPP
