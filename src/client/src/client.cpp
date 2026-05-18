@@ -63,7 +63,6 @@ double ClientNode::seno(int amplitude, int period, int offset, double phase, dou
 
 void ClientNode::get_angle(const interfaces::msg::MG8008EState::SharedPtr msg)
 {
-        RCLCPP_INFO(this->get_logger(), "Angulo atuador %s: %d", msg->names[0].c_str(), msg->angles[0]);
         real_angle_ = msg->angles[0];
 }
 
@@ -80,6 +79,8 @@ void ClientNode::execute_path()
 {  
     current_t_ = 0;
     double interval = (double)period_ / samples_; // m
+    RCLCPP_INFO(this->get_logger(), "Intervalo %f.", interval);
+    
 
     // mandando pra posiço inicial
     for (size_t i = 0; i <= samples_*loops_; i++)
@@ -100,8 +101,8 @@ void ClientNode::execute_path()
         {
             current_read_t_ = current_t_ + j * read_interval;
             rclcpp::sleep_for(
-                std::chrono::milliseconds(
-                    static_cast<int>(read_interval * 1000)
+                std::chrono::microseconds(
+                    static_cast<int>(read_interval * 1000000.0)
                 )
             );
             
