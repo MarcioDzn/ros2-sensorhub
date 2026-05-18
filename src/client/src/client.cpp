@@ -15,8 +15,8 @@ ClientNode::ClientNode(const rclcpp::NodeOptions& options)
     this->declare_parameter("amplitude", 500);
     this->declare_parameter("period", 5);
     this->declare_parameter("offset", 400);
-    this->declare_parameter("phase", 0);
-    this->declare_parameter("samples", 100);
+    this->declare_parameter("phase", -M_PI / 2.0);
+    this->declare_parameter("samples", 50);
     this->declare_parameter("speed", 360);
     
     amplitude_ = this->get_parameter("amplitude").as_int();
@@ -43,7 +43,7 @@ void ClientNode::run(int argc, char **argv)
 double ClientNode::seno(int amplitude, int period, int offset, double phase, double t)
 {
     double freq = 1.0 / period;
-    return amplitude * std::sin(2 * 3.1415 * freq * t + phase) + offset;
+    return amplitude * std::sin(2 * M_PI * freq * t + phase) + offset;
 }
 
 void ClientNode::get_angle(const interfaces::msg::MG8008EState::SharedPtr msg)
@@ -66,7 +66,8 @@ void ClientNode::execute_path()
     double interval = (double)period_ / samples_; // m
 
     // mandando pra posiço inicial
-    RCLCPP_INFO(this->get_logger(), "Enviando posicao %d.", seno(amplitude_, period_, offset_, phase_, t));
+    int angle = static_cast<int32_t>(seno(amplitude_, period_, offset_, phase_, t)); 
+    RCLCPP_INFO(this->get_logger(), "Enviando angulo %d.", angle);
     send_angle(
         "joint_1", 
         seno(amplitude_, period_, offset_, phase_, t), 
@@ -78,9 +79,12 @@ void ClientNode::execute_path()
     for (size_t i = 1; i <= samples_; i++)
     {
         t = i * interval;
+        angle = static_cast<int32_t>(seno(amplitude_, period_, offset_, phase_, t));
+        
+        RCLCPP_INFO(this->get_logger(), "Enviando angulo %d.", angle);
         send_angle(
             "joint_1", 
-            seno(amplitude_, period_, offset_, phase_, t), 
+            angle, 
             speed_
         );
 
