@@ -18,6 +18,7 @@ ClientNode::ClientNode(const rclcpp::NodeOptions& options)
     this->declare_parameter("phase", -M_PI / 2.0);
     this->declare_parameter("samples", 50);
     this->declare_parameter("speed", 360);
+    this->declare_parameter("loops", 2);
     
     amplitude_ = this->get_parameter("amplitude").as_int();
     period_ = this->get_parameter("period").as_int();
@@ -25,6 +26,7 @@ ClientNode::ClientNode(const rclcpp::NodeOptions& options)
     phase_ = this->get_parameter("phase").as_double();
     samples_ = this->get_parameter("samples").as_int();
     speed_ = this->get_parameter("speed").as_int();
+    loops_ = this->get_parameter("loops").as_int();
     
     actuator_publisher_ = this->create_publisher<interfaces::msg::MG8008ECommand>("/actuator/command", 10);
     actuator_subscriber_ = this->create_subscription<interfaces::msg::MG8008EState>(
@@ -70,13 +72,13 @@ void ClientNode::execute_path()
     RCLCPP_INFO(this->get_logger(), "Enviando angulo %d.", angle);
     send_angle(
         "joint_1", 
-        seno(amplitude_, period_, offset_, phase_, t), 
+        angle, 
         speed_
     );
 
     rclcpp::sleep_for(std::chrono::milliseconds(1000)); 
             
-    for (size_t i = 1; i <= samples_; i++)
+    for (size_t i = 1; i <= samples_*loops_; i++)
     {
         t = i * interval;
         angle = static_cast<int32_t>(seno(amplitude_, period_, offset_, phase_, t));

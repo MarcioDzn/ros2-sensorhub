@@ -34,6 +34,7 @@ class ClientNode : public rclcpp::Node
         double phase_;
         int32_t samples_;
         int32_t speed_;
+        int32_t loops_;
 };
 
 #endif // CLIENT_HPP
