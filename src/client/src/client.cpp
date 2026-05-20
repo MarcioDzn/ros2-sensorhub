@@ -81,7 +81,12 @@ void ClientNode::execute_path()
     double interval = (double)period_ / samples_; // m
     RCLCPP_INFO(this->get_logger(), "Intervalo %f.", interval);
     
-
+    // tempo pra pegar a posicao inicial de 1s
+    rclcpp::sleep_for(
+    	std::chrono::milliseconds(
+    		static_cast<int>(1000.0)
+        )
+    );
     // mandando pra posiço inicial
     for (size_t i = 0; i <= samples_*loops_; i++)
     {
