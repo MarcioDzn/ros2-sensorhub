@@ -1,4 +1,4 @@
 std_msgs/Header header
 IMUState imu_data
 PressureState pressure_data
-ActuatorState actuator_data
+MG8008EState actuator_data

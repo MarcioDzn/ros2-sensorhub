@@ -19,7 +19,9 @@ set(msg_files
   "msg/PressureData.msg"
   "msg/PressureState.msg"
   "msg/ActuatorCommand.msg"
+  "msg/MG8008ECommand.msg"
   "msg/ActuatorState.msg"
+  "msg/MG8008EState.msg"
   "msg/SyncedSensorData.msg"
   "msg/Time.msg"
 )
