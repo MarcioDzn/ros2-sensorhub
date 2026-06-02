@@ -23,6 +23,8 @@ set(msg_files
   "msg/ActuatorState.msg"
   "msg/MG8008EState.msg"
   "msg/SyncedSensorData.msg"
+  "msg/ControllerIn.msg"
+  "msg/ControllerOut.msg"
   "msg/Time.msg"
 )
 
