@@ -4,15 +4,48 @@
 #include <chrono>
 #include <iomanip>
 #include <sstream>
+#include <cmath>
 
 using namespace std::chrono_literals;
 
 ClientNode::ClientNode(const rclcpp::NodeOptions& options)
     : Node("client_node", options)
 {
-    actuator_publisher_ = this->create_publisher<interfaces::msg::ActuatorState>("/actuator/state", 10);
-    pressure_publisher_ = this->create_publisher<interfaces::msg::PressureState>("/pressure/state", 10);
-    imu_publisher_ = this->create_publisher<interfaces::msg::IMUState>("/imu/state", 10);
+    this->declare_parameter("amplitude", 500);
+    this->declare_parameter("period", 5);
+    this->declare_parameter("offset", 400);
+    this->declare_parameter("phase", -M_PI / 2.0);
+    this->declare_parameter("samples", 50);
+    this->declare_parameter("speed", 360);
+    this->declare_parameter("loops", 2);
+    this->declare_parameter("read_samples", 40);
+    
+    amplitude_ = this->get_parameter("amplitude").as_int();
+    period_ = this->get_parameter("period").as_int();
+    offset_ = this->get_parameter("offset").as_int();
+    phase_ = this->get_parameter("phase").as_double();
+    samples_ = this->get_parameter("samples").as_int();
+    speed_ = this->get_parameter("speed").as_int();
+    loops_ = this->get_parameter("loops").as_int();
+    read_samples_ = this->get_parameter("read_samples").as_int();
+    
+    if (samples_ <= 0 || read_samples_ <= 0)
+    {
+        RCLCPP_ERROR(
+            this->get_logger(),
+            "samples deve ser > 0");
+
+        return;
+    }
+    
+    actuator_publisher_ = this->create_publisher<interfaces::msg::MG8008ECommand>("/actuator/command", 10);
+    actuator_subscriber_ = this->create_subscription<interfaces::msg::MG8008EState>(
+        "/actuator/state", 
+        1, 
+        std::bind(&ClientNode::get_angle, this, std::placeholders::_1));
+        
+    file_.open("angles.csv");
+    file_ << "t,desired,real\n";
 
     RCLCPP_INFO(this->get_logger(), "Nó ClientNode iniciado com sucesso.");
 }
@@ -22,72 +55,75 @@ void ClientNode::run(int argc, char **argv)
     execute_path();
 }
 
-// Auxiliar para printar timestamp
-std::string ts_to_string(const rclcpp::Time& t) {
-    auto ns = t.nanoseconds();
-    std::ostringstream oss;
-    oss << ns / 1000000 << " ms";
-    return oss.str();
+double ClientNode::seno(int amplitude, int period, int offset, double phase, double t)
+{
+    double freq = 1.0 / period;
+    return amplitude * std::sin(2 * M_PI * freq * t + phase) + offset;
+}
+
+void ClientNode::get_angle(const interfaces::msg::MG8008EState::SharedPtr msg)
+{
+        real_angle_ = msg->angles[0];
+}
+
+void ClientNode::send_angle(std::string name, int32_t angle, int32_t speed) {
+    interfaces::msg::MG8008ECommand actuator_msg;
+    actuator_msg.names.push_back(name);
+    actuator_msg.angles.push_back(angle);
+    actuator_msg.speeds.push_back(speed);
+    actuator_publisher_->publish(actuator_msg);
 }
 
 // Função principal de execução
 void ClientNode::execute_path()
-{
-    // Configura delays entre tópicos (em milissegundos)
-    std::vector<int> delays_ms = {0, 1, 1}; // Actuator -> Pressure -> IMU
-
-    for (size_t idx = 0; idx < 3; idx++) // 3 loops só pra teste
+{  
+    current_t_ = 0;
+    double interval = (double)period_ / samples_; // m
+    RCLCPP_INFO(this->get_logger(), "Intervalo %f.", interval);
+    
+    // tempo pra pegar a posicao inicial de 1s
+    rclcpp::sleep_for(
+    	std::chrono::milliseconds(
+    		static_cast<int>(1000.0)
+        )
+    );
+    // mandando pra posiço inicial
+    for (size_t i = 0; i <= samples_*loops_; i++)
     {
-        auto start_time = this->get_clock()->now();
-
-        // --- Actuator ---
-        interfaces::msg::ActuatorState actuator_msg;
-        actuator_msg.header.stamp = start_time;
-        actuator_msg.names.push_back("joint_1");
-        actuator_msg.positions.push_back(500);
-        actuator_publisher_->publish(actuator_msg);
-
-        rclcpp::sleep_for(std::chrono::milliseconds(delays_ms[0]));
-
-        // --- Pressure ---
-        // interfaces::msg::PressureUnitSensor pressure_unit;
-        // pressure_unit.id = 1;
-        // pressure_unit.pressure = 1000;
-
-        // interfaces::msg::PressureData pressure_data;
-        // pressure_data.pressures.push_back(pressure_unit);
-
-        // interfaces::msg::PressureState pressure_msg;
-        // pressure_msg.header.stamp = this->get_clock()->now();
-        // pressure_msg.names.push_back("insole_1");
-        // pressure_msg.pressures.push_back(pressure_data);
-        // pressure_publisher_->publish(pressure_msg);
-
-        // rclcpp::sleep_for(std::chrono::milliseconds(delays_ms[1]));
-
-        // --- IMU ---
-        interfaces::msg::IMUData imu_data;
-        imu_data.name = "imu_1";
-        imu_data.q_x = 0.8;
-        imu_data.q_y = 0.8;
-        imu_data.q_z = 0.8;
-        imu_data.q_w = 0.8;
-
-        interfaces::msg::IMUState imu_msg;
-        imu_msg.header.stamp = this->get_clock()->now();
-        imu_msg.imus.push_back(imu_data);
-        imu_publisher_->publish(imu_msg);
-
-        rclcpp::sleep_for(std::chrono::milliseconds(delays_ms[2]));
-
-        // --- Print de debug ---
-        RCLCPP_INFO(this->get_logger(),
-            "Loop %zu | Actuator: %s | IMU: %s",
-            idx,
-            ts_to_string(actuator_msg.header.stamp).c_str(),
-            //ts_to_string(pressure_msg.header.stamp).c_str(),
-            ts_to_string(imu_msg.header.stamp).c_str());
+        current_t_ = i * interval;
+        desired_angle_ = static_cast<int32_t>(seno(amplitude_, period_, offset_, phase_, current_t_));
+        
+        RCLCPP_INFO(this->get_logger(), "Enviando angulo %d.", desired_angle_);
+        
+        send_angle(
+            "joint_1", 
+            desired_angle_, 
+            speed_
+        );
+        
+        double read_interval = interval / read_samples_;
+        for (size_t j = 0; j < read_samples_; j++)
+        {
+            current_read_t_ = current_t_ + j * read_interval;
+            rclcpp::sleep_for(
+                std::chrono::microseconds(
+                    static_cast<int>(read_interval * 1000000.0)
+                )
+            );
+            
+            file_ << current_read_t_
+              << ","
+              << desired_angle_
+              << ","
+              << real_angle_
+              << "\n";
+        }
     }
+    RCLCPP_INFO(this->get_logger(), "Trajetoria concluida");
 }
 
-ClientNode::~ClientNode() {}
+ClientNode::~ClientNode()
+{
+    if (file_.is_open())
+        file_.close();
+}
