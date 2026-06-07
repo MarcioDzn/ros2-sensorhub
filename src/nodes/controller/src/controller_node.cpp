@@ -54,6 +54,7 @@ void ControllerNode::publish_state()
 {
     interfaces::msg::ControllerOut msg;
 
+    msg.name = name_; 
     msg.ref_angle = ref_angle_.load();
     msg.real_angle = real_angle_.load();
 
@@ -64,7 +65,9 @@ void ControllerNode::controller_callback(
     const interfaces::msg::ControllerIn::SharedPtr msg)
 {
     ref_angle_ = msg->ref_angle;
-    send_angle("joint_1", ref_angle_.load(), 360);
+    name_ = msg->name;
+    int16_t speed = msg->speed;
+    send_angle(name_, ref_angle_.load(), speed);
 }
 
 ControllerNode::~ControllerNode() = default;

@@ -30,6 +30,7 @@ class ControllerNode : public rclcpp::Node
         interfaces::msg::ControllerIn last_msg_;
         rclcpp::TimerBase::SharedPtr timer_;
 
+        std::string name_;
         std::atomic<int32_t> real_angle_{0};
         std::atomic<int32_t> ref_angle_{0};
 };
