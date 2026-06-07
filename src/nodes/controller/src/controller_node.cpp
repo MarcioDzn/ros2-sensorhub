@@ -1,6 +1,3 @@
-#include <vector>
-#include <sstream>
-
 #include "controller_node.hpp"
 
 using namespace std::chrono_literals;
@@ -12,6 +9,17 @@ ControllerNode::ControllerNode(const rclcpp::NodeOptions& options)
     .reliable()
     .durability_volatile();
 
+
+    actuator_publisher_ = this->create_publisher<interfaces::msg::MG8008ECommand>("/actuator/command", 10);
+    actuator_subscriber_ = this->create_subscription<interfaces::msg::MG8008EState>(
+            "/actuator/state", 
+            10, 
+            std::bind(&ControllerNode::get_angle, this, std::placeholders::_1
+        )
+    );
+
+    publisher_ = this->create_publisher<interfaces::msg::ControllerOut>(
+        "controller/state", qos);
     subscriber_ = this->create_subscription<interfaces::msg::ControllerIn>(
         "controller/command",
         qos,
@@ -21,9 +29,20 @@ ControllerNode::ControllerNode(const rclcpp::NodeOptions& options)
             std::placeholders::_1
         )
     );
+}
 
-    publisher_ = this->create_publisher<interfaces::msg::ControllerOut>(
-        "controller/state", qos);
+void ControllerNode::get_angle(const interfaces::msg::MG8008EState::SharedPtr msg)
+{
+    real_angle_ = msg->angles[0]; // apenas do primeiro atuador
+    RCLCPP_INFO(this->get_logger(), "Angulo recebido %d", real_angle_.load());
+}
+
+void ControllerNode::send_angle(std::string name, int32_t angle, int32_t speed) {
+    interfaces::msg::MG8008ECommand actuator_msg;
+    actuator_msg.names.push_back(name);
+    actuator_msg.angles.push_back(angle);
+    actuator_msg.speeds.push_back(speed);
+    actuator_publisher_->publish(actuator_msg);
 }
 
 void ControllerNode::controller_callback(
@@ -35,6 +54,8 @@ void ControllerNode::controller_callback(
     );
 
     last_msg_ = *msg;
+
+    send_angle("joint_1", last_msg_.ref_angle, 360);
 }
 
 ControllerNode::~ControllerNode() = default;

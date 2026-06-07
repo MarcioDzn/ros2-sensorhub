@@ -5,6 +5,9 @@
 #include "interfaces/msg/controller_in.hpp"
 #include "interfaces/msg/controller_out.hpp"
 
+#include "interfaces/msg/mg8008_e_command.hpp"
+#include "interfaces/msg/mg8008_e_state.hpp"
+
 
 class ControllerNode : public rclcpp::Node
 {
@@ -13,12 +16,20 @@ class ControllerNode : public rclcpp::Node
         virtual ~ControllerNode();
         
     private:
+        void send_angle(std::string name, int32_t angle, int32_t speed);
+        void get_angle(const interfaces::msg::MG8008EState::SharedPtr msg);
         void controller_callback(const interfaces::msg::ControllerIn::SharedPtr msg);
+
+        rclcpp::Publisher<interfaces::msg::MG8008ECommand>::SharedPtr actuator_publisher_;
+        rclcpp::Subscription<interfaces::msg::MG8008EState>::SharedPtr actuator_subscriber_;
 
         rclcpp::Subscription<interfaces::msg::ControllerIn>::SharedPtr subscriber_;
         rclcpp::Publisher<interfaces::msg::ControllerOut>::SharedPtr publisher_;
+
         interfaces::msg::ControllerIn last_msg_;
         rclcpp::TimerBase::SharedPtr timer_;
+
+        std::atomic<int32_t> real_angle_{0};
 };
 
 #endif // CONTROLLER_HPP
