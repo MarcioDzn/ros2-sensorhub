@@ -1,1 +1,2 @@
-int16 torque
+int16 ref_angle
+int16 real_angle

@@ -29,6 +29,11 @@ ControllerNode::ControllerNode(const rclcpp::NodeOptions& options)
             std::placeholders::_1
         )
     );
+
+    timer_ = this->create_wall_timer(
+        100ms,
+        std::bind(&ControllerNode::publish_state, this)
+    );
 }
 
 void ControllerNode::get_angle(const interfaces::msg::MG8008EState::SharedPtr msg)
@@ -45,17 +50,21 @@ void ControllerNode::send_angle(std::string name, int32_t angle, int32_t speed) 
     actuator_publisher_->publish(actuator_msg);
 }
 
+void ControllerNode::publish_state()
+{
+    interfaces::msg::ControllerOut msg;
+
+    msg.ref_angle = ref_angle_.load();
+    msg.real_angle = real_angle_.load();
+
+    publisher_->publish(msg);
+}
+
 void ControllerNode::controller_callback(
     const interfaces::msg::ControllerIn::SharedPtr msg)
 {
-    RCLCPP_INFO(
-        this->get_logger(),
-        "Recebi mensagem!"
-    );
-
-    last_msg_ = *msg;
-
-    send_angle("joint_1", last_msg_.ref_angle, 360);
+    ref_angle_ = msg->ref_angle;
+    send_angle("joint_1", ref_angle_.load(), 360);
 }
 
 ControllerNode::~ControllerNode() = default;

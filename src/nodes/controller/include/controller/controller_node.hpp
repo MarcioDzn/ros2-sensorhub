@@ -19,6 +19,7 @@ class ControllerNode : public rclcpp::Node
         void send_angle(std::string name, int32_t angle, int32_t speed);
         void get_angle(const interfaces::msg::MG8008EState::SharedPtr msg);
         void controller_callback(const interfaces::msg::ControllerIn::SharedPtr msg);
+        void publish_state();
 
         rclcpp::Publisher<interfaces::msg::MG8008ECommand>::SharedPtr actuator_publisher_;
         rclcpp::Subscription<interfaces::msg::MG8008EState>::SharedPtr actuator_subscriber_;
@@ -30,6 +31,7 @@ class ControllerNode : public rclcpp::Node
         rclcpp::TimerBase::SharedPtr timer_;
 
         std::atomic<int32_t> real_angle_{0};
+        std::atomic<int32_t> ref_angle_{0};
 };
 
 #endif // CONTROLLER_HPP
