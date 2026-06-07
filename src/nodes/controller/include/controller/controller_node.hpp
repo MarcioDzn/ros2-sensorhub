@@ -13,8 +13,11 @@ class ControllerNode : public rclcpp::Node
         virtual ~ControllerNode();
         
     private:
+        void controller_callback(const interfaces::msg::ControllerIn::SharedPtr msg);
+
         rclcpp::Subscription<interfaces::msg::ControllerIn>::SharedPtr subscriber_;
         rclcpp::Publisher<interfaces::msg::ControllerOut>::SharedPtr publisher_;
+        interfaces::msg::ControllerIn last_msg_;
         rclcpp::TimerBase::SharedPtr timer_;
 };
 
