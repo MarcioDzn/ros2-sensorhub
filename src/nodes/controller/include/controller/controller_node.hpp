@@ -33,6 +33,8 @@ class ControllerNode : public rclcpp::Node
         std::string name_;
         std::atomic<int32_t> real_angle_{0};
         std::atomic<int32_t> ref_angle_{0};
+        uint32_t current_period_us_{10000}; // 10ms
+        std::chrono::microseconds feedback_period_{10000}; // 10ms
 };
 
 #endif // CONTROLLER_HPP

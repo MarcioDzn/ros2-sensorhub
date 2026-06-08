@@ -39,7 +39,6 @@ ControllerNode::ControllerNode(const rclcpp::NodeOptions& options)
 void ControllerNode::get_angle(const interfaces::msg::MG8008EState::SharedPtr msg)
 {
     real_angle_ = msg->angles[0]; // apenas do primeiro atuador
-    RCLCPP_INFO(this->get_logger(), "Angulo recebido %d", real_angle_.load());
 }
 
 void ControllerNode::send_angle(std::string name, int32_t angle, int32_t speed) {
@@ -66,8 +65,25 @@ void ControllerNode::controller_callback(
 {
     ref_angle_ = msg->ref_angle;
     name_ = msg->name;
+
     int16_t speed = msg->speed;
     send_angle(name_, ref_angle_.load(), speed);
+
+    // mude periodo de feedback
+    if (msg->feedback_period_us > 0 &&
+        msg->feedback_period_us != current_period_us_)
+    {
+        current_period_us_ = msg->feedback_period_us;
+
+        feedback_period_ = std::chrono::microseconds(current_period_us_);
+
+        timer_->cancel();
+
+        timer_ = this->create_wall_timer(
+            feedback_period_,
+            std::bind(&ControllerNode::publish_state, this)
+        );
+    }
 }
 
 ControllerNode::~ControllerNode() = default;
