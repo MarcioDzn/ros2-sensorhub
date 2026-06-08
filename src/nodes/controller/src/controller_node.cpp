@@ -69,7 +69,7 @@ void ControllerNode::controller_callback(
     int16_t speed = msg->speed;
     send_angle(name_, ref_angle_.load(), speed);
 
-    // mude periodo de feedback
+    // muda periodo de feedback
     if (msg->feedback_period_us > 0 &&
         msg->feedback_period_us != current_period_us_)
     {
