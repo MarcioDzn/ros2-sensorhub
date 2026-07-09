@@ -25,9 +25,9 @@ void ConvergenceNode::time_callback(const interfaces::msg::SyncedSensorData::Sha
     plotter_.set_window_name(4, "IMU 3");
 
     // Janela 1: Juntas (usando o índice 1)
-    plotter_.add_data(1, "joint_1", relative_time_s, static_cast<double>(msg->actuator_data.positions[0]));
-    plotter_.add_data(1, "joint_2", relative_time_s, static_cast<double>(msg->actuator_data.positions[1]));
-    plotter_.add_data(1, "joint_3", relative_time_s, static_cast<double>(msg->actuator_data.positions[2]));
+    plotter_.add_data(1, "joint_1", relative_time_s, static_cast<double>(msg->actuator_data.angles[0]));
+    plotter_.add_data(1, "joint_2", relative_time_s, static_cast<double>(msg->actuator_data.angles[1]));
+    plotter_.add_data(1, "joint_3", relative_time_s, static_cast<double>(msg->actuator_data.angles[2]));
     
     // Janela 2: IMU (usando o índice 2)
     plotter_.add_data(2, "q_x", relative_time_s, static_cast<double>(msg->imu_data.imus[0].q_x));
