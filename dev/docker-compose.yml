@@ -26,4 +26,11 @@ services:
     command: >
       bash -c "
         source /opt/ros/humble/setup.bash &&
+        if [ ! -d /tmp/WiringPi ]; then
+          cd /tmp &&
+          git clone https://github.com/WiringPi/WiringPi.git;
+        fi &&
+        cd /tmp/WiringPi &&
+        ./build &&
+        cd /app/ros2_ws &&
         bash"
