@@ -83,11 +83,21 @@ void BNO055IMU::get_quaternions_data(std::vector<float>& out_data) {
     bno_.read_quaternions(out_data.data());
     delay(1);
     
-    // calibrando
-    out_data[0] = out_data[0] - calibration_ref_quaternions_[0]; // w
-    out_data[1] = out_data[1] - calibration_ref_quaternions_[1]; // x
-    out_data[2] = out_data[2] - calibration_ref_quaternions_[2]; // y
-    out_data[3] = out_data[3] - calibration_ref_quaternions_[3]; // z
+
+    float rw =  calibration_ref_quaternions_[0];
+    float rx = -calibration_ref_quaternions_[1];
+    float ry = -calibration_ref_quaternions_[2];
+    float rz = -calibration_ref_quaternions_[3];
+    
+    float cw = out_data[0];
+    float cx = out_data[1];
+    float cy = out_data[2];
+    float cz = out_data[3];
+    
+    out_data[0] = rw*cw - rx*cx - ry*cy - rz*cz; // novo w
+    out_data[1] = rw*cx + rx*cw + ry*cz - rz*cy; // novo x
+    out_data[2] = rw*cy - rx*cz + ry*cw + rz*cx; // novo y
+    out_data[3] = rw*cz + rx*cy - ry*cx + rz*cw; // novo z
 }
 
 void BNO055IMU::calibrate_euler() {

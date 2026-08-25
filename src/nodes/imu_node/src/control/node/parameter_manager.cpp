@@ -14,7 +14,7 @@ ParameterManager::ParameterManager(
 void ParameterManager::declare_parameters()
 {
     node_->declare_parameter("names", std::vector<std::string>{"bottom", "middle", "top"});
-    node_->declare_parameter("ids", std::vector<int64_t>{1, 2, 3});
+    node_->declare_parameter("ids", std::vector<int64_t>{3, 2, 1});
     node_->declare_parameter("multiplexer", std::vector<int64_t>{0, 1, 0});
     node_->declare_parameter("addresses", std::vector<int64_t>{40, 41, 40});
     node_->declare_parameter("update_rate_ms", 15);
